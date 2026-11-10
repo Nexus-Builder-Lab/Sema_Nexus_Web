@@ -24,3 +24,13 @@
 - **O que foi feito:** 19 Issues (12 P0, 6 P1, 1 P2) com títulos `[SEMA_NEXUS_WEB][MÓDULO]`, dependências nativas inclusive para a API; CLAUDE.md, templates, CI (nome do branch, lint/testes/build, imagem Docker) e guardrails do Claude Code.
 - **Decisões técnicas:** Vite + React 18 em JavaScript; Bootstrap 5; Chart.js; Leaflet com malha IBGE local (offline); mocks MSW a partir do OpenAPI exportado pela API.
 - **Observação de ambiente:** a porta 8080 do host está ocupada por outro serviço; a API local roda em 18080.
+
+## 2026-11-10 11:40 — GH-1 · Esqueleto Vite + React + Bootstrap + Router + Axios
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web)
+- **O que foi feito:** projeto Vite + React 18 em JavaScript; dependências Bootstrap 5.3 (Sass), React Router 6, Axios, Chart.js 4 + react-chartjs-2, Leaflet 1.9 + react-leaflet 4; estrutura `src/{api,mocks,auth,layout,components,pages/{core,intelligence,flux,docia},styles,utils}`; página inicial provisória com a faixa "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS" e página 404; ESLint 9 (flat config) + Prettier; Vitest + Testing Library + jsdom; scripts `dev`, `build`, `preview`, `lint`, `test`, `test:watch`, `format`, `format:check`; README atualizado.
+- **Decisões técnicas:** proxy `/api` do Vite lê `VITE_API_PROXY_TARGET` (padrão `http://localhost:8080`, conforme a Issue; nesta máquina usar 18080). react-leaflet fixado na v4 (a v5 exige React 19). ESLint fixado na v9 (`@eslint/js` 10 exige ESLint 10, incompatível com `eslint-plugin-react`). Avisos de depreciação do Sass vindos do Bootstrap silenciados no `vite.config.js`. `.github` e `.claude` fora do Prettier para não reformatar templates existentes.
+- **Arquivos principais:** `package.json`, `vite.config.js`, `eslint.config.js`, `.prettierrc.json`, `index.html`, `src/main.jsx`, `src/App.jsx`, `src/pages/core/*`, `src/styles/theme.scss`, `src/setupTests.js`, `src/App.test.jsx`, `README.md`.
+- **Testes:** `npm run lint` → 0 problemas; `npm test` → 1 arquivo, 2 testes, 0 falhas; `npm run build` → OK (vite 8.3.7); `prettier --check .` → OK; `npm run dev` → `GET /` 200 com título "SEMA NEXUS".
+- **API real ou mocks:** não se aplica (sem integração nesta Issue). Docker não se aplica: ainda não há Dockerfile (Issue #2) nem compose na `main` da API.
+- **Pendências / observações para as próximas Issues:** `npm audit --omit=dev` aponta 2 vulnerabilidades moderadas no `react-router` 6.x (correção só na v7, fora da stack aprovada) — avaliar com o proprietário. Tokens visuais do protótipo ficam para a Issue #3; MSW para a Issue #4.
