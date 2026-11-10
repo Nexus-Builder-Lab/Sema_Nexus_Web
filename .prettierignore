@@ -6,3 +6,5 @@ public/geo
 *.md
 .github
 .claude
+src/mocks/openapi.json
+public/mockServiceWorker.js

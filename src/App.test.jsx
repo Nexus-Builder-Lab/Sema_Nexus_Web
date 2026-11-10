@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import App from './App.jsx';
+import { iniciarSessao } from './test/auth.js';
 
 function renderAt(path) {
   return render(
@@ -14,6 +15,8 @@ function renderAt(path) {
 const BANNER = 'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS';
 
 describe('App e layout', () => {
+  beforeEach(() => iniciarSessao());
+
   it('exibe a página inicial dentro do layout', () => {
     renderAt('/');
     expect(screen.getByRole('heading', { level: 1, name: 'SEMA NEXUS' })).toBeInTheDocument();

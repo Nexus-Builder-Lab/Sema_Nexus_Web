@@ -649,3 +649,23 @@ body {
 .nx-modal-open {
   display: block;
 }
+
+// Tela de login (fora do AppLayout)
+.nx-login {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.nx-login-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.nx-login-card {
+  width: 100%;
+  max-width: 400px;
+}

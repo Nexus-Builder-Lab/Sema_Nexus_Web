@@ -1,19 +1,27 @@
 import { Route, Routes } from 'react-router-dom';
+import AuthProvider from './auth/AuthProvider.jsx';
+import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { ToastProvider } from './components/Toasts.jsx';
-import AppLayout from './layout/AppLayout.jsx';
+import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
+import LoginPage from './pages/core/LoginPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 
 export default function App() {
   return (
-    <ToastProvider>
-      <Routes>
-        {/* Rotas protegidas por login chegam na Issue #4; o layout já envolve todas. */}
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          {/* Tudo abaixo exige login; telas restritas por perfil usam <RequireRole roles={[...]}>. */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AuthenticatedLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Route>
+        </Routes>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
