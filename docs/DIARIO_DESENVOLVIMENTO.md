@@ -34,3 +34,13 @@
 - **Testes:** `npm run lint` → 0 problemas; `npm test` → 1 arquivo, 2 testes, 0 falhas; `npm run build` → OK (vite 8.3.7); `prettier --check .` → OK; `npm run dev` → `GET /` 200 com título "SEMA NEXUS".
 - **API real ou mocks:** não se aplica (sem integração nesta Issue). Docker não se aplica: ainda não há Dockerfile (Issue #2) nem compose na `main` da API.
 - **Pendências / observações para as próximas Issues:** `npm audit --omit=dev` aponta 2 vulnerabilidades moderadas no `react-router` 6.x (correção só na v7, fora da stack aprovada) — avaliar com o proprietário. Tokens visuais do protótipo ficam para a Issue #3; MSW para a Issue #4.
+
+## 2026-11-10 13:55 — GH-2 · Dockerfile multi-stage, .dockerignore e proxy /api (Nginx)
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web)
+- **O que foi feito:** `Dockerfile` multi-stage (`node:22-alpine` → `nginxinc/nginx-unprivileged:alpine`), `nginx/default.conf.template` com fallback SPA, proxy `/api/` → `${API_UPSTREAM}`, `/healthz`, cache longo em `/assets/` e cabeçalhos básicos de segurança; `HEALTHCHECK`; `.dockerignore`; teste `src/dockerConfig.test.js`; README.
+- **Decisões técnicas:** envsubst via `/etc/nginx/templates` do entrypoint oficial (sem script próprio). `proxy_pass` com variável + `resolver ${NGINX_RESOLVER}` (padrão `127.0.0.11`): o Nginx não falha ao subir se a API ainda não resolver e acompanha reinícios do container da API. `client_max_body_size 25m` para os uploads do DocIA (ajustar se a API definir outro limite). `VITE_USE_MOCKS=false` fixo no build da imagem.
+- **Arquivos principais:** `Dockerfile`, `nginx/default.conf.template`, `.dockerignore`, `src/dockerConfig.test.js`, `README.md`.
+- **Testes:** `docker build .` → OK (Docker 29.7.2). Container de teste em rede isolada com stub `api` (busybox httpd): `GET /` → 200; `GET /flux/demandas` → 200 com `index.html`; `GET /api/auth/config` → 200 com o JSON do stub (proxy OK); `GET /healthz` → `ok`; status `healthy`; `id` → `uid=101(nginx)`; nenhum segredo no histórico da imagem nem nos arquivos (único match de "SECRET" é o interno `__SECRET_INTERNALS_…` do React). `npm ci` → OK; `npm run lint` → 0 problemas; `npm test` → 2 arquivos, 6 testes, 0 falhas; `npm run build` → OK; `prettier --check .` → OK.
+- **API real ou mocks:** proxy validado contra stub; o `docker-compose.yml` ainda não existe na `main` da API (Issue API#8), então a subida completa fica para lá.
+- **Pendências / observações para as próximas Issues:** API#8 deve usar `build: ../Sema_Nexus_Web`, porta `${WEB_PORT:-3000}:8080` e `depends_on: api (service_healthy)`.

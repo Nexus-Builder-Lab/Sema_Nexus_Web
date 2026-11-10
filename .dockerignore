@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.vite
+.git
+.github
+.claude
+.idea
+.vscode
+.env
+.env*
+*.log
+Dockerfile
+.dockerignore
+docs
