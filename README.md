@@ -60,6 +60,11 @@ O Nginx da imagem serve o build e faz proxy de `/api` para o serviço `api`. Det
 
 A camada base do mapa usa a malha oficial de municípios do **IBGE** (GeoJSON local em `public/geo/`). Os tiles do OpenStreetMap são opcionais e ficam desligados por padrão.
 
+## Histórico e autopilot
+
+- [docs/DIARIO_DESENVOLVIMENTO.md](docs/DIARIO_DESENVOLVIMENTO.md): o que foi feito, decidido e testado em cada Issue.
+- Desenvolvimento autônomo (`/next-issue`): [Sema_Nexus_API/docs/AUTOPILOT.md](https://github.com/Nexus-Builder-Lab/Sema_Nexus_API/blob/main/docs/AUTOPILOT.md).
+
 ## Contribuição
 
 Toda mudança parte de uma Issue **deste** repositório. Branch `feature/GH-<n>`, commits `GH-<n>: ...`, PR com `Closes #<n>`. Ver [CLAUDE.md](CLAUDE.md) e [Sema_Nexus_API/docs/DEVELOPMENT.md](https://github.com/Nexus-Builder-Lab/Sema_Nexus_API/blob/main/docs/DEVELOPMENT.md).

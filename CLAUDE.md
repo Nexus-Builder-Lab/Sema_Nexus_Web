@@ -78,7 +78,7 @@ public/geo/     mt-uf.geojson, mt-municipios.geojson (IBGE) — mapa funciona of
 
 - **Nunca** se adicionar como colaborador, convidar contas, alterar permissões de membros, alterar visibilidade ou excluir repositórios/histórico.
 - Trabalhe sempre a partir de uma Issue. Não marque Issue como finalizada sem os critérios atendidos.
-- Não invente resultados de CI ou de testes. Não faça merge, tag ou release sem autorização do proprietário.
+- Não invente resultados de CI ou de testes. Não faça merge, tag ou release sem autorização do proprietário — exceto o merge no **modo autopilot** (seção 8.1). Tag e release continuam exigindo autorização.
 
 ### Títulos de Issue (regra permanente)
 
@@ -93,7 +93,23 @@ public/geo/     mt-uf.geojson, mt-municipios.geojson (IBGE) — mapa funciona of
 - Commits: `GH-<n>: descrição curta`. PR: título `GH-<n> — <título da Issue>`, corpo com `Closes #<n>` (ou `Closes Nexus-Builder-Lab/Sema_Nexus_API#<n>`), testes executados e evidências.
 - O CI valida o nome do branch com `^feature/GH-[0-9]+$`.
 
-## 9. Como executar uma Issue (use `/start-issue <n>`)
+## 8.1 Modo autopilot (autorizado pelo proprietário em 10/11/2026)
+
+Quando executado pelo `/next-issue` (ou pelo script `Sema_Nexus_API/scripts/autopilot/autopilot.ps1`), o Claude Code **pode fazer merge sem pedir autorização**, desde que **todas** as condições sejam verdadeiras:
+
+1. todos os checks do CI do PR verdes;
+2. `npm run lint`, `npm test` e `npm run build` executados e aprovados na mesma execução;
+3. todos os critérios de aceitação da Issue comprovados com evidência e marcados no PR;
+4. subida via Docker Compose validada (compose em `../Sema_Nexus_API`), quando ele já existir e a Issue afetar a execução;
+5. todas as dependências ("Blocked by") da Issue fechadas — inclusive as da API. Enquanto um endpoint da API não estiver mesclado, o Web pode **desenvolver** contra os mocks MSW, mas o PR fica com a label `aguardando-dependencia` até a dependência fechar.
+
+Se um problema persistir após **3 tentativas de correção**, não há merge: a Issue recebe a label `autopilot-falhou` e o erro é registrado em `C:\SEMANEXUS\autopilot\RELATORIO_ERROS.md`.
+Toda Issue concluída acrescenta uma entrada em `docs/DIARIO_DESENVOLVIMENTO.md` (no mesmo PR).
+Continuam proibidos no autopilot: tags/releases, push direto na `main`, force push, apagar volumes Docker, Issues P2, ampliar escopo e encerrar processos que o agente não iniciou. Detalhes: `Sema_Nexus_API/docs/AUTOPILOT.md`.
+
+Ambiente desta máquina: a porta 8080 do host está ocupada por outro serviço — a API local roda em 18080 (`VITE_API_PROXY_TARGET=http://localhost:18080`).
+
+## 9. Como executar uma Issue (use `/start-issue <n>`, ou `/next-issue` no autopilot)
 
 1. Ler a Issue (`gh issue view <n>`).
 2. Verificar dependências ("Blocked by"), inclusive as da API — se o endpoint ainda não existir, trabalhar contra os mocks MSW do contrato.

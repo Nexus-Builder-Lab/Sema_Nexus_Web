@@ -42,13 +42,11 @@
       "Read(./.env.*.local)"
     ],
     "ask": [
-      "Bash(gh pr merge:*)",
       "Bash(git tag:*)",
       "Bash(git push --tags:*)",
       "Bash(gh release create:*)",
       "Bash(git push origin main:*)",
       "Bash(scripts/demo-reset*)",
-      "PowerShell(gh pr merge*)",
       "PowerShell(git tag*)",
       "PowerShell(*demo-reset*)"
     ]
