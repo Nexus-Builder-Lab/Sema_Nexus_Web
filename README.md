@@ -12,7 +12,8 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 |---|---|
 | CI, templates, CLAUDE.md | **Implementado** (10/11/2026) |
 | Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
-| Layout, login, mocks MSW, Dockerfile | **Planejado** — Sprint 1 (Issues #2–#4) |
+| Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
+| Layout, login, mocks MSW | **Planejado** — Sprint 1 (Issues #3–#4) |
 | Telas do Flux, Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
@@ -61,7 +62,17 @@ src/
 
 ## Executar via Docker (ambiente completo)
 
-> **Planejado:** o Dockerfile do Web (Issue #2) e o `docker-compose.yml` da API ainda não estão mesclados. Os passos abaixo descrevem o uso previsto.
+> **Implementado:** imagem do Web (Issue #2). **Planejado:** o `docker-compose.yml` fica na API (Issue API#8) e ainda não está mesclado; os passos abaixo descrevem o uso previsto.
+
+### Imagem do Web
+
+- `Dockerfile` multi-stage: `node:22-alpine` (`npm ci` + `npm run build`) → `nginxinc/nginx-unprivileged:alpine` (usuário não-root, uid 101).
+- Escuta na porta **8080** do container (o compose mapeia para **3000** no host). `HEALTHCHECK` em `GET /healthz`.
+- `nginx/default.conf.template`: fallback SPA (`try_files $uri $uri/ /index.html`) e proxy `location /api/` → `${API_UPSTREAM}`.
+- Variáveis de runtime (aplicadas por `envsubst` no entrypoint oficial): `API_UPSTREAM` (padrão `http://api:8080`) e `NGINX_RESOLVER` (padrão `127.0.0.11`, DNS do Docker). O host da API é resolvido por requisição, então o Nginx sobe mesmo antes da API.
+- Nenhum segredo na imagem; `.dockerignore` exclui `node_modules`, `dist`, `.git` e `.env*`.
+
+Build isolado: `docker build -t sema-nexus-web .` · teste rápido: `docker run --rm -p 3000:8080 sema-nexus-web` (sem a API, `/api` responde 502).
 
 O `docker-compose.yml` fica no repositório da API; clone os dois lado a lado:
 
