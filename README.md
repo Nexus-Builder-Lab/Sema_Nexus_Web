@@ -13,7 +13,8 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | CI, templates, CLAUDE.md | **Implementado** (10/11/2026) |
 | Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
-| Layout, login, mocks MSW | **Planejado** — Sprint 1 (Issues #3–#4) |
+| Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
+| Login, rotas protegidas, mocks MSW | **Planejado** — Sprint 1 (Issue #4) |
 | Telas do Flux, Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
@@ -86,6 +87,15 @@ docker compose up -d --build
 
 Acesse http://localhost:3000. Login de teste (**somente demonstração**): `admin@admin.com` / `12345678`.
 O Nginx da imagem serve o build e faz proxy de `/api` para o serviço `api`. Detalhes: [Sema_Nexus_API/docs/DOCKER.md](https://github.com/Nexus-Builder-Lab/Sema_Nexus_API/blob/main/docs/DOCKER.md).
+
+## Interface e componentes
+
+Tema em `src/styles/theme.scss`: tokens do protótipo (verde institucional, cinzas, cores de estado) aplicados às variáveis do Bootstrap 5.3.
+
+- **Layout** (`src/layout/`): `AppLayout` (envolve todas as rotas) com `Sidebar` recolhível — painel deslizante abaixo de 992 px —, `Topbar`, `Breadcrumbs` e `DemoBanner` fixo "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS". Menu em `src/layout/navigation.js`.
+- **Componentes** (`src/components/`): `DataTable` (ordenação local ou no servidor + `Pagination` 0-based), `FilterBar`, `EmptyState`, `Loading`, `ErrorState`, `ConfirmDialog`, `ToastProvider`/`useToast`, `StatusBadge` (7 status da demanda), `PriorityBadge`, `KpiCard`, `ChartCard`, `PageHeader`, `Icon` (SVG inline, sem biblioteca).
+- Rótulos e cores de status/prioridade: `src/utils/catalogos.js` (valores de `Sema_Nexus_API/docs/DATABASE.md`).
+- Responsivo em 375, 768 e 1366 px sem rolagem horizontal; foco visível, link "Pular para o conteúdo" e `aria-*` nos controles.
 
 ## Mapa sem internet
 

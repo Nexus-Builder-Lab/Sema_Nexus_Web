@@ -1,5 +1,651 @@
-// Tema base do SEMA NEXUS sobre o Bootstrap 5.3.
-// Os tokens completos do protótipo (cores, tipografia) serão aplicados na Issue #3.
-$primary: #1b5e20; // verde institucional (provisório)
+// Tema do SEMA NEXUS sobre o Bootstrap 5.3 (Issue #3).
+// Tokens copiados de `assets/css/global.css` do protótipo de referência
+// (FabricioJorge0/prototipo_SEMA_NEXUS, somente leitura).
+
+// ---------- Tokens do protótipo ----------
+$nx-green-950: #0b2e1a;
+$nx-green-900: #14532d;
+$nx-green-800: #166534;
+$nx-green-700: #15803d;
+$nx-green-600: #16a34a;
+$nx-green-500: #22c55e;
+$nx-green-100: #dcfce7;
+$nx-green-50: #f0fdf4;
+
+$nx-gray-50: #f9fafb;
+$nx-gray-100: #f3f4f6;
+$nx-gray-200: #e5e7eb;
+$nx-gray-300: #d1d5db;
+$nx-gray-400: #9ca3af;
+$nx-gray-500: #6b7280;
+$nx-gray-600: #4b5563;
+$nx-gray-700: #374151;
+$nx-gray-800: #1f2937;
+$nx-gray-900: #111827;
+
+$nx-blue-700: #1d4ed8;
+$nx-blue-100: #dbeafe;
+$nx-blue-50: #eff6ff;
+$nx-red-600: #dc2626;
+$nx-red-100: #fee2e2;
+$nx-red-50: #fef2f2;
+$nx-amber-600: #d97706;
+$nx-amber-100: #fef3c7;
+$nx-amber-50: #fffbeb;
+$nx-orange-600: #ea580c;
+$nx-violet-600: #7c3aed;
+$nx-violet-100: #ede9fe;
+
+$nx-sidebar-w: 260px;
+$nx-sidebar-w-collapsed: 72px;
+$nx-topbar-h: 64px;
+
+// ---------- Variáveis do Bootstrap ----------
+$primary: $nx-green-800;
+$secondary: $nx-gray-600;
+$success: $nx-green-700;
+$info: $nx-blue-700;
+$warning: $nx-amber-600;
+$danger: $nx-red-600;
+$light: $nx-gray-100;
+$dark: $nx-gray-800;
+
+$gray-100: $nx-gray-100;
+$gray-200: $nx-gray-200;
+$gray-300: $nx-gray-300;
+$gray-400: $nx-gray-400;
+$gray-500: $nx-gray-500;
+$gray-600: $nx-gray-600;
+$gray-700: $nx-gray-700;
+$gray-800: $nx-gray-800;
+$gray-900: $nx-gray-900;
+
+// Superfícies (cards, modais, campos) brancas; o fundo cinza do protótipo vai no <body>.
+$body-bg: #fff;
+$body-color: $nx-gray-800;
+$body-secondary-color: $nx-gray-600;
+$border-color: $nx-gray-200;
+$link-color: $nx-blue-700;
+$link-decoration: none;
+$link-hover-decoration: underline;
+
+$font-family-sans-serif:
+  'Inter',
+  'Segoe UI',
+  system-ui,
+  -apple-system,
+  Roboto,
+  'Helvetica Neue',
+  Arial,
+  sans-serif;
+$font-family-monospace: 'Cascadia Code', 'Consolas', 'SFMono-Regular', Menlo, monospace;
+$font-size-base: 0.875rem; // 14px, como no protótipo
+$headings-font-weight: 650;
+$headings-color: $nx-gray-900;
+
+$border-radius: 0.625rem; // 10px
+$border-radius-sm: 0.375rem; // 6px
+$border-radius-lg: 0.875rem; // 14px
+$box-shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+$box-shadow:
+  0 1px 3px rgba(17, 24, 39, 0.08),
+  0 1px 2px rgba(17, 24, 39, 0.04);
+$box-shadow-lg: 0 12px 32px rgba(17, 24, 39, 0.16);
+
+$card-border-color: $nx-gray-200;
+$table-cell-padding-y: 0.625rem;
 
 @import 'bootstrap/scss/bootstrap';
+
+// ---------- Propriedades CSS reutilizáveis ----------
+:root {
+  --nx-sidebar-w: #{$nx-sidebar-w};
+  --nx-sidebar-w-collapsed: #{$nx-sidebar-w-collapsed};
+  --nx-topbar-h: #{$nx-topbar-h};
+  --nx-green-950: #{$nx-green-950};
+  --nx-green-800: #{$nx-green-800};
+  --nx-green-500: #{$nx-green-500};
+}
+
+body {
+  background-color: $nx-gray-100;
+}
+
+// Foco sempre visível (acessibilidade).
+:focus-visible {
+  outline: 2px solid $nx-blue-700;
+  outline-offset: 2px;
+}
+
+.nx-skip-link {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 1100;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: $border-radius-sm;
+  box-shadow: $box-shadow-lg;
+
+  &:not(:focus) {
+    @include visually-hidden;
+  }
+}
+
+.nx-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nx-rotate-180 {
+  transform: rotate(180deg);
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+// ---------- Layout ----------
+.nx-app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.nx-sidebar {
+  width: var(--nx-sidebar-w);
+  background: $nx-green-950;
+  color: #cfe7d7;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 1040;
+  transition:
+    width 0.2s ease,
+    transform 0.2s ease;
+}
+
+.nx-sidebar-head {
+  height: var(--nx-topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nx-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: $border-radius;
+  background: $nx-green-500;
+  color: $nx-green-950;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 800;
+}
+
+.nx-brand-text {
+  line-height: 1.1;
+  white-space: nowrap;
+
+  strong {
+    display: block;
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    color: #fff;
+  }
+
+  span {
+    font-size: 11.5px;
+    color: #a7d3b5;
+  }
+}
+
+.nx-sidebar nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 10px 20px;
+}
+
+.nx-nav-group + .nx-nav-group {
+  margin-top: 14px;
+}
+
+.nx-nav-group-title {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #8fc7a2;
+  padding: 6px 10px;
+  font-weight: 650;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.nx-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: #cfe7d7;
+  font-size: 13.5px;
+  white-space: nowrap;
+  position: relative;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    text-decoration: none;
+  }
+
+  &.active {
+    background: $nx-green-800;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline-color: $nx-green-500;
+  }
+}
+
+.nx-sidebar-foot {
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+
+  button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #cfe7d7;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 10px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+    }
+  }
+}
+
+.nx-main {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--nx-sidebar-w);
+  transition: margin-left 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.nx-app.is-collapsed {
+  .nx-sidebar {
+    width: var(--nx-sidebar-w-collapsed);
+  }
+
+  .nx-brand-text,
+  .nx-nav-label,
+  .nx-nav-group-title {
+    display: none;
+  }
+
+  .nx-nav-link,
+  .nx-sidebar-foot button {
+    justify-content: center;
+  }
+
+  .nx-nav-group + .nx-nav-group {
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 8px;
+  }
+
+  .nx-main {
+    margin-left: var(--nx-sidebar-w-collapsed);
+  }
+}
+
+.nx-topbar {
+  min-height: var(--nx-topbar-h);
+  background: #fff;
+  border-bottom: 1px solid $nx-gray-200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+}
+
+.nx-topbar-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nx-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: inline-grid;
+  place-items: center;
+  color: $nx-gray-600;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) {
+    background: $nx-gray-100;
+    color: $nx-gray-900;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+  }
+}
+
+.nx-menu-btn {
+  display: none;
+}
+
+.nx-user {
+  line-height: 1.15;
+  min-width: 0;
+
+  strong {
+    display: block;
+    font-size: 13px;
+  }
+
+  span {
+    font-size: 11.5px;
+    color: $nx-gray-600;
+  }
+}
+
+.nx-breadcrumbs .breadcrumb {
+  margin: 0;
+  font-size: 13px;
+  flex-wrap: nowrap;
+  min-width: 0;
+
+  .breadcrumb-item {
+    white-space: nowrap;
+
+    a {
+      color: $nx-gray-600;
+    }
+
+    &.active {
+      color: $nx-gray-900;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+.nx-demo-banner {
+  background: $nx-amber-50;
+  border-bottom: 1px solid #fde68a;
+  color: #92400e;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 24px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  letter-spacing: 0.02em;
+}
+
+.nx-view {
+  padding: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-footer {
+  padding: 14px 24px;
+  font-size: 12px;
+  color: $nx-gray-600;
+  border-top: 1px solid $nx-gray-200;
+  background: #fff;
+}
+
+.nx-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.4);
+  z-index: 1035;
+}
+
+// Tablet e celular: sidebar vira painel deslizante.
+@include media-breakpoint-down(lg) {
+  // Fechada: fora da tela e fora da ordem de tabulação.
+  .nx-sidebar,
+  .nx-app.is-collapsed .nx-sidebar {
+    width: var(--nx-sidebar-w);
+    transform: translateX(-100%);
+    visibility: hidden;
+  }
+
+  .nx-app.is-mobile-open .nx-sidebar {
+    transform: none;
+    visibility: visible;
+    box-shadow: $box-shadow-lg;
+  }
+
+  .nx-app.is-collapsed {
+    .nx-brand-text,
+    .nx-nav-label,
+    .nx-nav-group-title {
+      display: revert;
+    }
+
+    .nx-nav-link {
+      justify-content: flex-start;
+    }
+  }
+
+  .nx-main,
+  .nx-app.is-collapsed .nx-main {
+    margin-left: 0;
+  }
+
+  .nx-menu-btn {
+    display: inline-grid;
+  }
+
+  .nx-collapse-btn {
+    display: none !important;
+  }
+
+  .nx-topbar {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .nx-view {
+    padding: 16px;
+  }
+
+  .nx-demo-banner,
+  .nx-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+@include media-breakpoint-down(md) {
+  .nx-breadcrumbs,
+  .nx-user {
+    display: none;
+  }
+}
+
+// ---------- Cabeçalho de página ----------
+.nx-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+
+  h1 {
+    font-size: 22px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    color: $nx-gray-600;
+    margin: 4px 0 0;
+    max-width: 760px;
+  }
+}
+
+.nx-module-tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $nx-green-700;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+// ---------- Badges (status, prioridade) ----------
+.nx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: $nx-gray-100;
+  color: $nx-gray-700;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.8;
+  }
+}
+
+.nx-badge-gray {
+  background: $nx-gray-200;
+  color: $nx-gray-700;
+}
+.nx-badge-violet {
+  background: $nx-violet-100;
+  color: #6d28d9;
+}
+.nx-badge-amber {
+  background: $nx-amber-100;
+  color: #92400e;
+}
+.nx-badge-blue {
+  background: $nx-blue-100;
+  color: $nx-blue-700;
+}
+.nx-badge-orange {
+  background: #ffedd5;
+  color: #9a3412;
+}
+.nx-badge-teal {
+  background: #ccfbf1;
+  color: #115e59;
+}
+.nx-badge-green {
+  background: $nx-green-100;
+  color: $nx-green-800;
+}
+.nx-badge-red {
+  background: $nx-red-100;
+  color: #b91c1c;
+}
+
+// ---------- Cards ----------
+.nx-kpi {
+  .nx-kpi-label {
+    font-size: 12px;
+    color: $nx-gray-600;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .nx-kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: $nx-gray-900;
+    line-height: 1.2;
+  }
+}
+
+.nx-kpi-green {
+  border-left: 4px solid $nx-green-700;
+}
+.nx-kpi-blue {
+  border-left: 4px solid $nx-blue-700;
+}
+.nx-kpi-amber {
+  border-left: 4px solid $nx-amber-600;
+}
+.nx-kpi-red {
+  border-left: 4px solid $nx-red-600;
+}
+
+.nx-chart-body {
+  position: relative;
+  min-height: 240px;
+}
+
+// ---------- Tabela ----------
+.nx-sort-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nx-table thead th {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $nx-gray-600;
+  background: $nx-gray-50;
+  white-space: nowrap;
+}
+
+// ---------- Toasts e diálogo ----------
+.nx-toasts {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1090;
+  max-width: calc(100vw - 32px);
+}
+
+.nx-modal-open {
+  display: block;
+}
