@@ -1,13 +1,13 @@
 name: Feature
 description: Nova funcionalidade do SEMA NEXUS (uma Issue por repositório)
-title: "[MÓDULO][CAMADA] "
+title: "[SEMA_NEXUS_WEB][MÓDULO] "
 labels: ["type:feature"]
 body:
   - type: markdown
     attributes:
       value: |
-        Título com dois prefixos: módulo + camada. Ex.: `[FLUX][BACKEND] Endpoint de cadastro de demanda`.
-        Prefixos: `[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[BACKEND]` `[FRONTEND]` `[DATABASE]` `[INFRA]` `[TEST]` `[DOCS]`.
+        Título: prefixo do repositório + módulo. Ex.: `[SEMA_NEXUS_API][FLUX] Endpoint de cadastro de demanda` ou `[SEMA_NEXUS_WEB][FLUX] Tela de cadastro de demanda`.
+        Tags após o prefixo: `[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[DATABASE]` `[INFRA]` `[TEST]` `[DOCS]`.
         **Nunca** crie uma Issue que exija código na API e no Web ao mesmo tempo: crie uma em cada repositório e ligue por dependência.
         Funcionalidade fora do backlog aprovado = proposta de melhoria (precisa de aprovação do proprietário).
   - type: dropdown

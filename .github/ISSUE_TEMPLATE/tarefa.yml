@@ -1,6 +1,6 @@
 name: Tarefa técnica
 description: Infraestrutura, CI, Docker, documentação, testes ou refatoração
-title: "[INFRA] "
+title: "[SEMA_NEXUS_WEB][INFRA] "
 labels: ["type:task"]
 body:
   - type: dropdown

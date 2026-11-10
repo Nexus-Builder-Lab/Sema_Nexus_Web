@@ -80,6 +80,12 @@ public/geo/     mt-uf.geojson, mt-municipios.geojson (IBGE) — mapa funciona of
 - Trabalhe sempre a partir de uma Issue. Não marque Issue como finalizada sem os critérios atendidos.
 - Não invente resultados de CI ou de testes. Não faça merge, tag ou release sem autorização do proprietário.
 
+### Títulos de Issue (regra permanente)
+
+- Toda Issue deste repositório começa com **`[SEMA_NEXUS_WEB]`**, seguido do módulo ou tipo e do título: `[SEMA_NEXUS_WEB][FLUX] Tela de cadastro de demanda`.
+- Issues de backend, infraestrutura e documentação transversal começam com **`[SEMA_NEXUS_API]`** e ficam em `Sema_Nexus_API`.
+- Tags após o prefixo: `[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[INFRA]` `[TEST]` `[DOCS]`. Não usar `[BACKEND]`/`[FRONTEND]` (o prefixo já indica o repositório).
+
 ### Branches, commits e PRs (regra permanente)
 
 - **Todo branch se chama `feature/GH-<número da Issue>`** — para qualquer tipo de trabalho. Nunca `fix/`, `chore/`, `docs/` ou sufixos.
