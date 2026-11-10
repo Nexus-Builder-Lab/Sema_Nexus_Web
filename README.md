@@ -11,7 +11,8 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Item | Status |
 |---|---|
 | CI, templates, CLAUDE.md | **Implementado** (10/11/2026) |
-| Projeto React, layout, login, Dockerfile | **Planejado** — Sprint 1 (Issues #1–#4) |
+| Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
+| Layout, login, mocks MSW, Dockerfile | **Planejado** — Sprint 1 (Issues #2–#4) |
 | Telas do Flux, Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
@@ -21,27 +22,46 @@ Acompanhamento: [GitHub Project — SEMA NEXUS — Desenvolvimento](https://gith
 
 React 18 (JavaScript) · Vite · Bootstrap 5 · React Router · Axios · Chart.js · Leaflet · MSW · Vitest · Testing Library · ESLint · Prettier · Nginx · Docker
 
-## Executar localmente (após a Issue #1)
+## Executar localmente
+
+Requisitos: Node.js 20.19+ (o CI usa Node 22).
 
 ```bash
 npm ci
-npm run dev                         # http://localhost:5173 — /api vai para http://localhost:8080
+npm run dev                         # http://localhost:5173 — /api vai para VITE_API_PROXY_TARGET
 ```
 
-Sem a API rodando, use os mocks gerados do contrato OpenAPI (Issue #4):
+O proxy `/api` do Vite usa `VITE_API_PROXY_TARGET` (padrão `http://localhost:8080`). Para mudar, copie `.env.example` para `.env.local` e ajuste — por exemplo, `VITE_API_PROXY_TARGET=http://localhost:18080` quando a porta 8080 da máquina estiver ocupada. O frontend sempre chama a API por `/api` relativo.
+
+Sem a API rodando, use os mocks gerados do contrato OpenAPI (**Planejado** — Issue #4):
 ```bash
 # .env.local
 VITE_USE_MOCKS=true
 ```
 
-Qualidade:
-```bash
-npm run lint
-npm test
-npm run build
+Scripts:
+
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento (Vite) |
+| `npm run build` | Build de produção em `dist/` |
+| `npm run preview` | Serve o build localmente |
+| `npm run lint` | ESLint (flat config) |
+| `npm test` | Vitest + Testing Library (`vitest run`, sem modo watch) |
+| `npm run format` / `format:check` | Prettier |
+
+Estrutura:
+
+```
+src/
+  api/ mocks/ auth/ layout/ components/ utils/
+  pages/{core,intelligence,flux,docia}/
+  styles/theme.scss      # Bootstrap 5.3 via Sass
 ```
 
 ## Executar via Docker (ambiente completo)
+
+> **Planejado:** o Dockerfile do Web (Issue #2) e o `docker-compose.yml` da API ainda não estão mesclados. Os passos abaixo descrevem o uso previsto.
 
 O `docker-compose.yml` fica no repositório da API; clone os dois lado a lado:
 
