@@ -1,0 +1,62 @@
+name: Bug
+description: Comportamento incorreto em funcionalidade existente
+title: "[MÓDULO][CAMADA] Bug: "
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: repositorio
+    attributes:
+      label: Repositório
+      options:
+        - Sema_Nexus_API (backend, Oracle, infraestrutura transversal, docs)
+        - Sema_Nexus_Web (frontend)
+    validations: { required: true }
+  - type: textarea
+    id: descricao
+    attributes: { label: Descrição, description: O que está errado? }
+    validations: { required: true }
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      value: |
+        1. Subir o ambiente (`docker compose up -d --build`) e entrar com o usuário de teste
+        2.
+        3.
+    validations: { required: true }
+  - type: textarea
+    id: esperado
+    attributes: { label: Comportamento esperado x obtido }
+    validations: { required: true }
+  - type: textarea
+    id: evidencias
+    attributes: { label: Evidências, description: "Logs (`docker compose logs api`), prints, resposta HTTP. **Não cole senhas, tokens ou o conteúdo do .env.**" }
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options: [Core, SEMA Intelligence, SEMA Flux, SEMA DocIA, Infraestrutura, Documentação, Qualidade]
+    validations: { required: true }
+  - type: dropdown
+    id: prioridade
+    attributes: { label: Prioridade, options: [Crítica, Alta, Média, Baixa] }
+    validations: { required: true }
+  - type: dropdown
+    id: mvp
+    attributes: { label: Categoria MVP, description: Bug que impede a demonstração é P0., options: ["P0 — Obrigatória", "P1 — Desejável", "P2 — Futura"] }
+    validations: { required: true }
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação da correção
+      value: |
+        - [ ] O cenário descrito deixa de ocorrer
+        - [ ] Teste automatizado cobre o caso
+    validations: { required: true }
+  - type: textarea
+    id: dependencias
+    attributes: { label: Dependências, value: Nenhuma. }
+  - type: textarea
+    id: testes
+    attributes: { label: Testes, description: Como a correção será verificada. }
+    validations: { required: true }

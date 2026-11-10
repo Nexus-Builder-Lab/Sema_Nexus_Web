@@ -1,0 +1,24 @@
+# Dependências e build
+node_modules/
+dist/
+coverage/
+.vite/
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE / SO
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Variáveis de ambiente (NUNCA versionar valores reais)
+.env
+.env.*
+!.env.example
+
+# Claude Code — configurações locais
+.claude/settings.local.json

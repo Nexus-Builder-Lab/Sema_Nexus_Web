@@ -1,0 +1,52 @@
+name: Tarefa técnica
+description: Infraestrutura, CI, Docker, documentação, testes ou refatoração
+title: "[INFRA] "
+labels: ["type:task"]
+body:
+  - type: dropdown
+    id: repositorio
+    attributes:
+      label: Repositório
+      options:
+        - Sema_Nexus_API (backend, Oracle, infraestrutura transversal, docs)
+        - Sema_Nexus_Web (frontend)
+    validations: { required: true }
+  - type: textarea
+    id: descricao
+    attributes: { label: Descrição, description: O que precisa ser feito e por quê. }
+    validations: { required: true }
+  - type: textarea
+    id: escopo
+    attributes: { label: Escopo, description: Arquivos, configurações e comandos envolvidos. }
+    validations: { required: true }
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      value: |
+        - [ ]
+    validations: { required: true }
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options: [Infraestrutura, Documentação, Qualidade, Core, SEMA Intelligence, SEMA Flux, SEMA DocIA]
+    validations: { required: true }
+  - type: dropdown
+    id: prioridade
+    attributes: { label: Prioridade, options: [Crítica, Alta, Média, Baixa] }
+    validations: { required: true }
+  - type: dropdown
+    id: mvp
+    attributes: { label: Categoria MVP, options: ["P0 — Obrigatória", "P1 — Desejável", "P2 — Futura"] }
+    validations: { required: true }
+  - type: textarea
+    id: dependencias
+    attributes: { label: Dependências, value: Nenhuma. }
+  - type: textarea
+    id: testes
+    attributes: { label: Testes / verificação, description: "Ex.: CI verde, `docker compose up` a partir de ambiente limpo." }
+    validations: { required: true }
+  - type: input
+    id: estimativa
+    attributes: { label: Estimativa (horas), placeholder: "2" }

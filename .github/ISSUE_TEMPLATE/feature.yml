@@ -1,0 +1,67 @@
+name: Feature
+description: Nova funcionalidade do SEMA NEXUS (uma Issue por repositório)
+title: "[MÓDULO][CAMADA] "
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Título com dois prefixos: módulo + camada. Ex.: `[FLUX][BACKEND] Endpoint de cadastro de demanda`.
+        Prefixos: `[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[BACKEND]` `[FRONTEND]` `[DATABASE]` `[INFRA]` `[TEST]` `[DOCS]`.
+        **Nunca** crie uma Issue que exija código na API e no Web ao mesmo tempo: crie uma em cada repositório e ligue por dependência.
+        Funcionalidade fora do backlog aprovado = proposta de melhoria (precisa de aprovação do proprietário).
+  - type: dropdown
+    id: repositorio
+    attributes:
+      label: Repositório
+      options:
+        - Sema_Nexus_API (backend, Oracle, infraestrutura transversal, docs)
+        - Sema_Nexus_Web (frontend)
+    validations: { required: true }
+  - type: textarea
+    id: problema
+    attributes: { label: Problema, description: Qual problema a funcionalidade resolve? }
+    validations: { required: true }
+  - type: textarea
+    id: objetivo
+    attributes: { label: Objetivo, description: O que deverá ser entregue? }
+    validations: { required: true }
+  - type: textarea
+    id: escopo
+    attributes: { label: Escopo e comportamento esperado, description: O que desenvolver e como funcionará. Inclua telas, endpoints e tabelas envolvidos. }
+    validations: { required: true }
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      description: Checklist objetiva e verificável.
+      value: |
+        - [ ]
+    validations: { required: true }
+  - type: dropdown
+    id: modulo
+    attributes:
+      label: Módulo
+      options: [Core, SEMA Intelligence, SEMA Flux, SEMA DocIA, Infraestrutura, Documentação, Qualidade]
+    validations: { required: true }
+  - type: dropdown
+    id: prioridade
+    attributes: { label: Prioridade, options: [Crítica, Alta, Média, Baixa] }
+    validations: { required: true }
+  - type: dropdown
+    id: mvp
+    attributes: { label: Categoria MVP, options: ["P0 — Obrigatória", "P1 — Desejável", "P2 — Futura"] }
+    validations: { required: true }
+  - type: textarea
+    id: dependencias
+    attributes:
+      label: Dependências
+      description: "Use #n para este repositório e a referência completa para o outro (ex.: Nexus-Builder-Lab/Sema_Nexus_API#12). Cadastre também no recurso 'Blocked by'."
+      value: Nenhuma.
+  - type: textarea
+    id: testes
+    attributes: { label: Testes previstos, description: Unitários, integração, via Docker Compose, manuais. }
+    validations: { required: true }
+  - type: input
+    id: estimativa
+    attributes: { label: Estimativa (horas), placeholder: "4" }
