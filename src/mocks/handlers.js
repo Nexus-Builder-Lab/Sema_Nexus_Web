@@ -1,5 +1,21 @@
 import { http, HttpResponse } from 'msw';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
+import {
+  CATEGORIAS,
+  EQUIPES,
+  MEMBROS,
+  MUNICIPIOS,
+  ORIGENS,
+  PRIORIDADES,
+  STATUS,
+} from './fixtures/catalogos.js';
+import {
+  buscarDemanda,
+  cadastrarDemandaMock,
+  editarDemandaMock,
+  listarDemandasMock,
+  validarCorpoMock,
+} from './fixtures/demandas.js';
 
 // Usuário de teste fictício dos mocks (o mesmo da demonstração da API).
 const USUARIO_MOCK = {
@@ -63,11 +79,6 @@ const auth = [
 
 // Operações cujo 200 ainda não consta no contrato publicado (endpoints pendentes na API).
 const semRespostaNoContrato = [
-  http.get('/api/demandas/:id', ({ request }) =>
-    temToken(request)
-      ? HttpResponse.json(exemploDoSchema('DemandaDetalhe'))
-      : naoAutenticado('/api/demandas'),
-  ),
   http.get('/api/demandas/:id/historico', ({ request }) =>
     temToken(request)
       ? HttpResponse.json([exemploDoSchema('HistoricoItem')])
@@ -80,5 +91,125 @@ const semRespostaNoContrato = [
   ),
 ];
 
+// Catálogos e equipes com fixtures fictícias (o gerador do contrato devolve só 1 item).
+function comToken(resposta) {
+  return ({ request, params }) =>
+    temToken(request)
+      ? resposta({ request, params })
+      : naoAutenticado(new URL(request.url).pathname);
+}
+
+const catalogos = [
+  http.get(
+    '/api/catalogos/status',
+    comToken(() => HttpResponse.json(STATUS)),
+  ),
+  http.get(
+    '/api/catalogos/prioridades',
+    comToken(() => HttpResponse.json(PRIORIDADES)),
+  ),
+  http.get(
+    '/api/catalogos/categorias',
+    comToken(() => HttpResponse.json(CATEGORIAS)),
+  ),
+  http.get(
+    '/api/catalogos/origens',
+    comToken(() => HttpResponse.json(ORIGENS)),
+  ),
+  http.get(
+    '/api/catalogos/municipios',
+    comToken(() => HttpResponse.json(MUNICIPIOS)),
+  ),
+  http.get(
+    '/api/equipes',
+    comToken(() => HttpResponse.json(EQUIPES)),
+  ),
+  http.get(
+    '/api/equipes/:id/membros',
+    comToken(({ params }) => {
+      const membros = MEMBROS[params.id];
+      return membros
+        ? HttpResponse.json(membros)
+        : problema(
+            404,
+            'Não encontrado',
+            'Equipe inexistente.',
+            `/api/equipes/${params.id}/membros`,
+          );
+    }),
+  ),
+];
+
+function problemaValidacao(erros, instance) {
+  return HttpResponse.json(
+    {
+      type: 'https://semanexus.demo/problemas/validacao',
+      title: 'Dados inválidos',
+      status: 400,
+      detail: 'Um ou mais campos são inválidos.',
+      instance,
+      errors: erros,
+    },
+    { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+  );
+}
+
+// Demandas (Issue API#11): store em memória com filtros, ordenação, paginação, cadastro e edição.
+const demandas = [
+  http.get(
+    '/api/demandas',
+    comToken(({ request }) =>
+      HttpResponse.json(listarDemandasMock(new URL(request.url).searchParams)),
+    ),
+  ),
+
+  http.post('/api/demandas', async ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/demandas');
+    const corpo = await request.json().catch(() => ({}));
+    const erros = validarCorpoMock(corpo);
+    if (erros.length) return problemaValidacao(erros, '/api/demandas');
+    const criada = cadastrarDemandaMock(corpo);
+    return HttpResponse.json(criada, {
+      status: 201,
+      headers: { Location: `/api/demandas/${criada.id}` },
+    });
+  }),
+
+  http.get(
+    '/api/demandas/:id',
+    comToken(({ params }) => {
+      const demanda = buscarDemanda(params.id);
+      return demanda
+        ? HttpResponse.json(demanda)
+        : problema(404, 'Não encontrado', 'Demanda inexistente.', `/api/demandas/${params.id}`);
+    }),
+  ),
+
+  http.put('/api/demandas/:id', async ({ request, params }) => {
+    if (!temToken(request)) return naoAutenticado(`/api/demandas/${params.id}`);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda)
+      return problema(404, 'Não encontrado', 'Demanda inexistente.', `/api/demandas/${params.id}`);
+    const corpo = await request.json().catch(() => ({}));
+    const erros = validarCorpoMock(corpo);
+    if (erros.length) return problemaValidacao(erros, `/api/demandas/${params.id}`);
+    if (!['PENDENTE', 'EM_TRIAGEM'].includes(demanda.status)) {
+      return problema(
+        409,
+        'Conflito',
+        'A demanda só pode ser editada em PENDENTE ou EM_TRIAGEM.',
+        `/api/demandas/${params.id}`,
+      );
+    }
+    return HttpResponse.json(editarDemandaMock(demanda, corpo));
+  }),
+];
+
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
-export const handlers = [...auth, ...semRespostaNoContrato, ...criarHandlersDoContrato()];
+export const handlers = [
+  ...auth,
+  ...catalogos,
+  ...demandas,
+  ...semRespostaNoContrato,
+  ...criarHandlersDoContrato(),
+];
