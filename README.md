@@ -14,7 +14,7 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
-| Login, rotas protegidas, mocks MSW | **Planejado** — Sprint 1 (Issue #4) |
+| Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
 | Telas do Flux, Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
@@ -35,11 +35,15 @@ npm run dev                         # http://localhost:5173 — /api vai para VI
 
 O proxy `/api` do Vite usa `VITE_API_PROXY_TARGET` (padrão `http://localhost:8080`). Para mudar, copie `.env.example` para `.env.local` e ajuste — por exemplo, `VITE_API_PROXY_TARGET=http://localhost:18080` quando a porta 8080 da máquina estiver ocupada. O frontend sempre chama a API por `/api` relativo.
 
-Sem a API rodando, use os mocks gerados do contrato OpenAPI (**Planejado** — Issue #4):
+Sem a API rodando, use os mocks (MSW) gerados do contrato OpenAPI (**Implementado**, Issue #4):
 ```bash
 # .env.local
 VITE_USE_MOCKS=true
 ```
+
+Com os mocks ligados, o login `admin@admin.com` / `12345678` funciona sem API (o mesmo usuário de teste da demonstração). Os handlers são gerados em tempo de execução de `src/mocks/openapi.json`, cópia do artefato `openapi` do job **Exportar contrato OpenAPI** do CI da API; para atualizar o contrato, baixe o artefato (`gh run download <run> -R Nexus-Builder-Lab/Sema_Nexus_API -n openapi`) e substitua o arquivo. Respostas específicas (login, fixtures) ficam em `src/mocks/handlers.js`. Os mocks **não entram** no build de produção (a Docker usa `VITE_USE_MOCKS=false`) e os mesmos handlers rodam nos testes (`src/mocks/server.js`).
+
+Autenticação: o token JWT fica em memória e em `sessionStorage` (nunca `localStorage`); um `401` em sessão autenticada encerra a sessão e leva ao login; o aviso com o usuário de teste só aparece quando `GET /api/auth/config` devolve `demo: true`. Telas restritas por perfil usam `<RequireRole roles={[...]}>` — é só conveniência de interface, a autorização é da API.
 
 Scripts:
 
@@ -56,7 +60,7 @@ Estrutura:
 
 ```
 src/
-  api/ mocks/ auth/ layout/ components/ utils/
+  api/ mocks/ auth/ layout/ components/ utils/ test/
   pages/{core,intelligence,flux,docia}/
   styles/theme.scss      # Bootstrap 5.3 via Sass
 ```
