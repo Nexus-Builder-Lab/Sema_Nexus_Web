@@ -67,7 +67,7 @@ src/
 
 ## Executar via Docker (ambiente completo)
 
-> **Implementado:** imagem do Web (Issue #2). **Planejado:** o `docker-compose.yml` fica na API (Issue API#8) e ainda não está mesclado; os passos abaixo descrevem o uso previsto.
+> **Implementado:** imagem do Web (Issue #2) e `docker-compose.yml` na API (Issue API#8, mesclado); login validado contra a API real via Compose (Issue #4).
 
 ### Imagem do Web
 
