@@ -1,4 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
+import RequireRole from './auth/RequireRole.jsx';
+import { PERFIS_EDICAO_DEMANDA } from './auth/perfis.js';
 import AuthProvider from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { ToastProvider } from './components/Toasts.jsx';
@@ -6,6 +8,8 @@ import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
 import LoginPage from './pages/core/LoginPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
+import DemandaFormPage from './pages/flux/DemandaFormPage.jsx';
+import DemandasListPage from './pages/flux/DemandasListPage.jsx';
 
 export default function App() {
   return (
@@ -17,6 +21,11 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedLayout />}>
               <Route path="/" element={<HomePage />} />
+              <Route path="/flux/demandas" element={<DemandasListPage />} />
+              <Route element={<RequireRole roles={PERFIS_EDICAO_DEMANDA} />}>
+                <Route path="/flux/demandas/nova" element={<DemandaFormPage />} />
+                <Route path="/flux/demandas/:id/editar" element={<DemandaFormPage />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Route>

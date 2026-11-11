@@ -15,7 +15,9 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
 | Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
-| Telas do Flux, Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
+| Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
+| Flux: detalhes, triagem, distribuição, acompanhamento e conclusão (Issues #6, #7) | **Planejado** — Sprint 2 |
+| Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
 Acompanhamento: [GitHub Project — SEMA NEXUS — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)
@@ -41,7 +43,7 @@ Sem a API rodando, use os mocks (MSW) gerados do contrato OpenAPI (**Implementad
 VITE_USE_MOCKS=true
 ```
 
-Com os mocks ligados, o login `admin@admin.com` / `12345678` funciona sem API (o mesmo usuário de teste da demonstração). Os handlers são gerados em tempo de execução de `src/mocks/openapi.json`, cópia do artefato `openapi` do job **Exportar contrato OpenAPI** do CI da API; para atualizar o contrato, baixe o artefato (`gh run download <run> -R Nexus-Builder-Lab/Sema_Nexus_API -n openapi`) e substitua o arquivo. Respostas específicas (login, fixtures) ficam em `src/mocks/handlers.js`. Os mocks **não entram** no build de produção (a Docker usa `VITE_USE_MOCKS=false`) e os mesmos handlers rodam nos testes (`src/mocks/server.js`).
+Com os mocks ligados, o login `admin@admin.com` / `12345678` funciona sem API (o mesmo usuário de teste da demonstração). Os handlers são gerados em tempo de execução de `src/mocks/openapi.json`, cópia do artefato `openapi` do job **Exportar contrato OpenAPI** do CI da API; para atualizar o contrato, baixe o artefato (`gh run download <run> -R Nexus-Builder-Lab/Sema_Nexus_API -n openapi`) e substitua o arquivo. Respostas específicas (login, fixtures) ficam em `src/mocks/handlers.js`; catálogos, equipes e demandas têm fixtures fictícias em `src/mocks/fixtures/` (store em memória com filtros, ordenação, paginação, cadastro, edição e validação 400 por campo — os testes a restauram a cada caso com `resetDemandasMock()`). Os mocks **não entram** no build de produção (a Docker usa `VITE_USE_MOCKS=false`) e os mesmos handlers rodam nos testes (`src/mocks/server.js`).
 
 Autenticação: o token JWT fica em memória e em `sessionStorage` (nunca `localStorage`); um `401` em sessão autenticada encerra a sessão e leva ao login; o aviso com o usuário de teste só aparece quando `GET /api/auth/config` devolve `demo: true`. Telas restritas por perfil usam `<RequireRole roles={[...]}>` — é só conveniência de interface, a autorização é da API.
 
@@ -100,6 +102,13 @@ Tema em `src/styles/theme.scss`: tokens do protótipo (verde institucional, cinz
 - **Componentes** (`src/components/`): `DataTable` (ordenação local ou no servidor + `Pagination` 0-based), `FilterBar`, `EmptyState`, `Loading`, `ErrorState`, `ConfirmDialog`, `ToastProvider`/`useToast`, `StatusBadge` (7 status da demanda), `PriorityBadge`, `KpiCard`, `ChartCard`, `PageHeader`, `Icon` (SVG inline, sem biblioteca).
 - Rótulos e cores de status/prioridade: `src/utils/catalogos.js` (valores de `Sema_Nexus_API/docs/DATABASE.md`).
 - Responsivo em 375, 768 e 1366 px sem rolagem horizontal; foco visível, link "Pular para o conteúdo" e `aria-*` nos controles.
+
+## Flux — demandas (Issue #5)
+
+- **Rotas:** `/flux/demandas` (todos os perfis), `/flux/demandas/nova` e `/flux/demandas/:id/editar` (somente ADMIN, GESTOR e ANALISTA — `RequireRole`; CONSULTA e FISCAL não veem "Nova demanda" nem "Editar"). Perfis em `src/auth/perfis.js`.
+- **Listagem** (`DemandasListPage`): pesquisa por número/título, filtros de município, categoria, prioridade, status, equipe/fiscal responsável e período; **filtros, página e ordenação ficam na URL** (compartilháveis e com botão Voltar); a API faz paginação e ordenação (`sort=campo,asc|desc`). Badge "Atrasada" vem do campo derivado `atrasada` da API. O filtro de equipe/fiscal só aparece se `GET /api/equipes` responder (ADMIN/GESTOR; os demais recebem 403).
+- **Formulário** (`DemandaFormPage`): validação de usabilidade em `validarDemanda.js` espelhando `DemandaRequest` da API (título 5–200, descrição ≤ 4000, município de MT do catálogo, coordenadas dentro do retângulo de MT com vírgula ou ponto, data de recebimento não futura, prazo sugerido ≥ recebimento); erros `400` do backend (`errors[].campo`) são exibidos no campo correspondente, `403`/`409` viram toast. Após salvar, toast com o número `DEM-AAAA/NNNN` e abertura dos detalhes (`/flux/demandas/:id`, tela da Issue #6).
+- **Limitação conhecida:** `DemandaDetalhe` não traz `prazoSugerido` (Issue API#47); na edição o campo fica vazio e, se salvo assim, a API receberia `null`.
 
 ## Mapa sem internet
 
