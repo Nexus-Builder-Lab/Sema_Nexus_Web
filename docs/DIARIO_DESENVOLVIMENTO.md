@@ -131,3 +131,12 @@
 - **Arquivos principais:** `src/pages/flux/{DemandaDetailPage,FormularioModal,FiscalizacaoModal,ConclusaoModal,AtividadeForm}.jsx`, `src/api/demandasApi.js`, `src/auth/perfis.js`, `src/mocks/{handlers.js,fixtures/demandas.js}`, testes `src/pages/flux/DemandaExecucao.test.jsx`, `README.md`.
 - **Testes:** afetados (`src/pages/flux`) → 5 arquivos, 57 testes, 0 falhas; lint → 0 problemas. Suíte completa, build e Docker (fluxo Distribuída → Finalizada com a API real): a confirmar pelo validador.
 - **API real ou mocks:** testes com mocks MSW do contrato (API#13 já fechada); validação contra a API real pendente.
+
+## 2026-11-11 — GH-10 · DocIA: biblioteca, upload, detalhes, download e vínculo à demanda
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/documentos` (`DocumentosPage`: busca textual em título, descrição, palavras-chave e conteúdo, com aviso de que é textual; filtros categoria, tipo, data e município), `/docia/documentos/novo` (`DocumentoFormPage`: validação de extensão/tamanho no cliente, barra de progresso, mensagens para 413/415), `/docia/documentos/:id` (`DocumentoDetailPage`: metadados, demandas vinculadas, texto extraído colapsável, download autenticado) e `DemandaDocumentos` nos detalhes da demanda (listar, vincular por busca, desvincular com confirmação, upload já vinculado). `documentosApi.js`, rotas e permissões em `perfis.js`.
+- **Decisões técnicas:** download via Axios com Blob (precisa do token). Nos testes, o corpo multipart é lido como texto porque o `File` do jsdom não é aceito pelo parser do undici (o nome do arquivo chega como "blob" no teste).
+- **Arquivos principais:** `src/pages/docia/*`, `src/api/documentosApi.js`, `src/pages/flux/DemandaDetailPage.jsx`, `src/App.jsx`, `src/auth/perfis.js`, `README.md`.
+- **Testes:** afetados (`src/pages/docia`, `flux`, `App`, `auth`) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real (API#15/#16) pendente.

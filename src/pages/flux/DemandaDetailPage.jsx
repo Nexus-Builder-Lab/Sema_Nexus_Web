@@ -18,6 +18,7 @@ import StatusBadge from '../../components/StatusBadge.jsx';
 import Timeline from '../../components/Timeline.jsx';
 import { useToast } from '../../components/Toasts.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
+import DemandaDocumentos from '../docia/DemandaDocumentos.jsx';
 import { formatarData } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
 import AtividadeForm from './AtividadeForm.jsx';
@@ -261,16 +262,7 @@ export default function DemandaDetailPage() {
 
       <div className="row g-3">
         <section className="col-12 col-lg-5" aria-labelledby="docs-demanda">
-          <div className="card card-body shadow-sm h-100">
-            <h2 id="docs-demanda" className="h5 mb-3">
-              Documentos
-            </h2>
-            <p className="text-body-secondary mb-0">
-              {d.totalDocumentos > 0
-                ? `${d.totalDocumentos} documento(s) associado(s). A listagem será exibida em breve.`
-                : 'Nenhum documento associado.'}
-            </p>
-          </div>
+          <DemandaDocumentos demandaId={d.id} onAlterado={historico.recarregar} />
         </section>
         <section className="col-12 col-lg-7" aria-labelledby="hist-demanda">
           <div className="card card-body shadow-sm h-100">

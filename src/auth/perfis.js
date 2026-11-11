@@ -54,3 +54,8 @@ export function acoesDisponiveis(status, usuario, demanda) {
     acoes.push('CONCLUIR', 'DEVOLVER');
   return acoes;
 }
+
+/** Perfis que enviam, vinculam e desvinculam documentos (CONSULTA só lê; a API responde 403). */
+export const PERFIS_ESCRITA_DOCUMENTO = ['ADMIN', 'GESTOR', 'FISCAL', 'ANALISTA'];
+export const podeEscreverDocumentos = (usuario) =>
+  Boolean(usuario) && PERFIS_ESCRITA_DOCUMENTO.includes(usuario.perfil);
