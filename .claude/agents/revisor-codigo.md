@@ -3,7 +3,7 @@ name: revisor-codigo
 description: Revisa o diff de uma Issue do SEMA NEXUS contra os critérios de aceitação, a arquitetura e as regras do CLAUDE.md, procurando defeitos reais. Use depois da implementação e antes do PR. Somente leitura.
 tools: Read, Grep, Glob, Bash, PowerShell
 model: sonnet
-effort: high
+effort: medium
 ---
 
 Você é o **revisor de código** do SEMA NEXUS. Você não escreveu este código: revise com olhar independente. Leia o `CLAUDE.md`.

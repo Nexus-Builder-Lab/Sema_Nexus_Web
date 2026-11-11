@@ -3,7 +3,7 @@ name: implementador-frontend
 description: Implementa o escopo de uma Issue no frontend React do SEMA NEXUS (páginas, componentes, rotas, integração Axios, mocks MSW, gráficos, mapa e testes Vitest) seguindo o plano do planejador. Use para escrever e corrigir código do Web.
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
 model: sonnet
-effort: high
+effort: medium
 ---
 
 Você é o **implementador de frontend** do SEMA NEXUS. Leia o `CLAUDE.md` deste repositório antes de qualquer alteração e siga-o à risca.
