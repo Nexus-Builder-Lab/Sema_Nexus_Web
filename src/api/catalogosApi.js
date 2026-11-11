@@ -1,19 +1,20 @@
 import httpClient from './httpClient.js';
 
-/** GET /api/catalogos/municipios → `[{ id, nome, regiao, bioma, latitude, longitude }]`. */
-export async function listarMunicipios() {
-  const { data } = await httpClient.get('/catalogos/municipios');
+async function obter(caminho) {
+  const { data } = await httpClient.get(caminho);
   return data;
 }
 
-/** GET /api/catalogos/categorias → `[{ codigo, rotulo, ordem }]`. */
-export async function listarCategorias() {
-  const { data } = await httpClient.get('/catalogos/categorias');
-  return data;
-}
+/** Catálogos (qualquer perfil autenticado): `[{ codigo, rotulo, ordem }]`. */
+export const listarStatus = () => obter('/catalogos/status');
+export const listarPrioridades = () => obter('/catalogos/prioridades');
+export const listarCategorias = () => obter('/catalogos/categorias');
+export const listarOrigens = () => obter('/catalogos/origens');
+export const listarBiomas = () => obter('/catalogos/biomas');
 
-/** GET /api/catalogos/biomas → `[{ codigo, rotulo, ordem }]`. */
-export async function listarBiomas() {
-  const { data } = await httpClient.get('/catalogos/biomas');
-  return data;
-}
+/** Municípios de MT: `[{ id (IBGE), nome, regiao, bioma, latitude, longitude }]`. */
+export const listarMunicipios = () => obter('/catalogos/municipios');
+
+/** Equipes e membros: somente ADMIN e GESTOR (os demais perfis recebem 403). */
+export const listarEquipes = () => obter('/equipes');
+export const listarMembros = (equipeId) => obter(`/equipes/${equipeId}/membros`);

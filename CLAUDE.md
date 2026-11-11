@@ -1,146 +1,39 @@
 # CLAUDE.md — SEMA NEXUS · Sema_Nexus_Web
 
-Referência permanente para sessões de desenvolvimento com Claude Code neste repositório.
-Leia este arquivo inteiro antes de qualquer alteração.
+Regras permanentes. Detalhes (arquitetura, API, Docker, autopilot, agentes, Definition of Done) em `Sema_Nexus_API/docs/` — leia só o que a tarefa exigir.
 
----
+## Projeto
+- Plataforma **demonstrativa** (inteligência ambiental, demandas de fiscalização, gestão documental) de **Mato Grosso**. **Só dados fictícios** (municípios/biomas do IBGE são reais). Exceção aprovada: dados públicos do INPE na camada de satélite, sempre identificados e separados.
+- **Nenhuma integração institucional** (SEMA-MT, SIGA, SISREV…). Telas com dados simulados exibem "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS".
+- Implementação até 25/11/2026 · revisão/tag 26/11 · apresentação 27/11.
+- Repos: este = frontend; `Sema_Nexus_API` = backend + compose/docs; `FabricioJorge0/prototipo_SEMA_NEXUS` = referência, nunca alterar. Nunca misturar código: uma Issue e um PR por repositório.
 
-## 1. Identidade do projeto
+## Stack e arquitetura
+React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Router 6 · Axios · Chart.js · Leaflet · MSW · Vitest/Testing Library · ESLint/Prettier · Nginx. Sem bibliotecas pesadas novas sem aprovação.
+- `src/api` (httpClient `baseURL=/api`), `src/mocks`, `src/auth`, `src/layout`, `src/components`, `src/pages/{core,intelligence,flux,docia}`, `src/styles/theme.scss`, `public/geo` (malha IBGE, mapa offline).
+- API sempre por `/api` relativo; nunca acessar banco. Regras de negócio e autorização ficam na API (esconder botão não é autorização). Divergência de contrato → Issue na API.
+- Token JWT em memória + `sessionStorage`; nada de dados de negócio em LocalStorage; nada secreto em `VITE_*`.
+- Interface: tokens do tema, responsivo (375/768/1366 px), estados de carregamento/vazio/erro/sucesso, acessibilidade básica, confirmação em ações destrutivas. Busca documental é textual; IA demonstrativa sempre identificada.
 
-- **SEMA NEXUS**: plataforma **demonstrativa** de inteligência ambiental, gestão de demandas de fiscalização e gestão documental, no contexto de **Mato Grosso**.
-- **Somente dados fictícios.** Municípios e biomas são referências geográficas reais (IBGE), mas tudo associado a eles é simulado.
-- **Nenhuma integração institucional** (SEMA-MT, SIGA, SISREV ou outros).
-- Nunca apresentar simulação como dado oficial. Telas com dados simulados exibem **"AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS"**.
-- Prazo: implementação até **25/11/2026**; **26/11** revisão, testes e tag; apresentação **27/11/2026**. Máximo de 3 sprints.
+## Segurança (inegociável)
+- Sem segredos no código, Dockerfile, imagem ou `nginx.conf`.
+- Credencial `admin@admin.com` / `12345678` **só demonstrativa**: aparece só no aviso do login quando `/api/auth/config` indicar `demo: true`; nunca pré-preenchida; texto puro só em README e testes.
+- Nunca `docker compose down -v`, apagar volumes, parar/remover containers de outros projetos, nem encerrar processos que você não iniciou (API local na porta 18080).
+- GitHub: nunca se adicionar como colaborador, convidar contas, mudar permissões/visibilidade, apagar histórico, force push ou push na `main`. Tag/release só com autorização.
 
-## 2. Repositórios
+## Fluxo
+- Sempre a partir de uma Issue. Títulos `[SEMA_NEXUS_WEB][MÓDULO] ...` (`[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[INFRA]` `[TEST]` `[DOCS]`).
+- Branch `feature/GH-<n>` (n = Issue deste repo; nenhum outro padrão). Commits `GH-<n>: ...` (aspas → `git commit -F arquivo`). PR `GH-<n> — <título>` com `Closes #<n>`.
+- Escopo novo = proposta ao proprietário. Não inventar resultado de teste/CI. Atualizar docs (Implementado / Planejado / Futuro).
+- **Definition of Done:** escopo e critérios com evidência, lint/testes/build aprovados, CI verde, funciona via Docker contra a API real quando aplicável, docs atualizados, sem erro crítico (inclusive no console).
 
-| Repositório | Conteúdo |
-|---|---|
-| `Nexus-Builder-Lab/Sema_Nexus_Web` (este) | Frontend React. |
-| `Nexus-Builder-Lab/Sema_Nexus_API` | Backend Spring Boot **e** infraestrutura/documentação transversal (`docker-compose.yml`, `scripts/`, `docs/`, project-health). Não há repositório hub. |
-| `FabricioJorge0/prototipo_SEMA_NEXUS` | Protótipo HTML/CSS/JS de referência visual e funcional. **Somente leitura — nunca alterar.** Ativos necessários (tokens CSS, malha GeoJSON do IBGE) são **copiados** para este repo pelas Issues. |
+## Autopilot (autorizado pelo proprietário)
+- `/next-issue` orquestra agentes (`.claude/agents/`). **Merge automático só se:** CI verde · validador aprovou · critérios comprovados · Docker validado quando aplicável · dependências (inclusive da API) fechadas · revisor sem bloqueante. Só falta dependência → `aguardando-dependencia`. Após 3 ciclos sem sucesso → `autopilot-falhou` + `C:\SEMANEXUS\autopilot\RELATORIO_ERROS.md`.
+- Só o orquestrador faz push, PR, merge, labels e Status. Diário em `docs/DIARIO_DESENVOLVIMENTO.md` no mesmo PR.
+- Modelos: Sonnet 5.5 médio (padrão); tarefas mecânicas por script (0 tokens) ou Haiku 5.5; Opus 5.5 médio só no `diagnosticador` e na retentativa após falha de código.
 
-Frontend → este repositório. Backend → Sema_Nexus_API. **Nunca misturar código dos dois.** Uma mudança que exija os dois repositórios = uma Issue por repositório, ligadas por dependência, e um PR por repositório.
-Documentação transversal (arquitetura, API, banco, Docker, demo, sprints) está em `Sema_Nexus_API/docs/`.
-
-## 3. Tecnologias
-
-React 18 com **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Router 6 · Axios · Chart.js 4 (react-chartjs-2) · Leaflet 1.9 (react-leaflet) · MSW 2 · Vitest + Testing Library · ESLint + Prettier · Nginx (imagem Docker) · **Docker e Docker Compose** · GitHub Actions.
-Backend (outro repo): Java 21, Spring Boot, Oracle Database, API REST.
-Não trocar tecnologia nem adicionar bibliotecas pesadas sem aprovação do proprietário.
-
-## 4. Arquitetura do frontend
-
-```
-src/
-  api/          httpClient.js (Axios, baseURL "/api", interceptors) + um módulo por recurso
-  mocks/        handlers MSW gerados do openapi.json da API (VITE_USE_MOCKS=true)
-  auth/         AuthContext, ProtectedRoute, RequireRole
-  layout/       AppLayout, Sidebar, Topbar, Breadcrumbs, DemoBanner
-  components/   DataTable, Pagination, FilterBar, EmptyState, Loading, ErrorState, ConfirmDialog, Toasts, StatusBadge, KpiCard, ChartCard
-  pages/        core/ intelligence/ flux/ docia/
-  styles/       theme.scss (tokens do protótipo sobre Bootstrap)
-public/geo/     mt-uf.geojson, mt-municipios.geojson (IBGE) — mapa funciona offline
-```
-- Sempre chamar a API por `/api` relativo (proxy do Vite em dev; proxy do Nginx no Docker). **Nunca** acessar Oracle ou qualquer banco a partir do frontend.
-- Regras de negócio ficam na API. O Web valida para usabilidade, mas quem decide é o backend; esconder um botão não é autorização.
-- Token JWT em memória + `sessionStorage`. **Nada de LocalStorage como persistência de dados de negócio.**
-- O contrato é o `openapi.json` exportado pelo CI da API. Divergência de contrato → Issue na API, não gambiarra no Web.
-- Mapa: camada base com a malha GeoJSON local; tiles OpenStreetMap só como opção desligada por padrão.
-
-## 5. Regras de desenvolvimento
-
-- Analise o código existente antes de alterar; reutilize componentes; evite duplicação; respeite a arquitetura.
-- Não insira credenciais ou URLs secretas no código. Variáveis `VITE_*` são públicas no bundle — nunca coloque segredos nelas.
-- Crie testes (Vitest + Testing Library + MSW) para o que implementar. `npm test` deve rodar sem modo watch (`vitest run`).
-- Atualize a documentação afetada (distinguindo **Implementado / Em desenvolvimento / Planejado / Futuro**).
-- Evite dependências desnecessárias. Não remova funcionalidades nem amplie escopo sem aprovação.
-- Escopo novo = proposta: descreva, benefício, esforço, impacto no prazo, P0/P1/P2, recomendação. Só implemente após aprovação.
-
-## 6. Interface
-
-- Identidade visual consistente (tokens do protótipo: verde institucional, cinzas, cores de estado), Bootstrap 5, responsivo (375/768/1366 px).
-- Componentes reutilizáveis; estados de **carregamento, sucesso, erro e vazio** em toda tela com dados.
-- Acessibilidade básica: contraste, foco visível, `label`/`aria-label`, navegação por teclado.
-- Confirmação antes de ações destrutivas ou irreversíveis.
-- Toda tela com dados fictícios mostra a identificação **AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS**.
-- IA: nunca afirmar que há IA real quando a resposta for do modo demonstrativo; busca documental é **textual** (não chamar de semântica).
-
-## 7. Docker e credencial de teste (regra permanente)
-
-- Toda funcionalidade deve continuar funcionando via `docker compose up -d --build` (compose em `../Sema_Nexus_API`). **Se quebrar a subida via Docker, não está concluído.**
-- Nunca colocar segredos no Dockerfile, na imagem ou no `nginx.conf`.
-- **Nunca** executar `docker compose down -v`, `docker volume rm`, `docker system prune` ou equivalente sem confirmação explícita do proprietário.
-- Credencial `admin@admin.com` / `12345678` é **exclusivamente demonstrativa** (profiles `demo`/`dev` da API). O Web só a menciona no aviso da tela de login quando `GET /api/auth/config` indicar `demo: true`. Não a deixe pré-preenchida em formulários e não a replique em outro lugar além de README e testes.
-
-## 8. GitHub
-
-- **Nunca** se adicionar como colaborador, convidar contas, alterar permissões de membros, alterar visibilidade ou excluir repositórios/histórico.
-- Trabalhe sempre a partir de uma Issue. Não marque Issue como finalizada sem os critérios atendidos.
-- Não invente resultados de CI ou de testes. Não faça merge, tag ou release sem autorização do proprietário — exceto o merge no **modo autopilot** (seção 8.1). Tag e release continuam exigindo autorização.
-
-### Títulos de Issue (regra permanente)
-
-- Toda Issue deste repositório começa com **`[SEMA_NEXUS_WEB]`**, seguido do módulo ou tipo e do título: `[SEMA_NEXUS_WEB][FLUX] Tela de cadastro de demanda`.
-- Issues de backend, infraestrutura e documentação transversal começam com **`[SEMA_NEXUS_API]`** e ficam em `Sema_Nexus_API`.
-- Tags após o prefixo: `[CORE]` `[INTELLIGENCE]` `[FLUX]` `[DOCIA]` `[INFRA]` `[TEST]` `[DOCS]`. Não usar `[BACKEND]`/`[FRONTEND]` (o prefixo já indica o repositório).
-
-### Branches, commits e PRs (regra permanente)
-
-- **Todo branch se chama `feature/GH-<número da Issue>`** — para qualquer tipo de trabalho. Nunca `fix/`, `chore/`, `docs/` ou sufixos.
-- O número é o da Issue **deste** repositório (a numeração não é compartilhada com a API). Um branch por Issue, criado da `main` atualizada, só ao iniciar a Issue.
-- Commits: `GH-<n>: descrição curta`. PR: título `GH-<n> — <título da Issue>`, corpo com `Closes #<n>` (ou `Closes Nexus-Builder-Lab/Sema_Nexus_API#<n>`), testes executados e evidências.
-- O CI valida o nome do branch com `^feature/GH-[0-9]+$`.
-
-## 8.1 Modo autopilot (autorizado pelo proprietário em 10/11/2026)
-
-Quando executado pelo `/next-issue` (ou pelo script `Sema_Nexus_API/scripts/autopilot/autopilot.ps1`), o Claude Code **pode fazer merge sem pedir autorização**, desde que **todas** as condições sejam verdadeiras:
-
-1. todos os checks do CI do PR verdes;
-2. `npm run lint`, `npm test` e `npm run build` executados e aprovados na mesma execução;
-3. todos os critérios de aceitação da Issue comprovados com evidência e marcados no PR;
-4. subida via Docker Compose validada (compose em `../Sema_Nexus_API`), quando ele já existir e a Issue afetar a execução;
-5. todas as dependências ("Blocked by") da Issue fechadas — inclusive as da API. Enquanto um endpoint da API não estiver mesclado, o Web pode **desenvolver** contra os mocks MSW, mas o PR fica com a label `aguardando-dependencia` até a dependência fechar.
-
-Se um problema persistir após **3 tentativas de correção**, não há merge: a Issue recebe a label `autopilot-falhou` e o erro é registrado em `C:\SEMANEXUS\autopilot\RELATORIO_ERROS.md`.
-Toda Issue concluída acrescenta uma entrada em `docs/DIARIO_DESENVOLVIMENTO.md` (no mesmo PR).
-Continuam proibidos no autopilot: tags/releases, push direto na `main`, force push, apagar volumes Docker, Issues P2, ampliar escopo e encerrar processos que o agente não iniciou. Detalhes: `Sema_Nexus_API/docs/AUTOPILOT.md`.
-
-Ambiente desta máquina: a porta 8080 do host está ocupada por outro serviço — a API local roda em 18080 (`VITE_API_PROXY_TARGET=http://localhost:18080`).
-
-## 9. Como executar uma Issue (use `/start-issue <n>`, ou `/next-issue` no autopilot)
-
-1. Ler a Issue (`gh issue view <n>`).
-2. Verificar dependências ("Blocked by"), inclusive as da API — se o endpoint ainda não existir, trabalhar contra os mocks MSW do contrato.
-3. Verificar Sprint, prioridade e categoria MVP.
-4. Analisar os arquivos envolvidos.
-5. Planejar a implementação.
-6. Implementar **apenas** o escopo.
-7. Executar `npm run lint`, `npm test`, `npm run build` e, quando aplicável, a subida via Docker.
-8. Atualizar documentação.
-9. Informar resultado, evidências e pendências.
-
-## 10. Definition of Done
-
-- [ ] Implementação dentro do escopo.
-- [ ] Critérios de aceitação atendidos.
-- [ ] Código organizado.
-- [ ] Validações implementadas.
-- [ ] Testes pertinentes executados.
-- [ ] Testes aprovados.
-- [ ] CI aprovada.
-- [ ] Funciona via Docker Compose (contra a API real, não só mocks).
-- [ ] Documentação atualizada.
-- [ ] Nenhum erro crítico conhecido (inclusive no console do navegador).
-- [ ] PR revisado e integrado (merge só com autorização).
-
-## 11. Comandos úteis
-
-```bash
-npm ci
-npm run dev                      # http://localhost:5173 (proxy /api -> localhost:8080)
-VITE_USE_MOCKS=true npm run dev  # sem API, usando mocks do contrato
-npm run lint && npm test && npm run build
-cd ../Sema_Nexus_API && docker compose up -d --build   # ambiente completo em http://localhost:3000
-```
+## Economia de tokens (obrigatório)
+- **Saídas de comando mínimas:** log para arquivo, só resumo/erro no contexto. Ex.: `npm test -- --reporter=dot > $env:TEMP\test.log 2>&1; if ($LASTEXITCODE) { Get-Content $env:TEMP\test.log -Tail 40 }`; `npm ci --silent`; `npm run build --silent > $env:TEMP\build.log 2>&1`. CI: `gh pr checks <pr> --watch --interval 30 > $null; gh pr checks <pr>`.
+- Leia só o necessário: `Grep`/`Glob` antes de `Read`; `Read` com offset/limit; não releia; não liste diretórios inteiros.
+- Testes: durante o desenvolvimento só os afetados (`npx vitest run <arquivos>`); suíte completa e build uma vez, no validador.
+- Relatórios de agentes curtos (sem colar logs).

@@ -47,12 +47,12 @@ describe('Login', () => {
 
   it('autentica com sucesso e volta para a rota que o usuário tentou abrir', async () => {
     const user = userEvent.setup();
-    renderAt('/flux/demandas?status=PENDENTE');
+    renderAt('/rota-inexistente?origem=teste');
     await screen.findByLabelText('E-mail');
 
     await preencherEEnviar(user, 'admin@admin.com', '12345678');
 
-    // Rota pedida (sem tela ainda → 404 dentro do layout autenticado).
+    // Rota pedida (inexistente → 404 dentro do layout autenticado, provando o retorno à rota).
     expect(
       await screen.findByRole('heading', { name: 'Página não encontrada' }),
     ).toBeInTheDocument();
