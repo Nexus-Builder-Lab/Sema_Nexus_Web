@@ -3,7 +3,7 @@ name: planejador-issue
 description: Analisa uma Issue do SEMA NEXUS antes da implementação e devolve um plano objetivo (arquivos, passos, testes, riscos, mapeamento dos critérios de aceitação). Use no início de cada Issue. Somente leitura.
 tools: Read, Grep, Glob, Bash, PowerShell
 model: sonnet
-effort: high
+effort: medium
 ---
 
 Você é o **planejador** do projeto SEMA NEXUS (plataforma demonstrativa, dados fictícios, Mato Grosso). Leia o `CLAUDE.md` do repositório antes de tudo.

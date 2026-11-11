@@ -21,16 +21,20 @@ Caminhos fixos (Windows):
 ### Subagentes disponíveis (`.claude/agents/`)
 | Etapa | Agente | Modelo |
 |---|---|---|
-| Planejar | `planejador-issue` | Sonnet 5.5 · alto |
-| Implementar / corrigir | `implementador-backend` (API) · `implementador-frontend` (Web) | Sonnet 5.5 · alto |
-| Validar (build, testes, Docker, critérios) | `validador-qa` | Sonnet 5.5 · alto |
-| Revisar código | `revisor-codigo` | Sonnet 5.5 · alto |
-| Revisar segurança (quando aplicável) | `revisor-seguranca` | Sonnet 5.5 · alto |
-| Revisar interface e acessibilidade (só Web, Issues com telas) | `revisor-ui-acessibilidade` | Sonnet 5.5 · alto |
-| Documentar (diário, status, rascunho do PR) | `documentador` | Sonnet 5.5 · alto |
+| Escolher a Issue | `selecionador-issue` | **Haiku 5.5 · baixo** |
+| Planejar | `planejador-issue` | Sonnet 5.5 · médio |
+| Implementar / corrigir | `implementador-backend` (API) · `implementador-frontend` (Web) | Sonnet 5.5 · médio |
+| Validar (build, testes, Docker, critérios) | `validador-qa` | Sonnet 5.5 · médio |
+| Revisar código | `revisor-codigo` | Sonnet 5.5 · médio |
+| Revisar segurança (quando aplicável) | `revisor-seguranca` | Sonnet 5.5 · médio |
+| Revisar interface e acessibilidade (só Web, Issues com telas) | `revisor-ui-acessibilidade` | Sonnet 5.5 · médio |
+| Documentar (diário, status, rascunho do PR) | `documentador` | **Haiku 5.5 · baixo** |
 | Diagnosticar (esporádico) | `diagnosticador` | **Opus 5.5 · médio** |
 
-Se esta execução já estiver rodando em Opus (retentativa do script), não acione o `diagnosticador`.
+### Política de modelos (definida pelo proprietário em 11/11/2026)
+- **Sonnet 5.5 com esforço médio** é o padrão (você, o orquestrador, também roda nele).
+- **Tarefas simples → modelo menor:** escolha da Issue e documentação usam Haiku 5.5. Para outras tarefas mecânicas e curtas (ex.: conferir o estado de uma lista de Issues, ler um log e extrair a linha de erro, resumir uma saída longa), delegue com a ferramenta Agent usando `model: "haiku"`, `effort: "low"`. Não use Haiku para escrever código de produção, revisar segurança nem decidir merge.
+- **Opus 5.5 com esforço médio** só esporadicamente, pelo `diagnosticador`, quando um problema persistir após 2 ciclos. Se esta execução já estiver rodando em Opus (retentativa do script), não acione o `diagnosticador`.
 
 ## Passo 0 — Pendências anteriores
 1. `git status` deve estar limpo. Se não estiver, e houver um branch `feature/GH-*` com trabalho seu, continue essa Issue a partir do Passo 4 (validar) — o trabalho não commitado é do implementador de uma execução interrompida. Nunca descarte alterações.
@@ -38,9 +42,9 @@ Se esta execução já estiver rodando em Opus (retentativa do script), não aci
 
 ## Passo 1 — Escolher a Issue
 0. **Se `$ARGUMENTS` contiver um número**, essa é a Issue desta execução (retentativa com modelo de reforço): ignore a ordenação abaixo, retome o branch `feature/GH-<n>` e o PR existentes, leia o diagnóstico anterior em `C:\SEMANEXUS\autopilot\RELATORIO_ERROS.md` e no PR, e siga do Passo 2. Se concluir com sucesso, marque a entrada correspondente do relatório como **Resolvido (reforço Opus)**.
-1. Liste Issues abertas deste repo com label `P0` e **sem** label `autopilot-falhou`: `gh issue list --label P0 --state open --json number,title,labels --limit 100`.
-2. Ordene por Sprint (1 → 2 → 3) e depois pelo número.
-3. Escolha a primeira cujos bloqueios **do mesmo repositório** (`gh api repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by`) estejam todos fechados.
+1. Acione o **`selecionador-issue`** (Haiku). Ele aplica as regras 2–4 e devolve `ISSUE: <n>` ou `ISSUE: NENHUMA`. **Confira** você mesmo os bloqueios da Issue indicada (`gh api repos/{owner}/{repo}/issues/<n>/dependencies/blocked_by`) antes de começar; se a indicação violar as regras, aplique-as diretamente.
+2. Regra de ordem: Issues abertas deste repo com label `P0` e **sem** label `autopilot-falhou`, ordenadas por Sprint (1 → 2 → 3) e depois pelo número.
+3. Regra de bloqueio: a primeira cujos bloqueios **do mesmo repositório** estejam todos fechados.
    - Bloqueios em **outro** repositório podem estar abertos **somente** se o contrato OpenAPI dos endpoints usados já existir (API #7 mesclada) — o Web trabalha contra os mocks MSW. Nesse caso o PR só será mesclado quando esses bloqueios fecharem (Passo 7).
 4. Se nenhuma P0 estiver disponível: faça o mesmo com `P1`, nesta ordem: Assistente DocIA (API#27 / Web#16) → **Dados públicos de satélite do INPE na aba Inteligência ambiental (API#34 / Web#22)** → Comparação documental → Indicadores/Painel → Notificações/Auditoria → Usuários/Equipes → Relatórios → Testes de integração Oracle (API#23). **Nunca** pegue P2. Nunca pegue a Issue de tag/release (API #22) — apenas preencha o checklist dela no corpo, sem criar tag.
 5. Se nada estiver disponível, escreva `AUTOPILOT: SEM_TRABALHO` na última linha da resposta e termine.

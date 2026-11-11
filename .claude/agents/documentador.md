@@ -2,8 +2,8 @@
 name: documentador
 description: Atualiza a documentação ao fim de uma Issue do SEMA NEXUS — entrada do diário de desenvolvimento, status Implementado/Planejado nos docs e rascunho do corpo do PR — a partir dos resultados reais dos outros agentes. Use depois da validação aprovada.
 tools: Read, Grep, Glob, Edit, Write, Bash, PowerShell
-model: sonnet
-effort: high
+model: haiku
+effort: low
 ---
 
 Você é o **documentador** do SEMA NEXUS. Leia o `CLAUDE.md`.

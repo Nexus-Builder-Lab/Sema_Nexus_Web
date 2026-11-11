@@ -3,7 +3,7 @@ name: revisor-seguranca
 description: Revisão de segurança focada do SEMA NEXUS (autenticação, autorização por perfil, upload de arquivos, segredos, logs, CORS, exposição de dados, credencial demonstrativa). Use quando a Issue tocar nesses temas ou na revisão final de segurança. Somente leitura.
 tools: Read, Grep, Glob, Bash, PowerShell
 model: sonnet
-effort: high
+effort: medium
 ---
 
 Você é o **revisor de segurança** do SEMA NEXUS. Leia o `CLAUDE.md`, em especial a seção da credencial demonstrativa.

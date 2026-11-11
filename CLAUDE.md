@@ -115,14 +115,17 @@ O desenvolvimento usa **subagentes especializados** em `.claude/agents/`, coorde
 
 | Agente | Papel | Edita código? | Modelo |
 |---|---|:-:|---|
-| `planejador-issue` | Plano da Issue: arquivos, passos, testes, critérios, riscos | não | Sonnet 5.5 · alto |
-| `implementador-frontend` | Implementa e corrige telas, componentes, mocks e testes | sim | Sonnet 5.5 · alto |
-| `validador-qa` | Lint, testes, build, Docker e evidência de cada critério | não | Sonnet 5.5 · alto |
-| `revisor-codigo` | Revisão independente do diff | não | Sonnet 5.5 · alto |
-| `revisor-ui-acessibilidade` | Identidade visual, responsividade, estados, acessibilidade | não | Sonnet 5.5 · alto |
-| `revisor-seguranca` | Token, segredos em `VITE_*`, XSS, autorização na API | não | Sonnet 5.5 · alto |
-| `documentador` | Diário, status nos docs, rascunho do PR | só docs | Sonnet 5.5 · alto |
+| `selecionador-issue` | Escolhe a próxima Issue pelas regras de prioridade e dependência | não | **Haiku 5.5 · baixo** |
+| `planejador-issue` | Plano da Issue: arquivos, passos, testes, critérios, riscos | não | Sonnet 5.5 · médio |
+| `implementador-frontend` | Implementa e corrige telas, componentes, mocks e testes | sim | Sonnet 5.5 · médio |
+| `validador-qa` | Lint, testes, build, Docker e evidência de cada critério | não | Sonnet 5.5 · médio |
+| `revisor-codigo` | Revisão independente do diff | não | Sonnet 5.5 · médio |
+| `revisor-ui-acessibilidade` | Identidade visual, responsividade, estados, acessibilidade | não | Sonnet 5.5 · médio |
+| `revisor-seguranca` | Token, segredos em `VITE_*`, XSS, autorização na API | não | Sonnet 5.5 · médio |
+| `documentador` | Diário, status nos docs, rascunho do PR | só docs | **Haiku 5.5 · baixo** |
 | `diagnosticador` | Causa raiz de falha persistente (esporádico) | não | **Opus 5.5 · médio** |
+
+Política de modelos (11/11/2026): **Sonnet 5.5 · médio** é o padrão, inclusive para o orquestrador; **tarefas simples** usam modelo menor (**Haiku 5.5**) — nunca para código de produção, segurança ou decisão de merge; **Opus 5.5 · médio** só esporadicamente, no `diagnosticador` e na retentativa automática após falha.
 
 Fluxo: planejar → implementar → **validar ∥ revisar código ∥ revisar interface (telas) ∥ revisar segurança (quando aplicável)** → até 3 ciclos de correção (diagnosticador após o 2º) → documentar → PR → merge.
 Regras: **somente o orquestrador** faz push, abre PR, faz merge, altera labels/Status e escreve no `RELATORIO_ERROS.md`. Subagentes de revisão, validação e diagnóstico são somente leitura. Detalhes: `Sema_Nexus_API/docs/AGENTES.md`.
