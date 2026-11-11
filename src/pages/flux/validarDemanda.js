@@ -90,6 +90,13 @@ export function validarDemanda(valores, { municipios = [], hoje = hojeISO() } = 
   if (erroLatitude) erros.latitude = erroLatitude;
   const erroLongitude = validarCoordenada(valores.longitude, LIMITES.longitude, 'A longitude');
   if (erroLongitude) erros.longitude = erroLongitude;
+  // A API exige as duas coordenadas juntas (ou nenhuma).
+  const temLat = String(valores.latitude).trim() !== '';
+  const temLon = String(valores.longitude).trim() !== '';
+  if (temLat !== temLon) {
+    const faltando = temLat ? 'longitude' : 'latitude';
+    erros[faltando] ??= 'Informe latitude e longitude juntas.';
+  }
 
   if (!valores.dataRecebimento) erros.dataRecebimento = 'Informe a data de recebimento.';
   else if (valores.dataRecebimento > hoje) {

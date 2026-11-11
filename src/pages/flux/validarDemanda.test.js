@@ -64,6 +64,12 @@ describe('validarDemanda', () => {
     expect(validar({ latitude: 'abc' }).latitude).toMatch(/número/);
   });
 
+  it('exige latitude e longitude juntas (regra da API)', () => {
+    expect(validar({ latitude: '-15,6' }).longitude).toBe('Informe latitude e longitude juntas.');
+    expect(validar({ longitude: '-56,1' }).latitude).toBe('Informe latitude e longitude juntas.');
+    expect(validar({ latitude: '', longitude: '' })).toEqual({});
+  });
+
   it('rejeita data de recebimento futura e prazo anterior ao recebimento', () => {
     expect(validar({ dataRecebimento: '2026-11-11' }).dataRecebimento).toMatch(/futura/);
     expect(validar({ dataRecebimento: HOJE })).toEqual({});

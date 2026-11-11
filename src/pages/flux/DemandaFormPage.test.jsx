@@ -120,6 +120,7 @@ describe('Cadastro de demanda', () => {
     await user.selectOptions(screen.getByLabelText(/^Categoria/), 'DESMATAMENTO_ILEGAL');
     await user.selectOptions(screen.getByLabelText(/^Prioridade/), 'ALTA');
     await user.type(screen.getByLabelText(/^Latitude/), '-15,601');
+    await user.type(screen.getByLabelText(/^Longitude/), '-56,097');
     await user.click(botaoSalvar());
 
     expect(await screen.findByText(/Demanda DEM-2026\/0026 cadastrada com sucesso/)).toBeVisible();
@@ -131,7 +132,7 @@ describe('Cadastro de demanda', () => {
       categoria: 'DESMATAMENTO_ILEGAL',
       municipioId: 5103403,
       latitude: -15.601,
-      longitude: null,
+      longitude: -56.097,
       prioridade: 'ALTA',
       dataRecebimento: hojeISO(),
     });

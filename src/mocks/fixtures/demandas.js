@@ -1,4 +1,5 @@
 import { CATEGORIAS, EQUIPES, MEMBROS, MUNICIPIOS } from './catalogos.js';
+import { hojeISO } from '../../utils/datas.js';
 
 // Demandas fictícias dos mocks: store em memória que simula listagem, cadastro e edição da API.
 // Dados 100% simulados — nada aqui é dado oficial.
@@ -166,12 +167,17 @@ export function validarCorpoMock(corpo) {
   else if (!MUNICIPIOS.some((m) => m.id === corpo.municipioId))
     falha('municipioId', 'município não pertence a Mato Grosso');
   if (!corpo.dataRecebimento) falha('dataRecebimento', 'não deve ser nulo');
-  else if (corpo.dataRecebimento > HOJE)
+  else if (corpo.dataRecebimento > hojeISO())
     falha('dataRecebimento', 'deve ser uma data no passado ou no presente');
   if (corpo.latitude != null && (corpo.latitude < LAT[0] || corpo.latitude > LAT[1]))
     falha('latitude', 'deve estar entre -18,1 e -7,3');
   if (corpo.longitude != null && (corpo.longitude < LON[0] || corpo.longitude > LON[1]))
     falha('longitude', 'deve estar entre -61,7 e -50,2');
+  if ((corpo.latitude == null) !== (corpo.longitude == null))
+    falha(
+      corpo.latitude == null ? 'latitude' : 'longitude',
+      'Informe latitude e longitude juntas.',
+    );
   if (corpo.localidade && corpo.localidade.length > 200)
     falha('localidade', 'tamanho deve ser no máximo 200');
   if (corpo.observacoes && corpo.observacoes.length > 2000)

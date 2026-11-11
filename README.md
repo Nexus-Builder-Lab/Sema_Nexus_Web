@@ -15,7 +15,7 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
 | Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
-| Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Em desenvolvimento** — telas prontas contra os mocks; validação com a API real aguarda API#11 |
+| Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
 | Flux: detalhes, triagem, distribuição, acompanhamento e conclusão (Issues #6, #7) | **Planejado** — Sprint 2 |
 | Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
