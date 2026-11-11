@@ -33,7 +33,8 @@ describe('acoesDisponiveis', () => {
     expect(acoesDisponiveis('AGUARDANDO_DISTRIBUICAO', gestor)).toEqual(['DISTRIBUIR']);
     expect(acoesDisponiveis('AGUARDANDO_DISTRIBUICAO', analista)).toEqual([]);
     expect(acoesDisponiveis('PENDENTE', fiscal)).toEqual([]);
-    expect(acoesDisponiveis('DISTRIBUIDA', gestor)).toEqual([]);
+    expect(acoesDisponiveis('DISTRIBUIDA', gestor)).toEqual(['INICIAR_EXECUCAO']);
+    expect(acoesDisponiveis('FINALIZADA', gestor)).toEqual([]);
   });
 });
 

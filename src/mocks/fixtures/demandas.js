@@ -316,3 +316,79 @@ export function distribuirMock(demanda, corpo) {
   registrar(demanda, 'DISTRIBUICAO', 'DISTRIBUIDA', corpo.observacoes);
   return demanda;
 }
+
+// Execução, fiscalização, conclusão e devolução (Issue API#13).
+export function iniciarExecucaoMock(demanda) {
+  registrar(demanda, 'INICIO', 'EM_ANDAMENTO');
+  return demanda;
+}
+
+export function validarAtividadeMock(corpo) {
+  const erros = [];
+  if (!corpo.descricao?.trim())
+    erros.push({ campo: 'descricao', mensagem: 'não deve estar em branco' });
+  if (corpo.data && corpo.data > hojeISO())
+    erros.push({ campo: 'data', mensagem: 'deve ser uma data no passado ou no presente' });
+  return erros;
+}
+
+export function registrarAtividadeMock(demanda, corpo) {
+  registrar(demanda, 'ATIVIDADE', demanda.status, corpo.descricao);
+  return eventos.get(demanda.id).at(-1);
+}
+
+export function validarFiscalizacaoMock(corpo) {
+  const erros = [];
+  if (!corpo.data) erros.push({ campo: 'data', mensagem: 'não deve ser nulo' });
+  else if (corpo.data > hojeISO())
+    erros.push({ campo: 'data', mensagem: 'deve ser uma data no passado ou no presente' });
+  for (const campo of ['atividades', 'resultado', 'evidencias']) {
+    if (!corpo[campo]?.trim()) erros.push({ campo, mensagem: 'não deve estar em branco' });
+  }
+  return erros;
+}
+
+export function registrarFiscalizacaoMock(demanda, corpo) {
+  demanda.fiscalizacao = {
+    id: demanda.id,
+    data: corpo.data,
+    equipe: demanda.equipe,
+    atividades: corpo.atividades,
+    resultado: corpo.resultado,
+    evidencias: corpo.evidencias,
+    recomendacoes: corpo.recomendacoes ?? null,
+    registradoPor: USUARIO_CRIADOR,
+    registradoEm: `${HOJE}T11:00:00`,
+  };
+  registrar(demanda, 'FISCALIZACAO', 'AGUARDANDO_CONCLUSAO', corpo.resultado);
+  return demanda;
+}
+
+export function validarConclusaoMock(corpo) {
+  const erros = [];
+  if (!corpo.resultadoFinal?.trim())
+    erros.push({ campo: 'resultadoFinal', mensagem: 'não deve estar em branco' });
+  if (!corpo.justificativa?.trim())
+    erros.push({ campo: 'justificativa', mensagem: 'não deve estar em branco' });
+  return erros;
+}
+
+export function concluirMock(demanda, corpo) {
+  demanda.resultadoFinal = corpo.resultadoFinal;
+  demanda.justificativaConclusao = corpo.justificativa;
+  demanda.concluidaEm = `${HOJE}T11:00:00`;
+  demanda.atrasada = false;
+  registrar(demanda, 'CONCLUSAO', 'FINALIZADA', corpo.justificativa);
+  return demanda;
+}
+
+export function validarDevolucaoMock(corpo) {
+  return corpo.justificativa?.trim()
+    ? []
+    : [{ campo: 'justificativa', mensagem: 'não deve estar em branco' }];
+}
+
+export function devolverMock(demanda, corpo) {
+  registrar(demanda, 'DEVOLUCAO', 'EM_ANDAMENTO', corpo.justificativa);
+  return demanda;
+}

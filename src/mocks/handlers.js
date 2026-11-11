@@ -17,6 +17,15 @@ import {
   historicoMock,
   iniciarTriagemMock,
   validarDistribuicaoMock,
+  iniciarExecucaoMock,
+  registrarAtividadeMock,
+  validarAtividadeMock,
+  registrarFiscalizacaoMock,
+  validarFiscalizacaoMock,
+  concluirMock,
+  validarConclusaoMock,
+  devolverMock,
+  validarDevolucaoMock,
   validarTriagemMock,
   editarDemandaMock,
   listarDemandasMock,
@@ -246,6 +255,29 @@ const fluxo = [
   http.post(
     '/api/demandas/:id/distribuicao',
     acaoDeFluxo('AGUARDANDO_DISTRIBUICAO', distribuirMock, validarDistribuicaoMock),
+  ),
+  http.post('/api/demandas/:id/inicio', acaoDeFluxo('DISTRIBUIDA', iniciarExecucaoMock)),
+  http.post('/api/demandas/:id/atividades', async (info) => {
+    const resposta = await acaoDeFluxo(
+      'EM_ANDAMENTO',
+      registrarAtividadeMock,
+      validarAtividadeMock,
+    )(info);
+    return resposta.status === 200
+      ? HttpResponse.json(await resposta.json(), { status: 201 })
+      : resposta;
+  }),
+  http.post(
+    '/api/demandas/:id/fiscalizacao',
+    acaoDeFluxo('EM_ANDAMENTO', registrarFiscalizacaoMock, validarFiscalizacaoMock),
+  ),
+  http.post(
+    '/api/demandas/:id/conclusao',
+    acaoDeFluxo('AGUARDANDO_CONCLUSAO', concluirMock, validarConclusaoMock),
+  ),
+  http.post(
+    '/api/demandas/:id/devolucao',
+    acaoDeFluxo('AGUARDANDO_CONCLUSAO', devolverMock, validarDevolucaoMock),
   ),
 ];
 

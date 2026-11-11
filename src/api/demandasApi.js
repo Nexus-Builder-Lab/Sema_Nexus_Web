@@ -56,3 +56,33 @@ export async function distribuirDemanda(id, corpo) {
   const { data } = await httpClient.post(`/demandas/${id}/distribuicao`, corpo);
   return data;
 }
+
+/** POST /api/demandas/{id}/inicio (DISTRIBUIDA → EM_ANDAMENTO; 403 se fiscal não designado). */
+export async function iniciarExecucao(id) {
+  const { data } = await httpClient.post(`/demandas/${id}/inicio`);
+  return data;
+}
+
+/** POST /api/demandas/{id}/atividades `{ descricao, data? }` → 201 HistoricoItem (só EM_ANDAMENTO). */
+export async function registrarAtividade(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/atividades`, corpo);
+  return data;
+}
+
+/** POST /api/demandas/{id}/fiscalizacao (EM_ANDAMENTO → AGUARDANDO_CONCLUSAO). */
+export async function registrarFiscalizacao(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/fiscalizacao`, corpo);
+  return data;
+}
+
+/** POST /api/demandas/{id}/conclusao `{ resultadoFinal, justificativa }` (→ FINALIZADA). */
+export async function concluirDemanda(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/conclusao`, corpo);
+  return data;
+}
+
+/** POST /api/demandas/{id}/devolucao `{ justificativa }` (AGUARDANDO_CONCLUSAO → EM_ANDAMENTO). */
+export async function devolverDemanda(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/devolucao`, corpo);
+  return data;
+}

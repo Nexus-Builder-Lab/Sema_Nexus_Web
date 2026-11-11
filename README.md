@@ -16,7 +16,8 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
 | Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
 | Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
-| Flux: detalhes, triagem, distribuição, acompanhamento e conclusão (Issues #6, #7) | **Planejado** — Sprint 2 |
+| Flux: detalhes, triagem, distribuição (Issue #6) | **Implementado** |
+| Flux: execução, atividades, registro de fiscalização, conclusão e devolução (Issue #7) | **Implementado** |
 | Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
@@ -105,7 +106,7 @@ Tema em `src/styles/theme.scss`: tokens do protótipo (verde institucional, cinz
 
 ## Flux — demandas (Issue #5)
 
-- **Rotas:** `/flux/demandas` (todos os perfis), `/flux/demandas/nova` e `/flux/demandas/:id/editar` (somente ADMIN, GESTOR e ANALISTA — `RequireRole`; CONSULTA e FISCAL não veem "Nova demanda" nem "Editar"). Perfis em `src/auth/perfis.js`. Detalhes (`/flux/demandas/:id`, Issue #6): linha do tempo, Iniciar triagem, Concluir triagem, Solicitar complementação e Distribuir aparecem só quando o status e o perfil permitem (triagem: ADMIN/GESTOR/ANALISTA; distribuição: ADMIN/GESTOR); `409` da API é exibido no modal.
+- **Rotas:** `/flux/demandas` (todos os perfis), `/flux/demandas/nova` e `/flux/demandas/:id/editar` (somente ADMIN, GESTOR e ANALISTA — `RequireRole`; CONSULTA e FISCAL não veem "Nova demanda" nem "Editar"). Perfis em `src/auth/perfis.js`. Detalhes (`/flux/demandas/:id`, Issue #6): linha do tempo, Iniciar triagem, Concluir triagem, Solicitar complementação e Distribuir aparecem só quando o status e o perfil permitem (triagem: ADMIN/GESTOR/ANALISTA; distribuição: ADMIN/GESTOR); `409` da API é exibido no modal. Execução (Issue #7): Iniciar execução (Distribuída), Registrar atividade e Registrar fiscalização (Em andamento) para ADMIN/GESTOR ou o FISCAL designado; Concluir demanda e Devolver (Aguardando conclusão) só para ADMIN/GESTOR; seção "Fiscalização" com o aviso "Não gera auto de infração nem substitui sistemas oficiais."
 - **Listagem** (`DemandasListPage`): pesquisa por número/título, filtros de município, categoria, prioridade, status, equipe/fiscal responsável e período; **filtros, página e ordenação ficam na URL** (compartilháveis e com botão Voltar); a API faz paginação e ordenação (`sort=campo,asc|desc`). Badge "Atrasada" vem do campo derivado `atrasada` da API. O filtro de equipe/fiscal só aparece se `GET /api/equipes` responder (ADMIN/GESTOR; os demais recebem 403).
 - **Formulário** (`DemandaFormPage`): validação de usabilidade em `validarDemanda.js` espelhando `DemandaRequest` da API (título 5–200, descrição ≤ 4000, município de MT do catálogo, coordenadas dentro do retângulo de MT com vírgula ou ponto, data de recebimento não futura, prazo sugerido ≥ recebimento); erros `400` do backend (`errors[].campo`) são exibidos no campo correspondente, `403`/`409` viram toast. Após salvar, toast com o número `DEM-AAAA/NNNN` e abertura dos detalhes (`/flux/demandas/:id`, tela da Issue #6).
 - **Limitação conhecida:** `DemandaDetalhe` não traz `prazoSugerido` (Issue API#47); na edição o campo fica vazio e, se salvo assim, a API receberia `null`.
