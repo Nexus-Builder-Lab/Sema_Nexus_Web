@@ -109,6 +109,24 @@ Continuam proibidos no autopilot: tags/releases, push direto na `main`, force pu
 
 Ambiente desta máquina: a porta 8080 do host está ocupada por outro serviço — a API local roda em 18080 (`VITE_API_PROXY_TARGET=http://localhost:18080`).
 
+## 8.2 Agentes e fluxo multiagente (definido pelo proprietário em 11/11/2026)
+
+O desenvolvimento usa **subagentes especializados** em `.claude/agents/`, coordenados por um **orquestrador** (a sessão que executa `/next-issue` ou `/start-issue`):
+
+| Agente | Papel | Edita código? | Modelo |
+|---|---|:-:|---|
+| `planejador-issue` | Plano da Issue: arquivos, passos, testes, critérios, riscos | não | Sonnet 5.5 · alto |
+| `implementador-frontend` | Implementa e corrige telas, componentes, mocks e testes | sim | Sonnet 5.5 · alto |
+| `validador-qa` | Lint, testes, build, Docker e evidência de cada critério | não | Sonnet 5.5 · alto |
+| `revisor-codigo` | Revisão independente do diff | não | Sonnet 5.5 · alto |
+| `revisor-ui-acessibilidade` | Identidade visual, responsividade, estados, acessibilidade | não | Sonnet 5.5 · alto |
+| `revisor-seguranca` | Token, segredos em `VITE_*`, XSS, autorização na API | não | Sonnet 5.5 · alto |
+| `documentador` | Diário, status nos docs, rascunho do PR | só docs | Sonnet 5.5 · alto |
+| `diagnosticador` | Causa raiz de falha persistente (esporádico) | não | **Opus 5.5 · médio** |
+
+Fluxo: planejar → implementar → **validar ∥ revisar código ∥ revisar interface (telas) ∥ revisar segurança (quando aplicável)** → até 3 ciclos de correção (diagnosticador após o 2º) → documentar → PR → merge.
+Regras: **somente o orquestrador** faz push, abre PR, faz merge, altera labels/Status e escreve no `RELATORIO_ERROS.md`. Subagentes de revisão, validação e diagnóstico são somente leitura. Detalhes: `Sema_Nexus_API/docs/AGENTES.md`.
+
 ## 9. Como executar uma Issue (use `/start-issue <n>`, ou `/next-issue` no autopilot)
 
 1. Ler a Issue (`gh issue view <n>`).
