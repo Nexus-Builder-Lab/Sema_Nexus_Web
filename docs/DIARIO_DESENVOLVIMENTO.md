@@ -148,3 +148,12 @@
 - **Arquivos principais:** `src/fluxosCriticos.test.jsx`, este diário.
 - **Testes:** `fluxosCriticos.test.jsx` → 2 passaram; lint 0 problemas. Suíte completa, build e CI: a confirmar pelo validador.
 - **API real ou mocks:** MSW.
+
+## 2026-11-11 — GH-17 · Indicadores explicados e painel de fiscalização do Flux
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/intelligence/indicadores` (`IndicadoresPage`): demandas recebidas, tempo médio simulado, % de conclusão, evolução por período, volume por categoria e distribuição territorial, cada um com descrição e "Como é calculado". `/flux/painel` (`PainelFiscalizacaoPage`): contadores por status (inclui atrasadas) e gráficos por situação, período, município, categoria e equipe, reaproveitando `ChartCard`. Itens no menu; selo demonstrativo em todos os painéis; hook `useIndicador`.
+- **Decisões técnicas:** % de conclusão = finalizadas ÷ recebidas, calculado no cliente a partir de `/intelligence/resumo`. A API não expõe tempo médio nem indicador por equipe: o tempo médio aparece como "indisponível (pendência de contrato)" e o gráfico por equipe agrupa as primeiras 200 demandas de `/api/demandas` (avisa quando parcial). Sugerida Issue na API para esses dois indicadores.
+- **Arquivos principais:** `src/pages/intelligence/IndicadoresPage.jsx`, `src/pages/flux/PainelFiscalizacaoPage.jsx`, `src/hooks/useIndicador.js`, `src/App.jsx`, `src/layout/navigation.js`, testes das duas páginas.
+- **Testes:** afetados (2 páginas novas, App, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.

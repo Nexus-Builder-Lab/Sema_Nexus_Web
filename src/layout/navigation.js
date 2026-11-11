@@ -14,11 +14,15 @@ export const NAVIGATION = [
         label: 'Inteligência ambiental',
         icon: 'map',
       },
+      { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'dashboard' },
     ],
   },
   {
     group: 'Flux',
-    items: [{ to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' }],
+    items: [
+      { to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' },
+      { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'dashboard' },
+    ],
   },
   {
     group: 'DocIA',
