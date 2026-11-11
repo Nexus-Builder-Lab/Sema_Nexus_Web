@@ -10,6 +10,8 @@ import LoginPage from './pages/core/LoginPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
+import IndicadoresPage from './pages/intelligence/IndicadoresPage.jsx';
+import PainelFiscalizacaoPage from './pages/flux/PainelFiscalizacaoPage.jsx';
 import DocumentoDetailPage from './pages/docia/DocumentoDetailPage.jsx';
 import DocumentoFormPage from './pages/docia/DocumentoFormPage.jsx';
 import DocumentosPage from './pages/docia/DocumentosPage.jsx';
@@ -32,6 +34,8 @@ export default function App() {
                 path="/intelligence/inteligencia-ambiental"
                 element={<InteligenciaAmbientalPage />}
               />
+              <Route path="/intelligence/indicadores" element={<IndicadoresPage />} />
+              <Route path="/flux/painel" element={<PainelFiscalizacaoPage />} />
               <Route path="/flux/demandas" element={<DemandasListPage />} />
               <Route path="/flux/demandas/:id" element={<DemandaDetailPage />} />
               <Route element={<RequireRole roles={PERFIS_EDICAO_DEMANDA} />}>
