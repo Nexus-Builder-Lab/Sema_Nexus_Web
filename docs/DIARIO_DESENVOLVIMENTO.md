@@ -140,3 +140,10 @@
 - **Arquivos principais:** `src/pages/docia/*`, `src/api/documentosApi.js`, `src/pages/flux/DemandaDetailPage.jsx`, `src/App.jsx`, `src/auth/perfis.js`, `README.md`.
 - **Testes:** afetados (`src/pages/docia`, `flux`, `App`, `auth`) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real (API#15/#16) pendente.
+
+## 2026-11-11 — GH-11 · Integração final com a API real e revisão visual (parcial)
+- **PR:** (preenchido no PR) · **Status:** parcial — roteiro Docker com a API real e revisão em 375/768/1366 px pendentes
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** trilha de navegação (`Breadcrumbs`) agora cobre rotas aninhadas (Nova demanda, Detalhes, Editar, Novo documento) via `subCrumb` em `layout/navigation.js`. A faixa demonstrativa já vem do layout em todas as telas autenticadas.
+- **Limitação:** não havia API com credenciais demonstrativas (a API local em 18080 respondeu `demo:false`) nem navegador automatizado nesta sessão; o roteiro completo no Docker, o console limpo e a revisão em 3 larguras não foram executados e não são declarados como feitos.
+- **Testes:** afetados (`src/layout`, `src/App.test.jsx`) passaram; lint a reconfirmar. Suíte completa, build e Docker: a confirmar pelo validador.
