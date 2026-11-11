@@ -140,3 +140,11 @@
 - **Arquivos principais:** `src/pages/docia/*`, `src/api/documentosApi.js`, `src/pages/flux/DemandaDetailPage.jsx`, `src/App.jsx`, `src/auth/perfis.js`, `README.md`.
 - **Testes:** afetados (`src/pages/docia`, `flux`, `App`, `auth`) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real (API#15/#16) pendente.
+
+## 2026-11-11 — GH-12 · Testes de componentes e fluxos principais
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** auditoria dos 6 fluxos da Issue (login sucesso/erro, rota protegida, cadastro de demanda, triagem/distribuição, upload de documento, filtros da listagem): todos já tinham testes unitários por tela (`auth.test`, `DemandaFormPage.test`, `DemandaDetailPage.test`, `DocumentoFormPage.test`, `DemandasListPage.test`). Acrescentado `src/fluxosCriticos.test.jsx`, jornada integrada pelo App real e MSW que costura os fluxos. Sem testes pulados; o CI já roda `npm test`.
+- **Arquivos principais:** `src/fluxosCriticos.test.jsx`, este diário.
+- **Testes:** `fluxosCriticos.test.jsx` → 2 passaram; lint 0 problemas. Suíte completa, build e CI: a confirmar pelo validador.
+- **API real ou mocks:** MSW.
