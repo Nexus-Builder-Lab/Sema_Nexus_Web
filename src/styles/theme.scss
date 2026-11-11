@@ -713,3 +713,24 @@ body {
     border-color: $nx-green-700;
   }
 }
+
+// ---------- Mapa (Leaflet) ----------
+.nx-map {
+  height: min(70vh, 640px);
+  min-height: 320px;
+  width: 100%;
+  border-radius: var(--bs-border-radius);
+  background: #f4f7f5;
+  z-index: 0;
+}
+
+.nx-map-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}

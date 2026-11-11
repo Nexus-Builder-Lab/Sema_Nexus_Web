@@ -33,3 +33,10 @@ export const obterPorMunicipio = (filtros) =>
 export const obterPorCategoria = (filtros) =>
   obter('/intelligence/por-categoria', limparFiltros(filtros));
 export const obterPorBioma = (filtros) => obter('/intelligence/por-bioma', limparFiltros(filtros));
+
+/**
+ * GET /api/intelligence/mapa → `{ demonstrativo, aviso, pontos: [PontoMapa] }`.
+ * Filtros: `de`, `ate` (datas), `municipioId`, `bioma`, `categoria`, `status`.
+ * Filtros vazios não são enviados.
+ */
+export const obterMapa = (filtros = {}) => obter('/intelligence/mapa', limparFiltros(filtros));
