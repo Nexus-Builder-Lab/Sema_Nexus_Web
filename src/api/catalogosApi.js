@@ -10,6 +10,7 @@ export const listarStatus = () => obter('/catalogos/status');
 export const listarPrioridades = () => obter('/catalogos/prioridades');
 export const listarCategorias = () => obter('/catalogos/categorias');
 export const listarOrigens = () => obter('/catalogos/origens');
+export const listarBiomas = () => obter('/catalogos/biomas');
 
 /** Municípios de MT: `[{ id (IBGE), nome, regiao, bioma, latitude, longitude }]`. */
 export const listarMunicipios = () => obter('/catalogos/municipios');

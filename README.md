@@ -18,7 +18,8 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
 | Flux: detalhes, triagem, distribuição (Issue #6) | **Implementado** |
 | Flux: execução, atividades, registro de fiscalização, conclusão e devolução (Issue #7) | **Implementado** |
-| Intelligence (dashboards e mapa) | **Planejado** — Sprint 2 |
+| Aba Inteligência ambiental: mapa de MT (Leaflet, offline), filtros e legenda (Issue #9) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/mapa` (API#17) |
+| Intelligence (dashboards) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
 Acompanhamento: [GitHub Project — SEMA NEXUS — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)
@@ -114,6 +115,10 @@ Tema em `src/styles/theme.scss`: tokens do protótipo (verde institucional, cinz
 ## Mapa sem internet
 
 A camada base do mapa usa a malha oficial de municípios do **IBGE** (GeoJSON local em `public/geo/`). Os tiles do OpenStreetMap são opcionais e ficam desligados por padrão.
+
+- Rota `/intelligence/inteligencia-ambiental` (`src/pages/intelligence/`): `MapaMT` (Leaflet + `LayersControl`), `MapFilters`, `MapLegend`. Pontos de `GET /api/intelligence/mapa` (cor por categoria, popup com link para a demanda); filtros de município, bioma, categoria e período.
+- Camadas: malha IBGE (base, `public/geo/mt-uf.geojson` e `mt-municipios.geojson`, copiadas do protótipo), "Demandas (fictícias)" (ligada) e "Tiles OpenStreetMap" (desligada; exige internet). A camada "Focos de calor — INPE" (Issue #22) entra como mais um `LayersControl.Overlay` passado como `children` de `MapaMT`.
+- Os marcadores são `CircleMarker` (sem imagens de ícone externas), então nada depende da rede.
 
 ## Histórico e autopilot
 

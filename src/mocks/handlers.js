@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { BIOMAS, filtrarPontos } from './fixtures/intelligence.js';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
 import {
   CATEGORIAS,
@@ -89,6 +90,24 @@ const auth = [
   http.get('/api/auth/me', ({ request }) => {
     const usuario = usuarioDoToken(request);
     return usuario ? HttpResponse.json(usuario) : naoAutenticado('/api/auth/me');
+  }),
+];
+
+// Catálogos e mapa com fixtures fictícias (o exemplo gerado do contrato traria só 1 item genérico).
+const catalogo = (caminho, itens) =>
+  http.get(caminho, ({ request }) =>
+    temToken(request) ? HttpResponse.json(itens) : naoAutenticado(caminho),
+  );
+
+const intelligence = [
+  catalogo('/api/catalogos/biomas', BIOMAS),
+  http.get('/api/intelligence/mapa', ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/intelligence/mapa');
+    return HttpResponse.json({
+      demonstrativo: true,
+      aviso: 'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS',
+      pontos: filtrarPontos(new URL(request.url).searchParams),
+    });
   }),
 ];
 
@@ -284,6 +303,7 @@ const fluxo = [
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
   ...auth,
+  ...intelligence,
   ...catalogos,
   ...demandas,
   ...fluxo,
