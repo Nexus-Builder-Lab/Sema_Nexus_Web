@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { BIOMAS, CATEGORIAS, MUNICIPIOS, filtrarPontos } from './fixtures/intelligence.js';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
 
 // Usuário de teste fictício dos mocks (o mesmo da demonstração da API).
@@ -61,6 +62,26 @@ const auth = [
   }),
 ];
 
+// Catálogos e mapa com fixtures fictícias (o exemplo gerado do contrato traria só 1 item genérico).
+const catalogo = (caminho, itens) =>
+  http.get(caminho, ({ request }) =>
+    temToken(request) ? HttpResponse.json(itens) : naoAutenticado(caminho),
+  );
+
+const intelligence = [
+  catalogo('/api/catalogos/municipios', MUNICIPIOS),
+  catalogo('/api/catalogos/biomas', BIOMAS),
+  catalogo('/api/catalogos/categorias', CATEGORIAS),
+  http.get('/api/intelligence/mapa', ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/intelligence/mapa');
+    return HttpResponse.json({
+      demonstrativo: true,
+      aviso: 'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS',
+      pontos: filtrarPontos(new URL(request.url).searchParams),
+    });
+  }),
+];
+
 // Operações cujo 200 ainda não consta no contrato publicado (endpoints pendentes na API).
 const semRespostaNoContrato = [
   http.get('/api/demandas/:id', ({ request }) =>
@@ -81,4 +102,9 @@ const semRespostaNoContrato = [
 ];
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
-export const handlers = [...auth, ...semRespostaNoContrato, ...criarHandlersDoContrato()];
+export const handlers = [
+  ...auth,
+  ...intelligence,
+  ...semRespostaNoContrato,
+  ...criarHandlersDoContrato(),
+];
