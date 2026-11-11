@@ -1,6 +1,11 @@
 import { useCallback, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { detalharDemanda, iniciarTriagem, listarHistorico } from '../../api/demandasApi.js';
+import {
+  detalharDemanda,
+  iniciarExecucao,
+  iniciarTriagem,
+  listarHistorico,
+} from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { acoesDisponiveis, podeEditarDemandas, STATUS_EDITAVEIS } from '../../auth/perfis.js';
 import { useAuth } from '../../auth/useAuth.js';
@@ -15,7 +20,10 @@ import { useToast } from '../../components/Toasts.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { formatarData } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
+import AtividadeForm from './AtividadeForm.jsx';
+import ConclusaoModal from './ConclusaoModal.jsx';
 import DistribuicaoModal from './DistribuicaoModal.jsx';
+import FiscalizacaoModal, { AVISO_FISCALIZACAO } from './FiscalizacaoModal.jsx';
 import TriagemModal from './TriagemModal.jsx';
 
 function Dado({ rotulo, children }) {
@@ -46,11 +54,11 @@ export default function DemandaDetailPage() {
     historico.recarregar();
   }
 
-  async function confirmarInicioTriagem() {
+  async function confirmarInicio(iniciar, sucesso, falha) {
     setExecutando(true);
     try {
-      await iniciarTriagem(id);
-      aposAcao('Triagem iniciada com sucesso.');
+      await iniciar(id);
+      aposAcao(sucesso);
     } catch (erro) {
       setAcaoAberta(null);
       showToast({
@@ -58,7 +66,7 @@ export default function DemandaDetailPage() {
         message:
           erro.response?.status === 403
             ? 'Seu perfil não tem permissão para esta operação.'
-            : mensagemDeErro(erro, 'Não foi possível iniciar a triagem.'),
+            : mensagemDeErro(erro, falha),
       });
     } finally {
       setExecutando(false);
@@ -99,7 +107,7 @@ export default function DemandaDetailPage() {
 
   const d = demanda.data;
   const cat = catalogos.data;
-  const acoes = acoesDisponiveis(d.status, usuario);
+  const acoes = acoesDisponiveis(d.status, usuario, d);
   const editavel = STATUS_EDITAVEIS.includes(d.status) && podeEditarDemandas(usuario);
 
   const botoes = (
@@ -133,6 +141,47 @@ export default function DemandaDetailPage() {
           onClick={() => setAcaoAberta('SOLICITAR_COMPLEMENTACAO')}
         >
           Solicitar complementação
+        </button>
+      )}
+      {acoes.includes('INICIAR_EXECUCAO') && (
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setAcaoAberta('INICIAR_EXECUCAO')}
+        >
+          Iniciar execução
+        </button>
+      )}
+      {acoes.includes('REGISTRAR_ATIVIDADE') && (
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={() => setAcaoAberta('ATIVIDADE')}
+        >
+          Registrar atividade
+        </button>
+      )}
+      {acoes.includes('REGISTRAR_FISCALIZACAO') && (
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setAcaoAberta('FISCALIZACAO')}
+        >
+          Registrar fiscalização
+        </button>
+      )}
+      {acoes.includes('DEVOLVER') && (
+        <button
+          type="button"
+          className="btn btn-outline-warning"
+          onClick={() => setAcaoAberta('DEVOLVER')}
+        >
+          Devolver
+        </button>
+      )}
+      {acoes.includes('CONCLUIR') && (
+        <button type="button" className="btn btn-primary" onClick={() => setAcaoAberta('CONCLUIR')}>
+          Concluir demanda
         </button>
       )}
       {acoes.includes('DISTRIBUIR') && (
@@ -184,6 +233,32 @@ export default function DemandaDetailPage() {
         </dl>
       </section>
 
+      <section className="card card-body shadow-sm mb-3" aria-labelledby="fiscalizacao-demanda">
+        <h2 id="fiscalizacao-demanda" className="h5 mb-3">
+          Fiscalização
+        </h2>
+        {d.fiscalizacao ? (
+          <dl className="row g-3 mb-0">
+            <Dado rotulo="Data">{formatarData(d.fiscalizacao.data)}</Dado>
+            <Dado rotulo="Equipe">{d.fiscalizacao.equipe?.nome}</Dado>
+            <Dado rotulo="Registrada por">{d.fiscalizacao.registradoPor?.nome}</Dado>
+            <Dado rotulo="Atividades realizadas">{d.fiscalizacao.atividades}</Dado>
+            <Dado rotulo="Resultado">{d.fiscalizacao.resultado}</Dado>
+            <Dado rotulo="Evidências">{d.fiscalizacao.evidencias}</Dado>
+            <Dado rotulo="Recomendações">{d.fiscalizacao.recomendacoes}</Dado>
+            {d.status === 'FINALIZADA' && (
+              <>
+                <Dado rotulo="Resultado final">{d.resultadoFinal}</Dado>
+                <Dado rotulo="Justificativa da conclusão">{d.justificativaConclusao}</Dado>
+              </>
+            )}
+          </dl>
+        ) : (
+          <p className="text-body-secondary mb-2">Nenhuma fiscalização registrada.</p>
+        )}
+        <p className="small text-body-secondary mb-0">{AVISO_FISCALIZACAO}</p>
+      </section>
+
       <div className="row g-3">
         <section className="col-12 col-lg-5" aria-labelledby="docs-demanda">
           <div className="card card-body shadow-sm h-100">
@@ -224,7 +299,13 @@ export default function DemandaDetailPage() {
         confirmLabel="Iniciar triagem"
         variant="primary"
         busy={executando}
-        onConfirm={confirmarInicioTriagem}
+        onConfirm={() =>
+          confirmarInicio(
+            iniciarTriagem,
+            'Triagem iniciada com sucesso.',
+            'Não foi possível iniciar a triagem.',
+          )
+        }
         onCancel={() => setAcaoAberta(null)}
       />
       {(acaoAberta === 'CLASSIFICAR' || acaoAberta === 'SOLICITAR_COMPLEMENTACAO') && (
@@ -232,6 +313,36 @@ export default function DemandaDetailPage() {
           demanda={d}
           decisao={acaoAberta}
           catalogos={cat}
+          onClose={() => setAcaoAberta(null)}
+          onSucesso={aposAcao}
+        />
+      )}
+      <ConfirmDialog
+        show={acaoAberta === 'INICIAR_EXECUCAO'}
+        title="Iniciar execução"
+        message={`Iniciar a execução da demanda ${d.numero}? O status passará para Em andamento.`}
+        confirmLabel="Iniciar execução"
+        variant="primary"
+        busy={executando}
+        onConfirm={() =>
+          confirmarInicio(
+            iniciarExecucao,
+            'Execução iniciada com sucesso.',
+            'Não foi possível iniciar a execução.',
+          )
+        }
+        onCancel={() => setAcaoAberta(null)}
+      />
+      {acaoAberta === 'ATIVIDADE' && (
+        <AtividadeForm demanda={d} onClose={() => setAcaoAberta(null)} onSucesso={aposAcao} />
+      )}
+      {acaoAberta === 'FISCALIZACAO' && (
+        <FiscalizacaoModal demanda={d} onClose={() => setAcaoAberta(null)} onSucesso={aposAcao} />
+      )}
+      {(acaoAberta === 'CONCLUIR' || acaoAberta === 'DEVOLVER') && (
+        <ConclusaoModal
+          demanda={d}
+          modo={acaoAberta}
           onClose={() => setAcaoAberta(null)}
           onSucesso={aposAcao}
         />

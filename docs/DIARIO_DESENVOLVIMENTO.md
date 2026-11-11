@@ -93,3 +93,12 @@
 - **Arquivos principais:** `src/pages/flux/{DemandaDetailPage,TriagemModal,DistribuicaoModal}.jsx`, `src/components/{Timeline,Modal}.jsx`, `src/api/demandasApi.js`, `src/auth/perfis.js`, `src/mocks/{handlers.js,fixtures/demandas.js}`, `src/App.jsx`, teste `src/pages/flux/DemandaDetailPage.test.jsx`, `README.md`.
 - **Testes:** afetados (pages/flux, mocks, components, App) → 102 passaram; lint → 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW até a API#12 fechar; "Fluxo Pendente → Distribuída com a API real" fica pendente.
+
+## 2026-11-11 — GH-7 · Acompanhamento, registro de fiscalização e conclusão na tela da demanda
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** na tela de detalhes, ações por status e perfil: Iniciar execução (confirmação), Registrar atividade (`AtividadeForm`), Registrar fiscalização (`FiscalizacaoModal`: data, atividades, resultado, evidências fictícias, recomendações, aviso "Não gera auto de infração nem substitui sistemas oficiais."), Concluir e Devolver (`ConclusaoModal`). Nova seção "Fiscalização" com o registro (e resultado final quando Finalizada). `demandasApi` ganhou `/inicio`, `/atividades`, `/fiscalizacao`, `/conclusao`, `/devolucao`; mocks MSW stateful com validação e 409 por status.
+- **Decisões técnicas:** `FormularioModal` genérico (campos declarativos, validação local, 400 por campo, 403/409 no modal) reaproveitado pelos três componentes. `acoesDisponiveis(status, usuario, demanda)`: execução para ADMIN/GESTOR ou FISCAL cujo id é o da demanda (conveniência; a API autoriza); concluir/devolver só ADMIN/GESTOR. Fiscal não designado não vê as ações.
+- **Arquivos principais:** `src/pages/flux/{DemandaDetailPage,FormularioModal,FiscalizacaoModal,ConclusaoModal,AtividadeForm}.jsx`, `src/api/demandasApi.js`, `src/auth/perfis.js`, `src/mocks/{handlers.js,fixtures/demandas.js}`, testes `src/pages/flux/DemandaExecucao.test.jsx`, `README.md`.
+- **Testes:** afetados (`src/pages/flux`) → 5 arquivos, 57 testes, 0 falhas; lint → 0 problemas. Suíte completa, build e Docker (fluxo Distribuída → Finalizada com a API real): a confirmar pelo validador.
+- **API real ou mocks:** testes com mocks MSW do contrato (API#13 já fechada); validação contra a API real pendente.
