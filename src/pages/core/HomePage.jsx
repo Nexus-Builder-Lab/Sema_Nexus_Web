@@ -25,6 +25,7 @@ const ATALHOS = [
     to: '/docia/documentos',
     nome: 'SEMA DocIA',
     descricao: 'Biblioteca documental com busca textual e assistente em modo demonstrativo.',
+    planejado: true,
   },
 ];
 
@@ -163,7 +164,9 @@ export default function HomePage() {
             <div className="card-body">
               {loading && <Loading message="Carregando atividades..." />}
               {!loading && error && (
-                <ErrorState message={mensagemDeErro(error)} onRetry={recarregar} />
+                <p className="text-body-secondary mb-0">
+                  Atividades indisponíveis: veja o aviso de erro acima.
+                </p>
               )}
               {!loading && !error && <AtividadesRecentes atividades={data?.atividadesRecentes} />}
             </div>
@@ -176,16 +179,27 @@ export default function HomePage() {
               Atalhos para os módulos
             </h2>
             <div className="d-flex flex-column gap-3">
-              {ATALHOS.map((atalho) => (
-                <Link className="nx-atalho" to={atalho.to} key={atalho.to}>
-                  <div className="card shadow-sm">
+              {ATALHOS.map((atalho) =>
+                atalho.planejado ? (
+                  <div className="card shadow-sm" key={atalho.nome} aria-disabled="true">
                     <div className="card-body">
-                      <h3 className="h6 text-primary">{atalho.nome}</h3>
+                      <h3 className="h6 text-secondary">
+                        {atalho.nome} <span className="badge text-bg-secondary">Planejado</span>
+                      </h3>
                       <p className="mb-0 text-body-secondary">{atalho.descricao}</p>
                     </div>
                   </div>
-                </Link>
-              ))}
+                ) : (
+                  <Link className="nx-atalho" to={atalho.to} key={atalho.to}>
+                    <div className="card shadow-sm">
+                      <div className="card-body">
+                        <h3 className="h6 text-primary">{atalho.nome}</h3>
+                        <p className="mb-0 text-body-secondary">{atalho.descricao}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ),
+              )}
             </div>
           </section>
         </div>

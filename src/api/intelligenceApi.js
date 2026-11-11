@@ -15,9 +15,6 @@ export function limparFiltros(filtros = {}) {
 /** GET /api/dashboard → `{ resumo, porSituacao, atividadesRecentes, demonstrativo, aviso }`. */
 export const obterDashboard = () => obter('/dashboard');
 
-/** Biomas de MT: `[{ codigo, rotulo, ordem }]`. */
-export const listarBiomas = () => obter('/catalogos/biomas');
-
 // Indicadores agregados. Filtros: `de`, `ate` (AAAA-MM-DD), `municipioId`, `bioma`, `categoria`, `status`.
 /** → `{ totalDemandas, pendentes, emAndamento, finalizadas, atrasadas, totalDocumentos }`. */
 export const obterResumo = (filtros) => obter('/intelligence/resumo', limparFiltros(filtros));

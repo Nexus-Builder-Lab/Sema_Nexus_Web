@@ -78,12 +78,11 @@
 - **Pendências / observações para as próximas Issues:**
   - Tooltip do `KpiCard` disponível só por hover e `title`; sem acesso por foco ou toque.
   - Selects dos catálogos sem estado visual de erro.
-  - `ErrorState` duplicado na Home.
   - `aria-describedby` do seletor de período ainda ausente.
   - Alvo de toque do botão de informação com cerca de 18 px (abaixo do recomendado).
   - Rótulo "Em andamento" versus "Em fiscalização": alinhar com o contrato da API.
-  - Rotas `/flux/demandas` e `/docia/documentos` ainda não existem; caem na 404 até as Issues dos módulos serem mescladas.
   - Validar contra a API real e subir via Docker Compose quando API#17 for mesclada.
+- **Retentativa (critério "finalizar demanda altera o dashboard"):** os handlers MSW de `/api/dashboard` e `/api/intelligence/*` agora calculam tudo a cada chamada sobre o mesmo estado em memória das demandas do Flux (`listarTodasDemandasMock` em `fixtures/demandas.js`), como a API (#17); concluir/cadastrar uma demanda muda KPIs e gráficos na consulta seguinte. A Home e o dashboard buscam os dados a cada montagem (`useCarregar`, sem cache). Prova: `src/pages/intelligence/DashboardFluxIntegracao.test.jsx` ("ao finalizar uma demanda no Flux, os números do dashboard mudam"). Também: `listarBiomas` com definição única (`catalogosApi.js`); atalho DocIA da Home vira cartão "Planejado" sem link; `ErrorState` único na Home; código IBGE de Poconé nos mocks = 5106505 (confere com `public/geo/mt-municipios.geojson`; 5106752 é Pontes e Lacerda). Testes: a confirmar pelo validador (afetados rodados: 11 arquivos, 98 testes, 0 falhas; lint ok).
 
 ## 2026-11-11 11:30 — GH-9 · Aba Inteligência ambiental: mapa de MT com Leaflet, filtros e legenda (offline)
 - **PR:** (preenchido no PR) · **Status:** em validação (aguarda API#17 para o merge)

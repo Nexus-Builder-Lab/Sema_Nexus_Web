@@ -1,9 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { mensagemDeErro } from '../../api/httpClient.js';
-import { listarCategorias, listarMunicipios } from '../../api/catalogosApi.js';
+import { listarBiomas, listarCategorias, listarMunicipios } from '../../api/catalogosApi.js';
 import {
-  listarBiomas,
   obterPorBioma,
   obterPorCategoria,
   obterPorMunicipio,

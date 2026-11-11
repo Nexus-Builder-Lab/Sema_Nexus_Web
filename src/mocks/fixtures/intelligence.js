@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { temToken, problema } from '../contrato.js';
 import { CATEGORIAS, MUNICIPIOS, STATUS } from './catalogos.js';
+import { listarTodasDemandasMock } from './demandas.js';
 
 // Indicadores fictícios dos mocks: um conjunto fixo de demandas simuladas e as mesmas agregações
 // (com os mesmos filtros) que a API faz. Municípios/biomas são reais (IBGE); o resto é inventado.
@@ -17,44 +18,22 @@ const TOTAL_DOCUMENTOS = 47;
 
 const doisDigitos = (n) => String(n).padStart(2, '0');
 
-// Gerador determinístico (sem Math.random) para os testes serem estáveis.
-function gerarDemandas() {
-  const demandas = [];
-  for (let i = 0; i < 72; i += 1) {
-    const mes = (i % 10) + 1; // jan–out de 2026
-    const dia = (i % 27) + 1;
-    const municipio = MUNICIPIOS[(i * 3) % MUNICIPIOS.length];
-    const status = STATUS[(i * 5) % STATUS.length].codigo;
-    demandas.push({
-      id: i + 1,
-      municipioId: municipio.id,
-      municipio: municipio.nome,
-      bioma: municipio.bioma,
-      categoria: CATEGORIAS[(i * 7) % CATEGORIAS.length].codigo,
-      status,
-      dataRecebimento: `2026-${doisDigitos(mes)}-${doisDigitos(dia)}`,
-      dataFinalizacao:
-        status === 'FINALIZADA' ? `2026-${doisDigitos(mes + 1)}-${doisDigitos(dia)}` : null,
-      prazo: `2026-${doisDigitos(mes + 2)}-${doisDigitos(dia)}`,
-    });
-  }
-  return demandas;
-}
-
-export const DEMANDAS_MOCK = gerarDemandas();
-
+// Os indicadores são calculados a cada chamada sobre o mesmo estado em memória das demandas do
+// Flux: cadastrar ou concluir uma demanda altera os números na consulta seguinte (como na API).
 function filtrar(filtros = {}) {
   const { de, ate, municipioId, bioma, categoria, status } = filtros;
-  return DEMANDAS_MOCK.filter(
+  return listarTodasDemandasMock().filter(
     (d) =>
       (!de || d.dataRecebimento >= de) &&
       (!ate || d.dataRecebimento <= ate) &&
-      (!municipioId || String(d.municipioId) === String(municipioId)) &&
-      (!bioma || d.bioma === bioma) &&
+      (!municipioId || String(d.municipio.id) === String(municipioId)) &&
+      (!bioma || d.municipio.bioma === bioma) &&
       (!categoria || d.categoria === categoria) &&
       (!status || d.status === status),
   );
 }
+
+const finalizadaEm = (d) => (d.concluidaEm ? d.concluidaEm.slice(0, 10) : null);
 
 const contar = (lista, predicado) => lista.filter(predicado).length;
 
@@ -67,17 +46,17 @@ export function resumoMock(filtros) {
     pendentes: contar(lista, (d) => d.status === 'PENDENTE'),
     emAndamento: contar(lista, (d) => d.status === 'EM_ANDAMENTO'),
     finalizadas: contar(lista, (d) => d.status === 'FINALIZADA'),
-    atrasadas: contar(lista, (d) => d.status !== 'FINALIZADA' && d.prazo < HOJE),
+    atrasadas: contar(lista, (d) => d.status !== 'FINALIZADA' && Boolean(d.prazo) && d.prazo < HOJE),
     totalDocumentos: TOTAL_DOCUMENTOS,
   };
 }
 
-function porCatalogo(lista, catalogo, campo, incluirZeros) {
+function porCatalogo(lista, catalogo, valorDe, incluirZeros) {
   return catalogo
     .map((item) => ({
       codigo: item.codigo,
       rotulo: item.rotulo,
-      total: contar(lista, (d) => d[campo] === item.codigo),
+      total: contar(lista, (d) => valorDe(d) === item.codigo),
     }))
     .filter((item) => incluirZeros || item.total > 0);
 }
@@ -89,13 +68,13 @@ export function serieMensalMock(filtros) {
   const meses = new Set();
   lista.forEach((d) => {
     meses.add(d.dataRecebimento.slice(0, 7));
-    if (d.dataFinalizacao) meses.add(d.dataFinalizacao.slice(0, 7));
+    if (finalizadaEm(d)) meses.add(finalizadaEm(d).slice(0, 7));
   });
   return envelope(
     [...meses].sort().map((mes) => ({
       mes,
       cadastradas: contar(lista, (d) => d.dataRecebimento.startsWith(mes)),
-      finalizadas: contar(lista, (d) => d.dataFinalizacao?.startsWith(mes)),
+      finalizadas: contar(lista, (d) => finalizadaEm(d)?.startsWith(mes)),
     })),
   );
 }
@@ -107,7 +86,7 @@ export function porMunicipioMock(filtros) {
       municipioId: m.id,
       municipio: m.nome,
       bioma: m.bioma,
-      total: contar(lista, (d) => d.municipioId === m.id),
+      total: contar(lista, (d) => d.municipio.id === m.id),
     }))
       .filter((m) => m.total > 0)
       .sort((a, b) => b.total - a.total || a.municipio.localeCompare(b.municipio)),
@@ -115,11 +94,11 @@ export function porMunicipioMock(filtros) {
 }
 
 export const porSituacaoMock = (filtros) =>
-  envelope(porCatalogo(filtrar(filtros), STATUS, 'status', true));
+  envelope(porCatalogo(filtrar(filtros), STATUS, (d) => d.status, true));
 export const porCategoriaMock = (filtros) =>
-  envelope(porCatalogo(filtrar(filtros), CATEGORIAS, 'categoria', false));
+  envelope(porCatalogo(filtrar(filtros), CATEGORIAS, (d) => d.categoria, false));
 export const porBiomaMock = (filtros) =>
-  envelope(porCatalogo(filtrar(filtros), BIOMAS, 'bioma', true));
+  envelope(porCatalogo(filtrar(filtros), BIOMAS, (d) => d.municipio.bioma, true));
 
 const ATIVIDADES = [
   ['CONCLUSAO', 'Demanda concluída após fiscalização em campo.'],

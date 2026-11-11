@@ -57,10 +57,8 @@ describe('HomePage (dashboard inicial)', () => {
       'href',
       '/flux/demandas',
     );
-    expect(screen.getByRole('link', { name: /SEMA DocIA/ })).toHaveAttribute(
-      'href',
-      '/docia/documentos',
-    );
+    expect(screen.queryByRole('link', { name: /SEMA DocIA/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Planejado')).toBeInTheDocument();
     expect(screen.getAllByTestId('demo-seal').length).toBeGreaterThanOrEqual(2);
     await waitFor(() => expect(valorDoCard('Demandas totais')).not.toBe('—'));
   });

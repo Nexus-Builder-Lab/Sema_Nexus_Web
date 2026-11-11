@@ -56,7 +56,7 @@ export const MUNICIPIOS = [
   municipio(5101902, 'Barra do Garças', 'Leste', 'CERRADO', -15.89, -52.257),
   municipio(5102504, 'Cáceres', 'Sudoeste', 'PANTANAL', -16.07, -57.68),
   municipio(5103502, 'Colíder', 'Norte', 'AMAZONIA', -10.81, -55.46),
-  municipio(5106224, 'Poconé', 'Pantanal', 'PANTANAL', -16.257, -56.622),
+  municipio(5106505, 'Poconé', 'Pantanal', 'PANTANAL', -16.257, -56.622),
 ];
 
 export const EQUIPES = [
