@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import RequireRole from './auth/RequireRole.jsx';
-import { PERFIS_EDICAO_DEMANDA } from './auth/perfis.js';
+import { PERFIS_EDICAO_DEMANDA, PERFIS_ESCRITA_DOCUMENTO } from './auth/perfis.js';
 import AuthProvider from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { ToastProvider } from './components/Toasts.jsx';
@@ -10,6 +10,9 @@ import LoginPage from './pages/core/LoginPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
+import DocumentoDetailPage from './pages/docia/DocumentoDetailPage.jsx';
+import DocumentoFormPage from './pages/docia/DocumentoFormPage.jsx';
+import DocumentosPage from './pages/docia/DocumentosPage.jsx';
 import DemandaDetailPage from './pages/flux/DemandaDetailPage.jsx';
 import DemandaFormPage from './pages/flux/DemandaFormPage.jsx';
 import DemandasListPage from './pages/flux/DemandasListPage.jsx';
@@ -35,6 +38,11 @@ export default function App() {
                 <Route path="/flux/demandas/nova" element={<DemandaFormPage />} />
                 <Route path="/flux/demandas/:id/editar" element={<DemandaFormPage />} />
               </Route>
+              <Route path="/docia/documentos" element={<DocumentosPage />} />
+              <Route element={<RequireRole roles={PERFIS_ESCRITA_DOCUMENTO} />}>
+                <Route path="/docia/documentos/novo" element={<DocumentoFormPage />} />
+              </Route>
+              <Route path="/docia/documentos/:id" element={<DocumentoDetailPage />} />
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Route>
