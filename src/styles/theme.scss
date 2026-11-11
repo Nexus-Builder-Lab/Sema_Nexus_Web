@@ -670,6 +670,50 @@ body {
   max-width: 400px;
 }
 
+// ---------- Dashboards (Issue #8) ----------
+.nx-demo-seal {
+  background: $nx-amber-100;
+  color: #92400e;
+  border: 1px solid $nx-amber-600;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: normal;
+}
+
+.nx-chart-canvas {
+  position: relative;
+  width: 100%;
+}
+
+.nx-kpi-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  border: 1px solid $nx-gray-500;
+  border-radius: 50%;
+  background: #fff;
+  color: $nx-gray-700;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  padding: 0;
+}
+
+.nx-atalho {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  height: 100%;
+  &:hover .card,
+  &:focus-visible .card {
+    border-color: $nx-green-700;
+  }
+}
+
 // ---------- Mapa (Leaflet) ----------
 .nx-map {
   height: min(70vh, 640px);

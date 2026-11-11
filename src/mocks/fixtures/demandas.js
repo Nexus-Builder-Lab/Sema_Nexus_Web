@@ -83,6 +83,9 @@ export function resetDemandasMock(total = 25) {
 }
 resetDemandasMock();
 
+/** Demandas em memória (mesmo estado dos handlers do Flux); base dos indicadores do Intelligence. */
+export const listarTodasDemandasMock = () => demandas;
+
 export const buscarDemanda = (id) => demandas.find((d) => d.id === Number(id));
 
 const resumo = (d) => ({

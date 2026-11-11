@@ -1,38 +1,10 @@
-// Fixtures fictícias para o mapa e os catálogos (dados demonstrativos; municípios são referências IBGE).
-export const MUNICIPIOS = [
-  {
-    id: 5103403,
-    nome: 'Cuiabá',
-    regiao: 'Baixada Cuiabana',
-    bioma: 'CERRADO',
-    latitude: -15.601,
-    longitude: -56.097,
-  },
-  {
-    id: 5107602,
-    nome: 'Rondonópolis',
-    regiao: 'Sul',
-    bioma: 'CERRADO',
-    latitude: -16.47,
-    longitude: -54.636,
-  },
-  {
-    id: 5106505,
-    nome: 'Poconé',
-    regiao: 'Baixada Cuiabana',
-    bioma: 'PANTANAL',
-    latitude: -16.256,
-    longitude: -56.627,
-  },
-  {
-    id: 5100250,
-    nome: 'Alta Floresta',
-    regiao: 'Norte',
-    bioma: 'AMAZONIA',
-    latitude: -9.876,
-    longitude: -56.086,
-  },
-];
+import { http, HttpResponse } from 'msw';
+import { temToken, problema } from '../contrato.js';
+import { CATEGORIAS, MUNICIPIOS, STATUS } from './catalogos.js';
+import { listarTodasDemandasMock } from './demandas.js';
+
+// Indicadores fictícios dos mocks: um conjunto fixo de demandas simuladas e as mesmas agregações
+// (com os mesmos filtros) que a API faz. Municípios/biomas são reais (IBGE); o resto é inventado.
 
 export const BIOMAS = [
   { codigo: 'AMAZONIA', rotulo: 'Amazônia', ordem: 1 },
@@ -40,11 +12,172 @@ export const BIOMAS = [
   { codigo: 'PANTANAL', rotulo: 'Pantanal', ordem: 3 },
 ];
 
-export const CATEGORIAS = [
-  { codigo: 'DESMATAMENTO_ILEGAL', rotulo: 'Desmatamento ilegal', ordem: 1 },
-  { codigo: 'QUEIMADA_INCENDIO', rotulo: 'Queimada / incêndio', ordem: 2 },
-  { codigo: 'RECURSOS_HIDRICOS', rotulo: 'Recursos hídricos', ordem: 3 },
+const HOJE = '2026-11-10';
+const AVISO = 'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS';
+const TOTAL_DOCUMENTOS = 47;
+
+const doisDigitos = (n) => String(n).padStart(2, '0');
+
+// Os indicadores são calculados a cada chamada sobre o mesmo estado em memória das demandas do
+// Flux: cadastrar ou concluir uma demanda altera os números na consulta seguinte (como na API).
+function filtrar(filtros = {}) {
+  const { de, ate, municipioId, bioma, categoria, status } = filtros;
+  return listarTodasDemandasMock().filter(
+    (d) =>
+      (!de || d.dataRecebimento >= de) &&
+      (!ate || d.dataRecebimento <= ate) &&
+      (!municipioId || String(d.municipio.id) === String(municipioId)) &&
+      (!bioma || d.municipio.bioma === bioma) &&
+      (!categoria || d.categoria === categoria) &&
+      (!status || d.status === status),
+  );
+}
+
+const finalizadaEm = (d) => (d.concluidaEm ? d.concluidaEm.slice(0, 10) : null);
+
+const contar = (lista, predicado) => lista.filter(predicado).length;
+
+export function resumoMock(filtros) {
+  const lista = filtrar(filtros);
+  return {
+    demonstrativo: true,
+    aviso: AVISO,
+    totalDemandas: lista.length,
+    pendentes: contar(lista, (d) => d.status === 'PENDENTE'),
+    emAndamento: contar(lista, (d) => d.status === 'EM_ANDAMENTO'),
+    finalizadas: contar(lista, (d) => d.status === 'FINALIZADA'),
+    atrasadas: contar(lista, (d) => d.status !== 'FINALIZADA' && Boolean(d.prazo) && d.prazo < HOJE),
+    totalDocumentos: TOTAL_DOCUMENTOS,
+  };
+}
+
+function porCatalogo(lista, catalogo, valorDe, incluirZeros) {
+  return catalogo
+    .map((item) => ({
+      codigo: item.codigo,
+      rotulo: item.rotulo,
+      total: contar(lista, (d) => valorDe(d) === item.codigo),
+    }))
+    .filter((item) => incluirZeros || item.total > 0);
+}
+
+const envelope = (itens) => ({ demonstrativo: true, aviso: AVISO, itens });
+
+export function serieMensalMock(filtros) {
+  const lista = filtrar(filtros);
+  const meses = new Set();
+  lista.forEach((d) => {
+    meses.add(d.dataRecebimento.slice(0, 7));
+    if (finalizadaEm(d)) meses.add(finalizadaEm(d).slice(0, 7));
+  });
+  return envelope(
+    [...meses].sort().map((mes) => ({
+      mes,
+      cadastradas: contar(lista, (d) => d.dataRecebimento.startsWith(mes)),
+      finalizadas: contar(lista, (d) => finalizadaEm(d)?.startsWith(mes)),
+    })),
+  );
+}
+
+export function porMunicipioMock(filtros) {
+  const lista = filtrar(filtros);
+  return envelope(
+    MUNICIPIOS.map((m) => ({
+      municipioId: m.id,
+      municipio: m.nome,
+      bioma: m.bioma,
+      total: contar(lista, (d) => d.municipio.id === m.id),
+    }))
+      .filter((m) => m.total > 0)
+      .sort((a, b) => b.total - a.total || a.municipio.localeCompare(b.municipio)),
+  );
+}
+
+export const porSituacaoMock = (filtros) =>
+  envelope(porCatalogo(filtrar(filtros), STATUS, (d) => d.status, true));
+export const porCategoriaMock = (filtros) =>
+  envelope(porCatalogo(filtrar(filtros), CATEGORIAS, (d) => d.categoria, false));
+export const porBiomaMock = (filtros) =>
+  envelope(porCatalogo(filtrar(filtros), BIOMAS, (d) => d.municipio.bioma, true));
+
+const ATIVIDADES = [
+  ['CONCLUSAO', 'Demanda concluída após fiscalização em campo.'],
+  ['FISCALIZACAO', 'Fiscalização registrada pela equipe.'],
+  ['DISTRIBUICAO', 'Demanda distribuída à Equipe Alfa (demonstração).'],
+  ['TRIAGEM', 'Triagem concluída; prioridade definida.'],
+  ['CADASTRO', 'Demanda cadastrada.'],
 ];
+
+export function dashboardMock() {
+  return {
+    demonstrativo: true,
+    aviso: AVISO,
+    resumo: resumoMock(),
+    porSituacao: porSituacaoMock().itens,
+    atividadesRecentes: ATIVIDADES.map(([tipo, texto], i) => ({
+      data: `2026-11-${doisDigitos(10 - i)}T09:00:00`,
+      tipo,
+      texto,
+      demanda: {
+        id: 70 - i,
+        numero: `DEM-2026/${String(70 - i).padStart(4, '0')}`,
+        titulo: `Demanda fictícia ${70 - i}`,
+      },
+      usuario: { id: 3, nome: 'Fiscal Demonstrativo 1' },
+    })),
+  };
+}
+
+const FILTROS = ['de', 'ate', 'municipioId', 'bioma', 'categoria', 'status'];
+function filtrosDaUrl(request) {
+  const params = new URL(request.url).searchParams;
+  return Object.fromEntries(FILTROS.filter((f) => params.get(f)).map((f) => [f, params.get(f)]));
+}
+
+function protegido(resposta) {
+  return ({ request }) =>
+    temToken(request)
+      ? HttpResponse.json(resposta(request))
+      : problema(
+          401,
+          'Não autenticado',
+          'Token ausente ou inválido.',
+          new URL(request.url).pathname,
+        );
+}
+
+export const handlersIntelligence = [
+  http.get(
+    '/api/dashboard',
+    protegido(() => dashboardMock()),
+  ),
+  http.get(
+    '/api/intelligence/resumo',
+    protegido((r) => resumoMock(filtrosDaUrl(r))),
+  ),
+  http.get(
+    '/api/intelligence/serie-mensal',
+    protegido((r) => serieMensalMock(filtrosDaUrl(r))),
+  ),
+  http.get(
+    '/api/intelligence/por-situacao',
+    protegido((r) => porSituacaoMock(filtrosDaUrl(r))),
+  ),
+  http.get(
+    '/api/intelligence/por-municipio',
+    protegido((r) => porMunicipioMock(filtrosDaUrl(r))),
+  ),
+  http.get(
+    '/api/intelligence/por-categoria',
+    protegido((r) => porCategoriaMock(filtrosDaUrl(r))),
+  ),
+  http.get(
+    '/api/intelligence/por-bioma',
+    protegido((r) => porBiomaMock(filtrosDaUrl(r))),
+  ),
+];
+
+// ---------- Pontos do mapa (Issue #9) ----------
 
 // `bioma` e `recebidaEm` só existem na fixture, para aplicar os filtros; não vão na resposta.
 const FIXTURE = [

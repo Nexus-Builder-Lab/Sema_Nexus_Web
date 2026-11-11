@@ -15,11 +15,11 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
 | Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
+| Home e dashboard ambiental (Intelligence) contra mocks MSW (Issue #8) | **Implementado** (11/11/2026) com mocks; **Em desenvolvimento**: validação contra a API real e subida via Docker aguardam Sema_Nexus_API#17 |
 | Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
 | Flux: detalhes, triagem, distribuição (Issue #6) | **Implementado** |
 | Flux: execução, atividades, registro de fiscalização, conclusão e devolução (Issue #7) | **Implementado** |
 | Aba Inteligência ambiental: mapa de MT (Leaflet, offline), filtros e legenda (Issue #9) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/mapa` (API#17) |
-| Intelligence (dashboards) | **Planejado** — Sprint 2 |
 | Telas do DocIA, integração final, testes | **Planejado** — Sprint 3 |
 
 Acompanhamento: [GitHub Project — SEMA NEXUS — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)

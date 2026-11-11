@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { BIOMAS, filtrarPontos } from './fixtures/intelligence.js';
+import { BIOMAS, filtrarPontos, handlersIntelligence } from './fixtures/intelligence.js';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
 import {
   CATEGORIAS,
@@ -303,6 +303,7 @@ const fluxo = [
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
   ...auth,
+  ...handlersIntelligence,
   ...intelligence,
   ...catalogos,
   ...demandas,
