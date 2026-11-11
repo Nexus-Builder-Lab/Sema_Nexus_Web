@@ -1,6 +1,21 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
+    "allow": [
+      "PowerShell(.\\scripts\\demo-up.ps1*)",
+      "PowerShell(.\\scripts\\demo-down.ps1*)",
+      "PowerShell(.\\scripts\\demo-reset.ps1*)",
+      "PowerShell(*scripts\\demo-up.ps1*)",
+      "PowerShell(*scripts\\demo-down.ps1*)",
+      "PowerShell(*scripts\\demo-reset.ps1*)",
+      "PowerShell(*scripts\\lib\\demo-common.ps1*)",
+      "Bash(scripts/demo-up.sh*)",
+      "Bash(scripts/demo-down.sh*)",
+      "Bash(scripts/demo-reset.sh*)",
+      "Bash(./scripts/demo-up.sh*)",
+      "Bash(./scripts/demo-down.sh*)",
+      "Bash(./scripts/demo-reset.sh*)"
+    ],
     "deny": [
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
@@ -32,8 +47,26 @@
       "Bash(docker volume rm:*)",
       "Bash(docker volume prune:*)",
       "Bash(docker system prune:*)",
+      "Bash(docker stop*)",
+      "Bash(docker kill*)",
+      "Bash(docker rm*)",
+      "Bash(docker restart*)",
+      "Bash(docker container stop*)",
+      "Bash(docker container rm*)",
+      "Bash(*DEMO_RESET_CONFIRM=yes*)",
+      "Bash(*DEMO_RESET_CONFIRM*yes*)",
       "PowerShell(docker compose down -v*)",
+      "PowerShell(docker compose down --volumes*)",
       "PowerShell(docker volume rm*)",
+      "PowerShell(docker volume prune*)",
+      "PowerShell(docker system prune*)",
+      "PowerShell(docker stop*)",
+      "PowerShell(docker kill*)",
+      "PowerShell(docker rm*)",
+      "PowerShell(docker restart*)",
+      "PowerShell(docker container stop*)",
+      "PowerShell(docker container rm*)",
+      "PowerShell(*DEMO_RESET_CONFIRM*yes*)",
       "PowerShell(git push --force*)",
       "PowerShell(git push -f*)",
       "PowerShell(gh repo delete*)",
@@ -46,9 +79,10 @@
       "Bash(git push --tags:*)",
       "Bash(gh release create:*)",
       "Bash(git push origin main:*)",
-      "Bash(scripts/demo-reset*)",
       "PowerShell(git tag*)",
-      "PowerShell(*demo-reset*)"
+      "PowerShell(git push --tags*)",
+      "PowerShell(gh release create*)",
+      "PowerShell(git push origin main*)"
     ]
   }
 }
