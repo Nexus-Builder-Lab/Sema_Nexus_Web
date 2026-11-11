@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
+import { handlersIntelligence } from './fixtures/intelligence.js';
 
 // Usuário de teste fictício dos mocks (o mesmo da demonstração da API).
 const USUARIO_MOCK = {
@@ -81,4 +82,9 @@ const semRespostaNoContrato = [
 ];
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
-export const handlers = [...auth, ...semRespostaNoContrato, ...criarHandlersDoContrato()];
+export const handlers = [
+  ...auth,
+  ...handlersIntelligence,
+  ...semRespostaNoContrato,
+  ...criarHandlersDoContrato(),
+];
