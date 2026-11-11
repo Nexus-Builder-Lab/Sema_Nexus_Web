@@ -29,3 +29,30 @@ export async function editarDemanda(id, corpo) {
   const { data } = await httpClient.put(`/demandas/${id}`, corpo);
   return data;
 }
+
+/** GET /api/demandas/{id}/historico → `[HistoricoItem]`, do mais recente ao mais antigo. */
+export async function listarHistorico(id) {
+  const { data } = await httpClient.get(`/demandas/${id}/historico`);
+  return data;
+}
+
+/** POST /api/demandas/{id}/triagem/iniciar (PENDENTE → EM_TRIAGEM). */
+export async function iniciarTriagem(id) {
+  const { data } = await httpClient.post(`/demandas/${id}/triagem/iniciar`);
+  return data;
+}
+
+/**
+ * POST /api/demandas/{id}/triagem. `decisao`: CLASSIFICAR (categoria e prioridade obrigatórias)
+ * ou SOLICITAR_COMPLEMENTACAO; `justificativa` sempre obrigatória.
+ */
+export async function decidirTriagem(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/triagem`, corpo);
+  return data;
+}
+
+/** POST /api/demandas/{id}/distribuicao `{ equipeId, fiscalId, prazo, observacoes }`. */
+export async function distribuirDemanda(id, corpo) {
+  const { data } = await httpClient.post(`/demandas/${id}/distribuicao`, corpo);
+  return data;
+}
