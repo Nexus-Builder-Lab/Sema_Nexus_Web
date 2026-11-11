@@ -73,10 +73,12 @@ function fixture(i) {
 
 let demandas = [];
 let proximoId = 1;
+const eventos = new Map();
 
 /** Restaura as demandas fictícias iniciais (os testes chamam entre um caso e outro). */
 export function resetDemandasMock(total = 25) {
   demandas = Array.from({ length: total }, (_, i) => fixture(i));
+  eventos.clear();
   proximoId = total + 1;
 }
 resetDemandasMock();
@@ -227,5 +229,90 @@ export function cadastrarDemandaMock(corpo) {
 export function editarDemandaMock(demanda, corpo) {
   aplicarCorpo(demanda, corpo);
   demanda.atualizadoEm = `${HOJE}T10:00:00`;
+  return demanda;
+}
+
+// Histórico (linha do tempo) e transições de triagem/distribuição simuladas em memória.
+let proximoEvento = 1000;
+
+/** Histórico do mais recente ao mais antigo; inclui o evento de cadastro. */
+export function historicoMock(demanda) {
+  const extras = eventos.get(demanda.id) ?? [];
+  const cadastro = {
+    id: demanda.id,
+    tipo: 'CADASTRO',
+    statusAnterior: null,
+    statusNovo: 'PENDENTE',
+    texto: null,
+    usuario: demanda.criadoPor,
+    data: demanda.criadoEm,
+  };
+  return [...extras].reverse().concat(cadastro);
+}
+
+function registrar(demanda, tipo, novoStatus, texto) {
+  const evento = {
+    id: proximoEvento++,
+    tipo,
+    statusAnterior: demanda.status,
+    statusNovo: novoStatus,
+    texto: texto ?? null,
+    usuario: USUARIO_CRIADOR,
+    data: `${HOJE}T11:00:00`,
+  };
+  eventos.set(demanda.id, [...(eventos.get(demanda.id) ?? []), evento]);
+  demanda.status = novoStatus;
+  demanda.atualizadoEm = evento.data;
+}
+
+export function iniciarTriagemMock(demanda) {
+  registrar(demanda, 'TRIAGEM', 'EM_TRIAGEM');
+  return demanda;
+}
+
+export function decidirTriagemMock(demanda, corpo) {
+  if (corpo.decisao === 'CLASSIFICAR') {
+    demanda.categoria = corpo.categoria;
+    demanda.prioridade = corpo.prioridade;
+    registrar(demanda, 'TRIAGEM', 'AGUARDANDO_DISTRIBUICAO', corpo.justificativa);
+  } else {
+    registrar(demanda, 'COMPLEMENTACAO', 'PENDENTE', corpo.justificativa);
+  }
+  return demanda;
+}
+
+export function validarTriagemMock(corpo) {
+  const erros = [];
+  if (!['CLASSIFICAR', 'SOLICITAR_COMPLEMENTACAO'].includes(corpo.decisao))
+    erros.push({ campo: 'decisao', mensagem: 'decisão inválida' });
+  if (corpo.decisao === 'CLASSIFICAR') {
+    if (!corpo.categoria) erros.push({ campo: 'categoria', mensagem: 'não deve ser nulo' });
+    if (!corpo.prioridade) erros.push({ campo: 'prioridade', mensagem: 'não deve ser nulo' });
+  }
+  if (!corpo.justificativa?.trim())
+    erros.push({ campo: 'justificativa', mensagem: 'não deve estar em branco' });
+  return erros;
+}
+
+export function validarDistribuicaoMock(corpo) {
+  const erros = [];
+  const equipe = EQUIPES.find((e) => e.id === corpo.equipeId);
+  if (!equipe) erros.push({ campo: 'equipeId', mensagem: 'equipe inexistente' });
+  const fiscal = equipe && MEMBROS[equipe.id]?.find((m) => m.id === corpo.fiscalId);
+  if (!fiscal) erros.push({ campo: 'fiscalId', mensagem: 'fiscal não pertence à equipe' });
+  if (!corpo.prazo) erros.push({ campo: 'prazo', mensagem: 'não deve ser nulo' });
+  else if (corpo.prazo < hojeISO())
+    erros.push({ campo: 'prazo', mensagem: 'deve ser uma data no presente ou no futuro' });
+  return erros;
+}
+
+export function distribuirMock(demanda, corpo) {
+  const equipe = EQUIPES.find((e) => e.id === corpo.equipeId);
+  const fiscal = MEMBROS[equipe.id].find((m) => m.id === corpo.fiscalId);
+  demanda.equipe = { id: equipe.id, nome: equipe.nome };
+  demanda.fiscal = { id: fiscal.id, nome: fiscal.nome };
+  demanda.prazo = corpo.prazo;
+  demanda.observacoes = corpo.observacoes ?? demanda.observacoes;
+  registrar(demanda, 'DISTRIBUICAO', 'DISTRIBUIDA', corpo.observacoes);
   return demanda;
 }

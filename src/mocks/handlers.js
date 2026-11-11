@@ -12,6 +12,12 @@ import {
 import {
   buscarDemanda,
   cadastrarDemandaMock,
+  decidirTriagemMock,
+  distribuirMock,
+  historicoMock,
+  iniciarTriagemMock,
+  validarDistribuicaoMock,
+  validarTriagemMock,
   editarDemandaMock,
   listarDemandasMock,
   validarCorpoMock,
@@ -79,11 +85,6 @@ const auth = [
 
 // Operações cujo 200 ainda não consta no contrato publicado (endpoints pendentes na API).
 const semRespostaNoContrato = [
-  http.get('/api/demandas/:id/historico', ({ request }) =>
-    temToken(request)
-      ? HttpResponse.json([exemploDoSchema('HistoricoItem')])
-      : naoAutenticado('/api/demandas'),
-  ),
   http.get('/api/demandas/:id/documentos', ({ request }) =>
     temToken(request)
       ? HttpResponse.json([exemploDoSchema('DocumentoResumo')])
@@ -205,11 +206,55 @@ const demandas = [
   }),
 ];
 
+// Fluxo de triagem e distribuição (Issue API#12): transições em memória com 409 para status inválido.
+function conflito(id, detalhe) {
+  return problema(409, 'Conflito', detalhe, `/api/demandas/${id}`);
+}
+
+function acaoDeFluxo(statusEsperado, aplicar, validar) {
+  return async ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    const corpo = await request.json().catch(() => ({}));
+    const erros = validar ? validar(corpo) : [];
+    if (erros.length) return problemaValidacao(erros, caminho);
+    if (demanda.status !== statusEsperado) {
+      return conflito(params.id, `Transição inválida: a demanda está em ${demanda.status}.`);
+    }
+    return HttpResponse.json(aplicar(demanda, corpo));
+  };
+}
+
+const fluxo = [
+  http.get('/api/demandas/:id/historico', ({ request, params }) => {
+    if (!temToken(request)) return naoAutenticado(`/api/demandas/${params.id}`);
+    const demanda = buscarDemanda(params.id);
+    return demanda
+      ? HttpResponse.json(historicoMock(demanda))
+      : problema(404, 'Não encontrado', 'Demanda inexistente.', `/api/demandas/${params.id}`);
+  }),
+  http.post(
+    '/api/demandas/:id/triagem/iniciar',
+    acaoDeFluxo('PENDENTE', (demanda) => iniciarTriagemMock(demanda)),
+  ),
+  http.post(
+    '/api/demandas/:id/triagem',
+    acaoDeFluxo('EM_TRIAGEM', decidirTriagemMock, validarTriagemMock),
+  ),
+  http.post(
+    '/api/demandas/:id/distribuicao',
+    acaoDeFluxo('AGUARDANDO_DISTRIBUICAO', distribuirMock, validarDistribuicaoMock),
+  ),
+];
+
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
   ...auth,
   ...catalogos,
   ...demandas,
+  ...fluxo,
   ...semRespostaNoContrato,
   ...criarHandlersDoContrato(),
 ];
