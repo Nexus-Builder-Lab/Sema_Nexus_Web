@@ -43,15 +43,19 @@ export async function baixarCsvDemandas(filtros = {}) {
 
 export const NOME_ARQUIVO_CSV = 'relatorio-demandas-ficticio.csv';
 
-/** Baixa o CSV autenticado e dispara o download no navegador. */
-export async function baixarEGuardarCsv(filtros) {
-  const blob = await baixarCsvDemandas(filtros);
+/** Dispara no navegador o download de um Blob. */
+export function salvarBlob(blob, nome) {
   const url = URL.createObjectURL(blob);
   const ancora = document.createElement('a');
   ancora.href = url;
-  ancora.download = NOME_ARQUIVO_CSV;
+  ancora.download = nome;
   document.body.appendChild(ancora);
   ancora.click();
   ancora.remove();
   URL.revokeObjectURL(url);
+}
+
+/** Baixa o CSV autenticado e dispara o download no navegador. */
+export async function baixarEGuardarCsv(filtros) {
+  salvarBlob(await baixarCsvDemandas(filtros), NOME_ARQUIVO_CSV);
 }

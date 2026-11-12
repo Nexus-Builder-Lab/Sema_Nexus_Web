@@ -18,7 +18,7 @@ export const NAVIGATION = [
       { to: '/intelligence/indicadores', label: 'Análise de indicadores', icon: 'indicators' },
       {
         to: '/intelligence/relatorios',
-        label: 'Relatórios',
+        label: 'Relatórios gerenciais',
         icon: 'report',
         roles: ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'],
       },
