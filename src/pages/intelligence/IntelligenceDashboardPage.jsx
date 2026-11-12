@@ -21,6 +21,8 @@ import useCarregar from '../../hooks/useCarregar.js';
 import { validarPeriodo } from './validarFiltros.js';
 import { CORES_BIOMA, CORES_STATUS, corDaSerie, CORES_SERIE } from '../../utils/paleta.js';
 
+import { aplicarBioma, municipiosDoBioma } from './filtroBioma.js';
+
 const CAMPOS_FILTRO = ['municipioId', 'bioma', 'categoria', 'de', 'ate'];
 const TOP_MUNICIPIOS = 10;
 
@@ -95,12 +97,17 @@ function FiltrosAmbientais({ inicial, municipios, biomas, categorias, onAplicar,
           <Select
             id="f-municipio"
             valor={rascunho.municipioId}
-            itens={municipios}
+            itens={municipiosDoBioma(municipios, rascunho.bioma)}
             onChange={definir('municipioId')}
           />
         </Campo>
         <Campo id="f-bioma" label="Bioma">
-          <Select id="f-bioma" valor={rascunho.bioma} itens={biomas} onChange={definir('bioma')} />
+          <Select
+            id="f-bioma"
+            valor={rascunho.bioma}
+            itens={biomas}
+            onChange={(b) => setRascunho((atual) => aplicarBioma(atual, b, municipios))}
+          />
         </Campo>
         <Campo id="f-categoria" label="Categoria">
           <Select
