@@ -304,6 +304,8 @@ body {
   transition: margin-left 0.2s ease;
   display: flex;
   flex-direction: column;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .nx-app.is-collapsed {
@@ -631,12 +633,19 @@ body {
   }
 }
 
-@include media-breakpoint-down(md) {
+@include media-breakpoint-down(lg) {
   .nx-breadcrumbs,
   .nx-user,
   .nx-search {
     display: none;
   }
+}
+
+// Tabela acessível dos gráficos: contida no próprio figure para não esticar a página.
+figure.nx-chart-figure {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
 }
 
 // ---------- Cabeçalho de página ----------

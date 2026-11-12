@@ -81,7 +81,7 @@ export default function IndicatorChart({
   const Componente = tipo === 'line' ? Line : tipo === 'doughnut' ? Doughnut : Bar;
 
   return (
-    <figure className="m-0">
+    <figure className="nx-chart-figure">
       <div className="nx-chart-canvas" style={{ height: altura }}>
         <Componente data={dados} options={opcoes} role="img" aria-label={ariaLabel} />
       </div>
