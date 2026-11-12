@@ -166,3 +166,11 @@
 - **Arquivos principais:** `src/pages/docia/AssistentePage.jsx`, `src/api/assistenteApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Assistente.test.jsx`.
 - **Testes:** afetados (Assistente.test, App.test) → 15 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+## 2026-11-12 — GH-15 · Tela de comparação documental
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/comparacao` (`ComparacaoPage`): seleção de dois documentos (bloqueia o mesmo documento), metadados lado a lado com Igual/Diferente, diff por linhas (`DiffView`, fonte monoespaçada, cor + sinal + rótulo acessível), trechos semelhantes, termos exclusivos e similaridade como informação secundária. Aviso fixo de comparação determinística (não é IA). Erros da API (ex.: documento sem texto extraído) exibidos via `detail` do ProblemDetail. Item "Comparação" no menu DocIA.
+- **Decisões técnicas:** contrato conforme `ComparacaoResponse` da API (#26); aviso de texto truncado quando `truncado=true`.
+- **Arquivos principais:** `src/pages/docia/ComparacaoPage.jsx`, `src/components/DiffView.jsx`, `src/api/comparacaoApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Comparacao.test.jsx`.
+- **Testes:** afetados (Comparacao.test, App.test, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.

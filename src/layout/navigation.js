@@ -29,6 +29,7 @@ export const NAVIGATION = [
     items: [
       { to: '/docia/documentos', label: 'Documentos', icon: 'file' },
       { to: '/docia/assistente', label: 'Assistente', icon: 'inbox' },
+      { to: '/docia/comparacao', label: 'Comparação', icon: 'file' },
     ],
   },
   {
