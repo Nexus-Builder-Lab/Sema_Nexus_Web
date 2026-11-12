@@ -283,3 +283,10 @@
 - **Decisões:** a API entrega concluídas/ativas/atrasadas por setor (não os 7 status), então a pilha usa Concluídas, Ativas no prazo e Atrasadas; servidor vira responsável (fiscal); o filtro de setor só aparece se `/api/setores` responder (ADMIN/GESTOR; demais perfis recebem 403 e usam a tela sem o filtro).
 - **Arquivos principais:** `src/pages/flux/ProdutividadePage.jsx` (+ teste), `src/App.jsx`, `src/layout/navigation.js`, `src/mocks/fixtures/intelligence.js`.
 - **Testes:** afetados (ProdutividadePage, layout, App: 20) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real (#84 ainda aberta) e rolagem em 375/768/1366 px: a confirmar pelo validador.
+
+## 2026-11-12 — GH-62 · Setores e equipes em cartões igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/admin/estrutura` com abas Setores / Equipes / Usuários (com contagem). Setores viram cartões (ícone, sigla, nome, responsável, iniciais dos membros, "N servidores", badges de demandas ativas e vencidas, Editar e Desativar/Reativar); Equipes mantém a tabela com Membros/Editar; Usuários aponta para a tela de usuários. Sem "Unidades organizacionais".
+- **Decisões:** a API de setor não traz responsável nem membros: responsável = responsável da primeira equipe do setor; membros = usuários com `setorId`; contagens vêm de `/api/flux/produtividade` (`porSetorSituacao`) e são omitidas se o perfil não puder consultá-las. Desativar usa `PUT /api/setores/{id}`. Divergência de contrato (responsável/contagens no setor) pode virar Issue na API. "Responsável" do setor é **heurística** (responsável da primeira equipe com responsável), não um dado do setor. Correção do revisor: Desativar setor pede confirmação (`ConfirmDialog`); Reativar segue direto.
+- **Arquivos principais:** `src/pages/core/admin/EstruturaPage.jsx`, `Admin.test.jsx`, `src/styles/theme.scss`.
+- **Testes:** afetados (pages/core/admin: 17) passaram; lint 0 erros. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
