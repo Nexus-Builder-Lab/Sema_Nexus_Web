@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon.jsx';
+import GlobalSearch from './GlobalSearch.jsx';
 import Breadcrumbs from './Breadcrumbs.jsx';
 import NotificationBell from './NotificationBell.jsx';
 
@@ -18,29 +18,6 @@ function iniciais(nome = '') {
   const primeira = partes[0][0];
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
   return (primeira + ultima).toUpperCase();
-}
-
-/** Campo de pesquisa: leva à Central de demandas filtrada pelo texto (busca textual). */
-function Pesquisa() {
-  const navigate = useNavigate();
-  const [texto, setTexto] = useState('');
-  function enviar(event) {
-    event.preventDefault();
-    const q = texto.trim();
-    navigate(q ? `/flux/demandas?q=${encodeURIComponent(q)}` : '/flux/demandas');
-  }
-  return (
-    <form className="nx-search" role="search" onSubmit={enviar}>
-      <Icon name="search" size={16} />
-      <input
-        type="search"
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        placeholder="Pesquisar demandas…"
-        aria-label="Pesquisar demandas"
-      />
-    </form>
-  );
 }
 
 function MenuUsuario({ user, onLogout }) {
@@ -114,7 +91,7 @@ export default function Topbar({ sidebarId, mobileOpen, onToggleMobile, user, on
       </button>
       <Breadcrumbs />
       <div className="nx-topbar-actions">
-        <Pesquisa />
+        <GlobalSearch user={user} />
         <NotificationBell />
         {user && <MenuUsuario user={user} onLogout={onLogout} />}
       </div>
