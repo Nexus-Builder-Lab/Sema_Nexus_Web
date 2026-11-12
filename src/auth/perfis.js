@@ -62,3 +62,6 @@ export const podeEscreverDocumentos = (usuario) =>
 
 /** Administração de usuários, setores e equipes: somente ADMIN (a API responde 403 aos demais). */
 export const PERFIS_ADMIN = ['ADMIN'];
+
+/** Relatórios de demandas: FISCAL recebe 403 da API. */
+export const PERFIS_RELATORIOS = ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'];

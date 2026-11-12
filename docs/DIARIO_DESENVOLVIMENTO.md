@@ -183,3 +183,12 @@
 - **Arquivos principais:** `src/pages/core/admin/*`, `src/api/adminApi.js`, `src/mocks/fixtures/admin.js`, `src/App.jsx`, `src/layout/{navigation.js,Sidebar.jsx}`, `src/auth/perfis.js`.
 - **Testes:** afetados (Admin.test, App, auth, layout, flux) → 102 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-18 · Relatórios com filtros e exportação CSV/PDF
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/intelligence/relatorios` (`RelatoriosPage`): filtros período, município, bioma, categoria e status (na URL, validação de período), tabela paginada com estados de carregamento/vazio/erro, botão "Baixar CSV" (`GET /api/relatorios/demandas.csv` com os mesmos filtros e token, download via Blob) e "Salvar como PDF" (`window.print()`). `src/styles/print.css` (`@media print`): esconde menu, topbar, filtros e botões, A4 paisagem, cabeçalho "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS" com resumo dos filtros. Item "Relatórios" no menu e rota restrita a ADMIN/GESTOR/ANALISTA/CONSULTA (FISCAL → 403 na API).
+- **Decisões técnicas:** contrato conforme `docs/API.md` da API (#28); o `openapi.json` local ainda não contém `/relatorios`, então os mocks MSW (`src/mocks/fixtures/relatorios.js`) foram escritos à mão seguindo o contrato documentado. PDF é só impressão do navegador (sem biblioteca).
+- **Arquivos principais:** `src/pages/intelligence/RelatoriosPage.jsx`, `src/api/relatoriosApi.js`, `src/styles/print.css`, `src/mocks/fixtures/relatorios.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/auth/perfis.js`, `RelatoriosPage.test.jsx`.
+- **Testes:** afetados (RelatoriosPage.test, App, layout, mocks) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.

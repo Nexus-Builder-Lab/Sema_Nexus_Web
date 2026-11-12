@@ -1,0 +1,69 @@
+/* Impressão / "Salvar como PDF" dos relatórios. O cabeçalho demonstrativo só aparece ao imprimir. */
+.nx-print-header {
+  display: none;
+}
+
+@media print {
+  .nx-sidebar,
+  .nx-backdrop,
+  .nx-skip-link,
+  .nx-demo-banner,
+  .nx-footer,
+  .nx-topbar,
+  .nx-no-print {
+    display: none !important;
+  }
+
+  .nx-app,
+  .nx-main,
+  .nx-view {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .nx-print-header {
+    display: block;
+    border: 2px solid #000;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    font-size: 11pt;
+  }
+
+  .nx-print-header strong {
+    display: block;
+    font-size: 13pt;
+    letter-spacing: 0.04em;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+  }
+
+  table {
+    font-size: 8pt;
+    width: 100%;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  .pagination,
+  nav[aria-label='Paginação'] {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 12mm;
+  }
+}
