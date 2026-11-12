@@ -29,6 +29,7 @@ export const NAVIGATION = [
     subtitle: 'Processos e demandas',
     items: [
       { to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' },
+      { to: '/flux/kanban', label: 'Fluxo de atividades', icon: 'workflow' },
       { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'indicators' },
     ],
   },

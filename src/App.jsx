@@ -26,6 +26,7 @@ import DocumentoFormPage from './pages/docia/DocumentoFormPage.jsx';
 import DocumentosPage from './pages/docia/DocumentosPage.jsx';
 import AssistentePage from './pages/docia/AssistentePage.jsx';
 import ComparacaoPage from './pages/docia/ComparacaoPage.jsx';
+import KanbanPage from './pages/flux/KanbanPage.jsx';
 import DemandaDetailPage from './pages/flux/DemandaDetailPage.jsx';
 import DemandaFormPage from './pages/flux/DemandaFormPage.jsx';
 import DemandasListPage from './pages/flux/DemandasListPage.jsx';
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/intelligence/relatorios" element={<RelatoriosPage />} />
               </Route>
               <Route path="/flux/painel" element={<PainelFiscalizacaoPage />} />
+              <Route path="/flux/kanban" element={<KanbanPage />} />
               <Route path="/flux/demandas" element={<DemandasListPage />} />
               <Route path="/flux/demandas/:id" element={<DemandaDetailPage />} />
               <Route element={<RequireRole roles={PERFIS_EDICAO_DEMANDA} />}>
