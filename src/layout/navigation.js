@@ -28,7 +28,7 @@ export const NAVIGATION = [
     group: 'DocIA',
     items: [
       { to: '/docia/documentos', label: 'Documentos', icon: 'file' },
-      { to: '/docia/assistente', label: 'Assistente', icon: 'file' },
+      { to: '/docia/assistente', label: 'Assistente', icon: 'inbox' },
     ],
   },
   {

@@ -18,7 +18,7 @@ function Resposta({ item }) {
     <div className="card card-body shadow-sm mb-3" data-testid="resposta">
       <div className="mb-2">
         <span className="nx-badge nx-badge-gray" data-testid="modo-resposta">
-          {item.modo}
+          {item.modo || 'Modo não informado'}
         </span>
       </div>
       <p className={`mb-2 ${semInfo ? 'text-body-secondary fst-italic' : ''}`}>{item.resposta}</p>
@@ -64,6 +64,7 @@ export default function AssistentePage() {
       const r = await perguntar(p);
       setConversa((c) => [...c, { tipo: 'resposta', ...r }]);
     } catch (e) {
+      setTexto((atual) => atual || p);
       setErro(mensagemDeErro(e, 'Não foi possível obter a resposta.'));
     } finally {
       setEnviando(false);

@@ -49,7 +49,7 @@ export default function App() {
               </Route>
               <Route path="/docia/documentos/:id" element={<DocumentoDetailPage />} />
               <Route path="/docia/assistente" element={<AssistentePage />} />
-              <Route path="*"element={<NotFoundPage />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Route>
         </Routes>

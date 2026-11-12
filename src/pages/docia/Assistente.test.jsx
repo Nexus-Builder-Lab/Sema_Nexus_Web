@@ -74,5 +74,6 @@ describe('Assistente DocIA', () => {
     await user.type(await screen.findByLabelText('Sua pergunta'), 'oi');
     await user.click(screen.getByRole('button', { name: 'Perguntar' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(screen.getByLabelText('Sua pergunta')).toHaveValue('oi');
   });
 });
