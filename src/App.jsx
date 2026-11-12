@@ -27,6 +27,7 @@ import DocumentosPage from './pages/docia/DocumentosPage.jsx';
 import AssistentePage from './pages/docia/AssistentePage.jsx';
 import ComparacaoPage from './pages/docia/ComparacaoPage.jsx';
 import PrazosPage from './pages/flux/PrazosPage.jsx';
+import ProdutividadePage from './pages/flux/ProdutividadePage.jsx';
 import KanbanPage from './pages/flux/KanbanPage.jsx';
 import DemandaDetailPage from './pages/flux/DemandaDetailPage.jsx';
 import DemandaFormPage from './pages/flux/DemandaFormPage.jsx';
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/flux/painel" element={<PainelFiscalizacaoPage />} />
               <Route path="/flux/kanban" element={<KanbanPage />} />
               <Route path="/flux/prazos" element={<PrazosPage />} />
+              <Route path="/flux/produtividade" element={<ProdutividadePage />} />
               <Route path="/flux/demandas" element={<DemandasListPage />} />
               <Route path="/flux/demandas/:id" element={<DemandaDetailPage />} />
               <Route element={<RequireRole roles={PERFIS_EDICAO_DEMANDA} />}>
