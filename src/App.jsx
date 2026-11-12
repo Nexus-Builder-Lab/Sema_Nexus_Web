@@ -26,6 +26,7 @@ import DocumentoFormPage from './pages/docia/DocumentoFormPage.jsx';
 import DocumentosPage from './pages/docia/DocumentosPage.jsx';
 import AssistentePage from './pages/docia/AssistentePage.jsx';
 import ComparacaoPage from './pages/docia/ComparacaoPage.jsx';
+import AnaliseDocumentalPage from './pages/docia/AnaliseDocumentalPage.jsx';
 import PrazosPage from './pages/flux/PrazosPage.jsx';
 import ProdutividadePage from './pages/flux/ProdutividadePage.jsx';
 import KanbanPage from './pages/flux/KanbanPage.jsx';
@@ -68,6 +69,7 @@ export default function App() {
               </Route>
               <Route path="/docia/documentos/:id" element={<DocumentoDetailPage />} />
               <Route path="/docia/assistente" element={<AssistentePage />} />
+              <Route path="/docia/analise" element={<AnaliseDocumentalPage />} />
               <Route path="/docia/comparacao" element={<ComparacaoPage />} />
               <Route element={<RequireRole roles={PERFIS_ADMIN} />}>
                 <Route path="/admin/usuarios" element={<UsuariosPage />} />
