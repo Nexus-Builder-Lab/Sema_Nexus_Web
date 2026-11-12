@@ -7,5 +7,9 @@ const malhaDeTeste = http.get('/geo/mt-uf.geojson', () =>
   HttpResponse.json({ type: 'Feature', properties: { uf: 'MT' }, geometry: null }),
 );
 
+const municipiosDeTeste = http.get('/geo/mt-municipios.geojson', () =>
+  HttpResponse.json({ type: 'FeatureCollection', features: [] }),
+);
+
 // Usado pelos testes (Vitest, ambiente jsdom).
-export const server = setupServer(...handlers, malhaDeTeste);
+export const server = setupServer(...handlers, malhaDeTeste, municipiosDeTeste);

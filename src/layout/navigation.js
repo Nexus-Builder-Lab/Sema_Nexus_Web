@@ -41,6 +41,7 @@ export const NAVIGATION = [
     items: [
       { to: '/docia/documentos', label: 'Documentos', icon: 'folder' },
       { to: '/docia/assistente', label: 'Assistente DocIA', icon: 'assistant' },
+      { to: '/docia/analise', label: 'Análise documental', icon: 'report' },
       { to: '/docia/comparacao', label: 'Comparação', icon: 'compare' },
     ],
   },

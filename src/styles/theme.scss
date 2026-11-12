@@ -1632,3 +1632,79 @@ figure.nx-chart-figure {
     }
   }
 }
+
+// ---------- DocIA: análise documental ----------
+.nx-ai-disclaimer {
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: var(--bs-border-radius);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #3730a3;
+}
+
+.nx-doc-select-list {
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+.nx-doc-pick {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--bs-border-color);
+  padding: 10px 14px;
+
+  strong {
+    display: block;
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+  }
+
+  span span {
+    display: block;
+    font-size: 11px;
+    color: var(--bs-secondary-color);
+  }
+
+  &:hover,
+  &.active {
+    background: #f0fdf4;
+  }
+}
+
+.nx-summary-box {
+  background: #f9fafb;
+  border-left: 3px solid $nx-green-700;
+  border-radius: 6px;
+  padding: 12px 12px 12px 30px;
+  margin: 0;
+  font-size: 13px;
+
+  li + li {
+    margin-top: 6px;
+  }
+}
+
+.nx-doc-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.nx-mark-proc {
+  background: #dcfce7;
+}
+
+.nx-mark-date {
+  background: #dbeafe;
+}
+
+.nx-mark-num {
+  background: #fef3c7;
+}
