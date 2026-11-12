@@ -269,3 +269,10 @@
 - **Decisões:** setor do protótipo substituído por equipe (a API de demandas não expõe setor e `/equipes` é restrito a ADMIN/GESTOR); carrega as 100 demandas mais recentes com aviso se houver mais; "Cancelada" não existe nos 7 status.
 - **Arquivos principais:** `src/pages/flux/{KanbanPage.jsx,kanbanTransicoes.js}` (+ testes), `src/App.jsx`, `src/layout/navigation.js`, `src/components/Icon.jsx`, `src/styles/theme.scss`.
 - **Testes:** afetados (Kanban, kanbanTransicoes, layout: 13) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador.
+
+## 2026-11-12 — GH-60 · Controle de prazos igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** nova tela `/flux/prazos` (menu SEMA Flux > "Controle de prazos"): alerta de vencidas (ou aviso de sucesso), 4 KPIs (vencidas, próximas, dentro do prazo, concluídas) a partir de `/api/flux/prazos/resumo` e abas com contagem e lista por estado (`/api/flux/prazos?estado=`), com caixa de dias de atraso em destaque, link para a demanda, prioridade e status; selo demonstrativo e estados de carregamento/vazio/erro.
+- **Decisões:** equipe/fiscal/município no lugar de setor/servidor (domínio do SEMA NEXUS); janela de alerta fixa em 5 dias no texto (padrão da API; sem parâmetro administrativo no Web); lista limitada a 100 itens por aba.
+- **Arquivos principais:** `src/pages/flux/PrazosPage.jsx` (+ teste), `src/App.jsx`, `src/layout/navigation.js`, `src/styles/theme.scss`.
+- **Testes:** afetados (PrazosPage, layout, App: 5 + 15) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador.
