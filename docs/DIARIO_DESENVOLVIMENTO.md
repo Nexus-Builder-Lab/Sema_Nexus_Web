@@ -355,3 +355,8 @@
 - Revisão: documentos (`DocumentoResumo`) e prazos (`PrazoItem`, só nome da equipe) não têm campo de setor na API, e `/flux/prazos/resumo` não filtra. O filtro fica desabilitado nesses tipos, com nota, sem enviar `setorId` e sem "Setor:" no resumo. Pendência de contrato: expor `setorId` em documentos e prazos na API (a abrir como Issue na API, se aprovada).
 - Correção correlata: `modelos.js` renderizava `municipio`/`responsavel` (objetos `{id,nome}`) no relatório de documentos; agora usa `nome`.
 - Testes: `IndicadoresPage.test.jsx` e `RelatoriosPage.test.jsx` (23 ok); lint 0 erros. Suíte completa, build e Docker: a confirmar pelo validador.
+
+## GH-92 — Fontes do sistema +2 px (12/11/2026)
+- `theme.scss`: `$font-size-base` 14 -> 16 px; cada `font-size` em px/rem somado de 2 px, com piso de 12,5 px (hierarquia preservada; títulos e KPIs sobem igualmente). `print.css` (telas de impressão em rem) ajustado; regras em `pt` mantidas.
+- `IndicatorChart`: fonte 16 px em ticks, legenda, tooltip e títulos de eixo. Leaflet: popup/tooltip 14 px e atribuição 12,5 px.
+- Testes: lint e testes afetados rodados localmente; suíte completa, build e verificação visual em 375/768/1366 px a confirmar pelo validador.
