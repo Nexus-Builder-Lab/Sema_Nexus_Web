@@ -35,8 +35,8 @@ export const NAVIGATION = [
   {
     group: 'Administração',
     items: [
-      { to: '/admin/usuarios', label: 'Usuários', icon: 'users' },
-      { to: '/admin/equipes', label: 'Equipes', icon: 'team' },
+      { to: '/admin/usuarios', label: 'Usuários', icon: 'users', roles: ['ADMIN'] },
+      { to: '/admin/estrutura', label: 'Setores e equipes', icon: 'team', roles: ['ADMIN'] },
     ],
   },
 ];

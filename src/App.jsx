@@ -1,12 +1,14 @@
 import { Route, Routes } from 'react-router-dom';
 import RequireRole from './auth/RequireRole.jsx';
-import { PERFIS_EDICAO_DEMANDA, PERFIS_ESCRITA_DOCUMENTO } from './auth/perfis.js';
+import { PERFIS_ADMIN, PERFIS_EDICAO_DEMANDA, PERFIS_ESCRITA_DOCUMENTO } from './auth/perfis.js';
 import AuthProvider from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { ToastProvider } from './components/Toasts.jsx';
 import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
 import LoginPage from './pages/core/LoginPage.jsx';
+import UsuariosPage from './pages/core/admin/UsuariosPage.jsx';
+import EstruturaPage from './pages/core/admin/EstruturaPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
@@ -51,6 +53,10 @@ export default function App() {
               <Route path="/docia/documentos/:id" element={<DocumentoDetailPage />} />
               <Route path="/docia/assistente" element={<AssistentePage />} />
               <Route path="/docia/comparacao" element={<ComparacaoPage />} />
+              <Route element={<RequireRole roles={PERFIS_ADMIN} />}>
+                <Route path="/admin/usuarios" element={<UsuariosPage />} />
+                <Route path="/admin/estrutura" element={<EstruturaPage />} />
+              </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Route>
