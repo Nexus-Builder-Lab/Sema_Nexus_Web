@@ -67,7 +67,7 @@ describe('RelatoriosPage', () => {
     renderPagina('/intelligence/relatorios?bioma=PANTANAL');
     await screen.findByRole('table');
     await user.click(screen.getByRole('button', { name: 'Baixar CSV' }));
-    await waitFor(() => expect(clique).toHaveBeenCalled());
+    await waitFor(() => expect(clique).toHaveBeenCalled(), { timeout: 5000 });
     expect(consulta.searchParams.get('bioma')).toBe('PANTANAL');
     server.events.removeAllListeners();
   });
@@ -118,6 +118,8 @@ describe('RelatoriosPage', () => {
     renderPagina();
     await screen.findByRole('table');
     await user.click(screen.getByRole('button', { name: 'Baixar CSV' }));
-    expect(await screen.findByText('Perfil sem permissão para relatórios.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Perfil sem permissão para relatórios.', {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 });

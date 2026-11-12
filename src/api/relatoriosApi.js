@@ -12,12 +12,23 @@ export async function obterRelatorioDemandas(filtros = {}, { page = 0, size = 20
   return data;
 }
 
+/** Lê o Blob como texto; `Blob.text()` não existe em todos os ambientes (ex.: jsdom), então usa FileReader. */
+function lerTexto(blob) {
+  if (typeof blob.text === 'function') return blob.text();
+  return new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(String(leitor.result));
+    leitor.onerror = () => reject(leitor.error);
+    leitor.readAsText(blob);
+  });
+}
+
 /** Com `responseType: 'blob'` o problem+json do erro chega como Blob: converte para objeto. */
 async function lerErroBlob(erro) {
   const dados = erro?.response?.data;
   if (typeof Blob !== 'undefined' && dados instanceof Blob) {
     try {
-      erro.response.data = JSON.parse(await dados.text());
+      erro.response.data = JSON.parse(await lerTexto(dados));
     } catch {
       erro.response.data = undefined;
     }
