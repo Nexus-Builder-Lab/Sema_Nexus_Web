@@ -43,7 +43,13 @@ describe('App e layout', () => {
   it('lista os módulos no menu e marca o item ativo', () => {
     renderAt('/flux/demandas');
     const menu = screen.getByRole('navigation', { name: 'Módulos' });
-    for (const grupo of ['Core', 'Intelligence', 'Flux', 'DocIA', 'Administração']) {
+    for (const grupo of [
+      'Visão geral',
+      'SEMA Intelligence',
+      'SEMA Flux',
+      'SEMA DocIA',
+      'Administração',
+    ]) {
       expect(within(menu).getByText(grupo)).toBeInTheDocument();
     }
     expect(within(menu).getByRole('link', { name: 'Demandas' })).toHaveAttribute(
@@ -52,11 +58,24 @@ describe('App e layout', () => {
     );
   });
 
+  it('mostra subtítulos dos módulos, pesquisa e menu do usuário na topbar', async () => {
+    renderAt('/');
+    const menu = screen.getByRole('navigation', { name: 'Módulos' });
+    expect(within(menu).getByText('Gestão e análise ambiental')).toBeInTheDocument();
+    expect(within(menu).getByText('Processos e demandas')).toBeInTheDocument();
+    expect(within(menu).getByText('Documentos e processos')).toBeInTheDocument();
+    expect(screen.getByRole('search')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Menu do usuário' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+
   it('mostra a trilha de navegação da página atual', () => {
     renderAt('/intelligence/inteligencia-ambiental');
     const trail = screen.getByRole('navigation', { name: 'Trilha de navegação' });
     expect(within(trail).getByRole('link', { name: 'Início' })).toHaveAttribute('href', '/');
-    expect(within(trail).getByText('Intelligence')).toBeInTheDocument();
+    expect(within(trail).getByText('SEMA Intelligence')).toBeInTheDocument();
     expect(within(trail).getByText('Inteligência ambiental')).toHaveAttribute(
       'aria-current',
       'page',

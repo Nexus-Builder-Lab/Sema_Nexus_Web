@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import Icon from '../components/Icon.jsx';
 import { findNavItem, subCrumb } from './navigation.js';
 
 export default function Breadcrumbs() {
@@ -26,6 +27,7 @@ export default function Breadcrumbs() {
               className={`breadcrumb-item ${last ? 'active' : ''}`}
               aria-current={last ? 'page' : undefined}
             >
+              {index === 0 && <Icon name="home" size={14} className="nx-crumb-home" />}
               {!last && crumb.to ? <Link to={crumb.to}>{crumb.label}</Link> : crumb.label}
             </li>
           );
