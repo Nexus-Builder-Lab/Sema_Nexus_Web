@@ -23,7 +23,7 @@ ChartJS.register(
   Tooltip,
 );
 
-const FONTE = { size: 14 };
+const FONTE = { size: 16 };
 
 function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito }) {
   const base = {
@@ -42,7 +42,9 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
   const eixoValor = {
     beginAtZero: true,
     stacked,
-    title: tituloEixo ? { display: true, text: tituloEixo, color: COR_TEXTO } : undefined,
+    title: tituloEixo
+      ? { display: true, text: tituloEixo, color: COR_TEXTO, font: FONTE }
+      : undefined,
     ticks: { color: COR_TEXTO, font: FONTE, precision: 0 },
     grid: { color: COR_GRADE },
   };
@@ -63,7 +65,7 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
               beginAtZero: true,
               grid: { display: false },
               ticks: { color: COR_TEXTO, font: FONTE, precision: 0 },
-              title: { display: true, text: tituloEixoDireito, color: COR_TEXTO },
+              title: { display: true, text: tituloEixoDireito, color: COR_TEXTO, font: FONTE },
             },
           }
         : {}),

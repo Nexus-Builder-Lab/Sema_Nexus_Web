@@ -45,16 +45,16 @@
 }
 
 .nx-report-kpis span {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: var(--bs-secondary-color);
 }
 
 .nx-report-kpis strong {
-  font-size: 1.35rem;
+  font-size: 1.475rem;
 }
 
 .nx-report-table th {
-  font-size: 0.7rem;
+  font-size: 0.78125rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--bs-secondary-color);
