@@ -276,3 +276,10 @@
 - **Decisões:** equipe/fiscal/município no lugar de setor/servidor (domínio do SEMA NEXUS); janela de alerta fixa em 5 dias no texto (padrão da API; sem parâmetro administrativo no Web); lista limitada a 100 itens por aba.
 - **Arquivos principais:** `src/pages/flux/PrazosPage.jsx` (+ teste), `src/App.jsx`, `src/layout/navigation.js`, `src/styles/theme.scss`.
 - **Testes:** afetados (PrazosPage, layout, App: 5 + 15) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador.
+
+## 2026-11-12 — GH-61 · Indicadores de produtividade igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** nova tela `/flux/produtividade` (menu SEMA Flux > "Produtividade") com `/api/flux/produtividade`: filtros de período (3/6/12 meses, enviados como `de`/`ate`) e setor, 6 KPIs, gráficos "Demandas por setor e situação" (barras empilhadas), "Tempo médio de conclusão por setor" (horizontal) e histórico recebidas × concluídas, tabela por responsável com barra de conclusão e "Exportar CSV" (separador `;`, vírgula decimal). Selo demonstrativo e estados de carregamento/vazio/erro.
+- **Decisões:** a API entrega concluídas/ativas/atrasadas por setor (não os 7 status), então a pilha usa Concluídas, Ativas no prazo e Atrasadas; servidor vira responsável (fiscal); o filtro de setor só aparece se `/api/setores` responder (ADMIN/GESTOR; demais perfis recebem 403 e usam a tela sem o filtro).
+- **Arquivos principais:** `src/pages/flux/ProdutividadePage.jsx` (+ teste), `src/App.jsx`, `src/layout/navigation.js`, `src/mocks/fixtures/intelligence.js`.
+- **Testes:** afetados (ProdutividadePage, layout, App: 20) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real (#84 ainda aberta) e rolagem em 375/768/1366 px: a confirmar pelo validador.
