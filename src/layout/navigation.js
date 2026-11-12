@@ -30,6 +30,7 @@ export const NAVIGATION = [
     items: [
       { to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' },
       { to: '/flux/kanban', label: 'Fluxo de atividades', icon: 'workflow' },
+      { to: '/flux/prazos', label: 'Controle de prazos', icon: 'alarm' },
       { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'indicators' },
     ],
   },

@@ -1486,3 +1486,63 @@ figure.nx-chart-figure {
   padding: 1px 6px;
   font-weight: 600;
 }
+
+// Controle de prazos (Flux)
+.nx-prazo-tabs {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: $nx-gray-600;
+    font-size: 13px;
+    white-space: nowrap;
+    &.active {
+      color: #166534;
+      font-weight: 600;
+    }
+  }
+}
+.nx-deadline-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+.nx-deadline-days {
+  flex: 0 0 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 6px 4px;
+  line-height: 1.1;
+  text-align: center;
+  strong {
+    font-size: 16px;
+  }
+  span {
+    font-size: 9px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+}
+.nx-deadline-red {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.nx-deadline-amber {
+  background: #fffbeb;
+  color: #b45309;
+}
+.nx-deadline-green {
+  background: #f0fdf4;
+  color: #15803d;
+}
