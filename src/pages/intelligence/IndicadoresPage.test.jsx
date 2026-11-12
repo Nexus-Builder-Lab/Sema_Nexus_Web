@@ -136,9 +136,20 @@ describe('IndicadoresPage (Análise de indicadores)', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/falhou/i);
   });
 
-  it('o filtro de setor fica indisponível (pendência de contrato)', async () => {
+  it('o filtro de setor lista /api/setores e envia setorId aos indicadores', async () => {
+    let consulta = null;
+    server.events.on('request:start', ({ request }) => {
+      if (request.url.includes('/intelligence/serie-mensal')) consulta = new URL(request.url);
+    });
+    const user = userEvent.setup();
     renderPagina();
-    expect(screen.getByLabelText(/Setor/)).toBeDisabled();
+    const seletor = screen.getByLabelText('Setor');
+    expect(seletor).toBeEnabled();
+    await waitFor(() => expect(within(seletor).getAllByRole('option').length).toBeGreaterThan(1));
+    expect(screen.queryByText(/Filtro por setor indisponível/)).not.toBeInTheDocument();
+    await user.selectOptions(seletor, within(seletor).getAllByRole('option')[1]);
+    await waitFor(() => expect(consulta?.searchParams.get('setorId')).toBeTruthy());
+    server.events.removeAllListeners();
   });
 });
 

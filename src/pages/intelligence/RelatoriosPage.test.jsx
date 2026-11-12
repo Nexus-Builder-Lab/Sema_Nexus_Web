@@ -153,12 +153,44 @@ describe('RelatoriosPage', () => {
     const user = userEvent.setup();
     renderPagina('/intelligence/relatorios?tipo=produtividade');
     expect(await screen.findByRole('heading', { name: 'Por setor' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText('Setor')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: /Fiscalização/ })).toBeInTheDocument(),
+    );
     await user.selectOptions(screen.getByLabelText('Setor'), '2');
     await user.click(screen.getByRole('button', { name: 'Filtrar' }));
     await waitFor(() => expect(consulta?.searchParams.get('setorId')).toBe('2'));
     server.events.removeAllListeners();
   });
+
+  it('filtro de setor habilitado e enviado no relatório de demandas', async () => {
+    let consulta = null;
+    server.events.on('request:start', ({ request }) => {
+      if (/\/relatorios\/demandas(\?|$)/.test(request.url)) consulta = new URL(request.url);
+    });
+    renderPagina('/intelligence/relatorios?tipo=demandas&setorId=2');
+    expect(screen.getByLabelText('Setor')).toBeEnabled();
+    await waitFor(() => expect(consulta?.searchParams.get('setorId')).toBe('2'));
+    server.events.removeAllListeners();
+  });
+
+  it.each(['documentos', 'prazos'])(
+    'setor desabilitado e não enviado no relatório de %s',
+    async (tipo) => {
+      const urls = [];
+      server.events.on('request:start', ({ request }) => urls.push(request.url));
+      renderPagina(`/intelligence/relatorios?tipo=${tipo}&setorId=2`);
+      expect(screen.getByLabelText('Setor')).toBeDisabled();
+      expect(screen.getByText(/a API não expõe setor/)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(urls.some((u) => /\/(documentos|flux\/prazos)/.test(u))).toBe(true),
+      );
+      expect(
+        urls.filter((u) => /\/(documentos|flux\/prazos)/.test(u) && u.includes('setorId')),
+      ).toEqual([]);
+      expect(screen.getByTestId('cabecalho-impressao')).not.toHaveTextContent('Setor: ');
+      server.events.removeAllListeners();
+    },
+  );
 
   it('relatório de documentos mostra estado vazio sem registros', async () => {
     server.use(
