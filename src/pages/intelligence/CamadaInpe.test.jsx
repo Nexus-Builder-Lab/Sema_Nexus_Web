@@ -10,6 +10,18 @@ import { iniciarSessao } from '../../test/auth.js';
 // O mapa Leaflet em jsdom é lento com a suíte completa em paralelo.
 vi.setConfig({ testTimeout: 20000 });
 
+vi.mock('react-chartjs-2', () => {
+  const stub = (tipo) =>
+    function Grafico({ data, 'aria-label': ariaLabel }) {
+      return (
+        <div data-testid={`grafico-${tipo}`} role="img" aria-label={ariaLabel}>
+          {JSON.stringify(data.labels)}
+        </div>
+      );
+    };
+  return { Bar: stub('bar'), Line: stub('line'), Doughnut: stub('doughnut') };
+});
+
 const ROTA = '/intelligence/inteligencia-ambiental';
 const FOCOS = 'Focos de calor — INPE (dados públicos)';
 const DETER = 'Alertas de desmatamento — DETER (dados públicos)';
@@ -165,7 +177,8 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
     const { container } = renderPagina();
     await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
     expect(within(camadas(container)).getByText(FOCOS)).toBeInTheDocument();
-    await screen.findByText('8');
+    const painel = await screen.findByRole('region', { name: /Referência por satélite/ });
+    await within(painel).findByText('8');
     expect(within(camadas(container)).queryByText(DETER)).toBeNull();
   });
 

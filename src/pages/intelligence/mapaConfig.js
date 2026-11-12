@@ -44,6 +44,7 @@ export const FILTROS_VAZIOS = {
   municipioId: '',
   bioma: '',
   categoria: '',
+  status: '',
   de: '',
   ate: '',
   satDe: '',

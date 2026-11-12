@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import FilterBar from '../../components/FilterBar.jsx';
+import { PERIODOS } from './concentracao.js';
 
 function Selecao({ id, label, valor, onChange, vazio, opcoes, className }) {
   return (
@@ -28,6 +29,9 @@ export default function MapFilters({
   municipios,
   biomas,
   categorias,
+  situacoes = [],
+  onPeriodo,
+  periodoAtivo,
 }) {
   const id = useId();
   const set = (campo) => (event) => onChange({ ...valores, [campo]: event.target.value });
@@ -60,6 +64,15 @@ export default function MapFilters({
         valor={valores.categoria}
         onChange={set('categoria')}
         opcoes={categorias.map((c) => ({ valor: c.codigo, rotulo: c.rotulo }))}
+      />
+      <Selecao
+        id={`${id}-sit`}
+        className="col-6 col-md-3 col-xl-2"
+        label="Situação"
+        vazio="Todas"
+        valor={valores.status}
+        onChange={set('status')}
+        opcoes={situacoes.map((c) => ({ valor: c.codigo, rotulo: c.rotulo }))}
       />
       <div className="col-6 col-md-3 col-xl-2">
         <label htmlFor={`${id}-de`} className="form-label small mb-1">
@@ -113,6 +126,26 @@ export default function MapFilters({
           onChange={set('satAte')}
         />
       </div>
+      {onPeriodo && (
+        <div
+          className="col-12 d-flex flex-wrap align-items-center gap-2"
+          role="group"
+          aria-label="Período rápido"
+        >
+          <span className="small text-body-secondary">Período:</span>
+          {PERIODOS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`btn btn-sm nx-chip${periodoAtivo === p.id ? ' active' : ''}`}
+              aria-pressed={periodoAtivo === p.id}
+              onClick={() => onPeriodo(p.id)}
+            >
+              {p.rotulo}
+            </button>
+          ))}
+        </div>
+      )}
     </FilterBar>
   );
 }
