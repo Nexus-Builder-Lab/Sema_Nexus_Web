@@ -15,7 +15,7 @@ export const NAVIGATION = [
         label: 'Inteligência ambiental',
         icon: 'map',
       },
-      { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'indicators' },
+      { to: '/intelligence/indicadores', label: 'Análise de indicadores', icon: 'indicators' },
       {
         to: '/intelligence/relatorios',
         label: 'Relatórios',
