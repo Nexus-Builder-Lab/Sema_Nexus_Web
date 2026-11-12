@@ -1,5 +1,15 @@
 import {
+  Activity,
+  AlarmClockOff,
   AlertTriangle,
+  Building2,
+  CheckCircle2,
+  Clock,
+  LineChart,
+  Loader,
+  MapPin,
+  PieChart,
+  Plus,
   BarChart3,
   Bell,
   Bot,
@@ -61,6 +71,16 @@ const ICONS = {
   sortAsc: ArrowUp,
   sortDesc: ArrowDown,
   sort: ArrowUpDown,
+  activity: Activity,
+  alarm: AlarmClockOff,
+  building: Building2,
+  check: CheckCircle2,
+  clock: Clock,
+  lineChart: LineChart,
+  loader: Loader,
+  pin: MapPin,
+  pie: PieChart,
+  plus: Plus,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {

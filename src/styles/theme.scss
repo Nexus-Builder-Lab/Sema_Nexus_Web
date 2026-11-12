@@ -1260,3 +1260,47 @@ figure.nx-chart-figure {
   max-height: 360px;
   overflow: auto;
 }
+
+// ---------- Listas do dashboard (atenção e atividades recentes) ----------
+.nx-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nx-lista-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid $nx-gray-100;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+.nx-lista-main {
+  min-width: 0;
+  flex: 1;
+}
+.nx-lista-titulo {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: $nx-gray-900;
+  overflow-wrap: anywhere;
+}
+.nx-lista-sub {
+  font-size: 12px;
+  color: $nx-gray-500;
+}
+.nx-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: $nx-green-50;
+  color: $nx-green-700;
+  font-size: 11px;
+  font-weight: 700;
+}

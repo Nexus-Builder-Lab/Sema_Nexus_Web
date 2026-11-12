@@ -87,7 +87,10 @@ describe('Login', () => {
     const user = userEvent.setup();
     renderAt('/login');
     await preencherEEnviar(user, 'admin@admin.com', '12345678');
-    await screen.findByRole('heading', { name: 'SEMA NEXUS', level: 1 });
+    await screen.findByRole('heading', {
+      name: /^(Bom dia|Boa tarde|Boa noite), Administrador/,
+      level: 1,
+    });
 
     const guardado = JSON.parse(sessionStorage.getItem(SESSION_KEY));
     expect(guardado.token).toBeTruthy();
@@ -145,7 +148,10 @@ describe('Login', () => {
     const botao = await screen.findByRole('button', { name: /entrando/i });
     expect(botao).toBeDisabled();
     liberar();
-    await screen.findByRole('heading', { name: 'SEMA NEXUS', level: 1 });
+    await screen.findByRole('heading', {
+      name: /^(Bom dia|Boa tarde|Boa noite), Administrador/,
+      level: 1,
+    });
   });
 
   it('mostra mensagem para usuário inativo (403) e para falha de rede', async () => {
@@ -211,7 +217,10 @@ describe('Login', () => {
     iniciarSessao();
     renderAt('/login');
     expect(
-      await screen.findByRole('heading', { name: 'SEMA NEXUS', level: 1 }),
+      await screen.findByRole('heading', {
+        name: /^(Bom dia|Boa tarde|Boa noite), Administrador/,
+        level: 1,
+      }),
     ).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Menu principal' })).toBeInTheDocument();
   });

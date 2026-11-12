@@ -5,6 +5,7 @@ import { handlersRelatorios } from './fixtures/relatorios.js';
 import {
   BIOMAS,
   filtrarPontos,
+  handlersFluxDashboard,
   handlersIntelligence,
   handlersReferencia,
 } from './fixtures/intelligence.js';
@@ -334,6 +335,7 @@ export const handlers = [
   ...handlersAdmin,
   ...handlersNotificacoes,
   ...handlersIntelligence,
+  ...handlersFluxDashboard,
   ...handlersReferencia,
   ...handlersRelatorios,
   ...intelligence,
