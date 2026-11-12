@@ -14,21 +14,35 @@ export const NAVIGATION = [
         label: 'Inteligência ambiental',
         icon: 'map',
       },
+      { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'dashboard' },
+      {
+        to: '/intelligence/relatorios',
+        label: 'Relatórios',
+        icon: 'file',
+        roles: ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'],
+      },
     ],
   },
   {
     group: 'Flux',
-    items: [{ to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' }],
+    items: [
+      { to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' },
+      { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'dashboard' },
+    ],
   },
   {
     group: 'DocIA',
-    items: [{ to: '/docia/documentos', label: 'Documentos', icon: 'file' }],
+    items: [
+      { to: '/docia/documentos', label: 'Documentos', icon: 'file' },
+      { to: '/docia/assistente', label: 'Assistente', icon: 'inbox' },
+      { to: '/docia/comparacao', label: 'Comparação', icon: 'file' },
+    ],
   },
   {
     group: 'Administração',
     items: [
-      { to: '/admin/usuarios', label: 'Usuários', icon: 'users' },
-      { to: '/admin/equipes', label: 'Equipes', icon: 'team' },
+      { to: '/admin/usuarios', label: 'Usuários', icon: 'users', roles: ['ADMIN'] },
+      { to: '/admin/estrutura', label: 'Setores e equipes', icon: 'team', roles: ['ADMIN'] },
     ],
   },
 ];

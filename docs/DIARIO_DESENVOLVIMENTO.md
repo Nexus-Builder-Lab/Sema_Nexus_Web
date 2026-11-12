@@ -141,6 +141,58 @@
 - **Testes:** afetados (`src/pages/docia`, `flux`, `App`, `auth`) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real (API#15/#16) pendente.
 
+## 2026-11-11 — GH-12 · Testes de componentes e fluxos principais
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** auditoria dos 6 fluxos da Issue (login sucesso/erro, rota protegida, cadastro de demanda, triagem/distribuição, upload de documento, filtros da listagem): todos já tinham testes unitários por tela (`auth.test`, `DemandaFormPage.test`, `DemandaDetailPage.test`, `DocumentoFormPage.test`, `DemandasListPage.test`). Acrescentado `src/fluxosCriticos.test.jsx`, jornada integrada pelo App real e MSW que costura os fluxos. Sem testes pulados; o CI já roda `npm test`.
+- **Arquivos principais:** `src/fluxosCriticos.test.jsx`, este diário.
+- **Testes:** `fluxosCriticos.test.jsx` → 2 passaram; lint 0 problemas. Suíte completa, build e CI: a confirmar pelo validador.
+- **API real ou mocks:** MSW.
+
+## 2026-11-11 — GH-17 · Indicadores explicados e painel de fiscalização do Flux
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/intelligence/indicadores` (`IndicadoresPage`): demandas recebidas, tempo médio simulado, % de conclusão, evolução por período, volume por categoria e distribuição territorial, cada um com descrição e "Como é calculado". `/flux/painel` (`PainelFiscalizacaoPage`): contadores por status (inclui atrasadas) e gráficos por situação, período, município, categoria e equipe, reaproveitando `ChartCard`. Itens no menu; selo demonstrativo em todos os painéis; hook `useIndicador`.
+- **Decisões técnicas:** % de conclusão = finalizadas ÷ recebidas, calculado no cliente a partir de `/intelligence/resumo`. A API não expõe tempo médio nem indicador por equipe: o tempo médio aparece como "indisponível (pendência de contrato)" e o gráfico por equipe agrupa as primeiras 200 demandas de `/api/demandas` (avisa quando parcial). Sugerida Issue na API para esses dois indicadores.
+- **Arquivos principais:** `src/pages/intelligence/IndicadoresPage.jsx`, `src/pages/flux/PainelFiscalizacaoPage.jsx`, `src/hooks/useIndicador.js`, `src/App.jsx`, `src/layout/navigation.js`, testes das duas páginas.
+- **Testes:** afetados (2 páginas novas, App, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-11 — GH-16 · Assistente DocIA com referências e modo identificado
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/assistente` (`AssistentePage`): chat com sugestões de perguntas, campo limitado a 500 caracteres, estados de envio/erro; cada resposta exibe o `modo` devolvido pela API em destaque e as referências (título com link para o documento + trecho). Resposta "Não há informação suficiente" aparece como tal, sem referências. Item "Assistente" no menu DocIA.
+- **Decisões técnicas:** o modo vem sempre da API (a tela nunca afirma IA real); contrato conforme `POST /api/docia/perguntas` da API (#27); o `openapi.json` local ainda não contém o endpoint, então os testes usam handlers MSW próprios.
+- **Arquivos principais:** `src/pages/docia/AssistentePage.jsx`, `src/api/assistenteApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Assistente.test.jsx`.
+- **Testes:** afetados (Assistente.test, App.test) → 15 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+## 2026-11-12 — GH-15 · Tela de comparação documental
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/comparacao` (`ComparacaoPage`): seleção de dois documentos (bloqueia o mesmo documento), metadados lado a lado com Igual/Diferente, diff por linhas (`DiffView`, fonte monoespaçada, cor + sinal + rótulo acessível), trechos semelhantes, termos exclusivos e similaridade como informação secundária. Aviso fixo de comparação determinística (não é IA). Erros da API (ex.: documento sem texto extraído) exibidos via `detail` do ProblemDetail. Item "Comparação" no menu DocIA.
+- **Decisões técnicas:** contrato conforme `ComparacaoResponse` da API (#26); aviso de texto truncado quando `truncado=true`.
+- **Arquivos principais:** `src/pages/docia/ComparacaoPage.jsx`, `src/components/DiffView.jsx`, `src/api/comparacaoApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Comparacao.test.jsx`.
+- **Testes:** afetados (Comparacao.test, App.test, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-13 · Gestão de usuários, setores e equipes
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/admin/usuarios` (listagem paginada, pesquisa por nome/e-mail, filtro por perfil e situação, cadastro, edição, ativar/desativar com confirmação, equipe) e `/admin/estrutura` (setores e equipes: cadastro, edição, membros e responsável). Rotas só para ADMIN (`RequireRole`) e itens do menu Administração visíveis apenas ao ADMIN; senha validada com 8 a 72 caracteres (obrigatória no cadastro, opcional na edição). Menu: `/admin/equipes` virou `/admin/estrutura`.
+- **Decisões técnicas:** a API não guarda equipe no usuário; o campo "Equipe" do formulário grava a associação via `PUT /api/equipes/{id}/membros` depois de salvar (aviso se essa segunda chamada falhar). Erros 400 por campo e 409 (e-mail/sigla duplicados, último ADMIN) exibidos a partir do ProblemDetail. Contrato conforme `docs/API.md` da API (#24); o `openapi.json` local ainda não tem esses endpoints, então os mocks MSW (`src/mocks/fixtures/admin.js`, store em memória) foram escritos à mão a partir do doc.
+- **Arquivos principais:** `src/pages/core/admin/*`, `src/api/adminApi.js`, `src/mocks/fixtures/admin.js`, `src/App.jsx`, `src/layout/{navigation.js,Sidebar.jsx}`, `src/auth/perfis.js`.
+- **Testes:** afetados (Admin.test, App, auth, layout, flux) → 102 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-18 · Relatórios com filtros e exportação CSV/PDF
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/intelligence/relatorios` (`RelatoriosPage`): filtros período, município, bioma, categoria e status (na URL, validação de período), tabela paginada com estados de carregamento/vazio/erro, botão "Baixar CSV" (`GET /api/relatorios/demandas.csv` com os mesmos filtros e token, download via Blob) e "Salvar como PDF" (`window.print()`). `src/styles/print.css` (`@media print`): esconde menu, topbar, filtros e botões, A4 paisagem, cabeçalho "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS" com resumo dos filtros. Item "Relatórios" no menu e rota restrita a ADMIN/GESTOR/ANALISTA/CONSULTA (FISCAL → 403 na API).
+- **Decisões técnicas:** contrato conforme `docs/API.md` da API (#28); o `openapi.json` local ainda não contém `/relatorios`, então os mocks MSW (`src/mocks/fixtures/relatorios.js`) foram escritos à mão seguindo o contrato documentado. PDF é só impressão do navegador (sem biblioteca).
+- **Arquivos principais:** `src/pages/intelligence/RelatoriosPage.jsx`, `src/api/relatoriosApi.js`, `src/styles/print.css`, `src/mocks/fixtures/relatorios.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/auth/perfis.js`, `RelatoriosPage.test.jsx`.
+- **Testes:** afetados (RelatoriosPage.test, App, layout, mocks) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
 ## 2026-11-11 — GH-11 · Integração final com a API real e revisão visual (parcial)
 - **PR:** (preenchido no PR) · **Status:** parcial — roteiro Docker com a API real e revisão em 375/768/1366 px pendentes
 - **Executado por:** autopilot (sessão Web, Sonnet 5.5)

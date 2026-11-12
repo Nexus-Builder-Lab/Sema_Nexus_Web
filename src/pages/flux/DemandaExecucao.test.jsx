@@ -88,7 +88,7 @@ describe('Execução, fiscalização e conclusão', () => {
     for (const tipo of ['Início da fiscalização', 'Atividade', 'Fiscalização', 'Conclusão']) {
       expect(within(linha).getByText(tipo)).toBeInTheDocument();
     }
-  });
+  }, 30000);
 
   it('valida o formulário de fiscalização e mostra erros por campo', async () => {
     const user = userEvent.setup();

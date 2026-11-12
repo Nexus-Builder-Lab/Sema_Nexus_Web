@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { clearSession } from './auth/sessionStore.js';
+import { resetAdminMock } from './mocks/fixtures/admin.js';
 import { resetDemandasMock } from './mocks/fixtures/demandas.js';
 import { server } from './mocks/server.js';
 
@@ -13,6 +14,7 @@ afterEach(() => {
   server.resetHandlers();
   clearSession();
   resetDemandasMock();
+  resetAdminMock();
   // Alguns testes rodam em ambiente node (sem DOM).
   if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
 });
