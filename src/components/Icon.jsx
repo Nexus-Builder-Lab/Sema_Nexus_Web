@@ -3,6 +3,10 @@ import {
   AlarmClockOff,
   AlertTriangle,
   Building2,
+  Download,
+  ImageDown,
+  Lightbulb,
+  Table2,
   CheckCircle2,
   Clock,
   LineChart,
@@ -81,6 +85,10 @@ const ICONS = {
   pin: MapPin,
   pie: PieChart,
   plus: Plus,
+  download: Download,
+  image: ImageDown,
+  lightbulb: Lightbulb,
+  table: Table2,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {

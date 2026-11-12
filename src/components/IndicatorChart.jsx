@@ -75,7 +75,7 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
  * Gráfico Chart.js com tabela equivalente para leitores de tela.
  * `tipo`: 'bar' | 'line' | 'doughnut'. `datasets`: `[{ label, data, color | colors, linha?, eixoDireito? }]`.
  * `linha: true` desenha a série como linha sobre as barras (eixo `y1` se `eixoDireito`).
- * `stacked` empilha as barras; `tituloEixo`/`tituloEixoDireito` nomeiam os eixos.
+ * `chartRef` expõe a instância Chart.js (ex.: exportar PNG). `stacked` empilha as barras; `tituloEixo`/`tituloEixoDireito` nomeiam os eixos.
  */
 export default function IndicatorChart({
   tipo = 'bar',
@@ -87,6 +87,7 @@ export default function IndicatorChart({
   stacked = false,
   tituloEixo,
   tituloEixoDireito,
+  chartRef,
 }) {
   const legenda = tipo === 'doughnut' || datasets.length > 1;
   const dados = {
@@ -111,7 +112,13 @@ export default function IndicatorChart({
   return (
     <figure className="nx-chart-figure">
       <div className="nx-chart-canvas" style={{ height: altura }}>
-        <Componente data={dados} options={opcoes} role="img" aria-label={ariaLabel} />
+        <Componente
+          ref={chartRef}
+          data={dados}
+          options={opcoes}
+          role="img"
+          aria-label={ariaLabel}
+        />
       </div>
       <table className="visually-hidden">
         <caption>{ariaLabel}</caption>
