@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { listarSetores } from '../../api/adminApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import ChartCard from '../../components/ChartCard.jsx';
 import DemoSeal from '../../components/DemoSeal.jsx';
@@ -36,6 +37,7 @@ export default function IndicadoresPage() {
   const [ind, setInd] = useState('recebidas_concluidas');
   const [de, setDe] = useState(() => somarDias(hojeISO(), -364));
   const [ate, setAte] = useState(() => hojeISO());
+  const [setorId, setSetorId] = useState('');
   const [grafico, setGrafico] = useState('auto');
   const [comparar, setComparar] = useState(false);
   const def = INDICADORES[ind];
@@ -44,11 +46,15 @@ export default function IndicadoresPage() {
 
   const carregar = useCallback(async () => {
     if (!periodoValido) return null;
-    const atual = def.montar(await def.buscar({ de, ate }));
+    const atual = def.montar(await def.buscar({ de, ate, setorId }));
     if (!podeComparar) return atual;
-    const anterior = def.montar(await def.buscar(periodoAnterior(de, ate)), atual.labels);
+    const anterior = def.montar(
+      await def.buscar({ ...periodoAnterior(de, ate), setorId }),
+      atual.labels,
+    );
     return comporComparacao(atual, anterior);
-  }, [def, de, ate, periodoValido, podeComparar]);
+  }, [def, de, ate, setorId, periodoValido, podeComparar]);
+  const { data: setores } = useCarregar(listarSetores);
   const { data: r, loading, error, recarregar } = useCarregar(carregar);
 
   const vazio = Boolean(r) && (!r.labels.length || r.series.every((s) => s.data.every((v) => !v)));
@@ -167,17 +173,20 @@ export default function IndicadoresPage() {
             </div>
             <div className="col-6 col-lg-2">
               <label htmlFor="ind-setor" className="form-label small mb-1">
-                Setor (demandas)
+                Setor
               </label>
               <select
                 id="ind-setor"
                 className="form-select"
-                disabled
-                value=""
-                aria-describedby="ind-setor-nota"
-                onChange={() => {}}
+                value={setorId}
+                onChange={(e) => setSetorId(e.target.value)}
               >
                 <option value="">Todos</option>
+                {(setores ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.nome}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="col-6 col-lg-2">
@@ -210,10 +219,6 @@ export default function IndicadoresPage() {
               Comparar com o período anterior de mesma duração (indicadores não mensais)
             </label>
           </div>
-          <p id="ind-setor-nota" className="small text-body-secondary mb-0 mt-1">
-            Filtro por setor indisponível: a API ainda não expõe indicadores por setor (pendência de
-            contrato).
-          </p>
           {!periodoValido && (
             <div className="alert alert-warning mt-3 mb-0" role="alert">
               Período inválido: a data inicial deve ser anterior ou igual à final.

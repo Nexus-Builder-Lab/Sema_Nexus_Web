@@ -9,6 +9,7 @@ import {
   listarStatus,
 } from '../../api/catalogosApi.js';
 import { listarDocumentos } from '../../api/documentosApi.js';
+import { listarSetores } from '../../api/adminApi.js';
 import { listarPrazos, obterProdutividade, obterResumoPrazos } from '../../api/fluxApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { baixarEGuardarCsv, obterRelatorioDemandas, salvarBlob } from '../../api/relatoriosApi.js';
@@ -88,7 +89,6 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
   const [erro, setErro] = useState(null);
   const definir = (campo) => (valor) => setRascunho((r) => ({ ...r, [campo]: valor }));
   const demandas = rascunho.tipo === 'demandas';
-  const produtividade = rascunho.tipo === 'produtividade';
   const semPeriodo = rascunho.tipo === 'prazos';
 
   function enviar() {
@@ -142,8 +142,6 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
             valor={rascunho.setorId}
             itens={setores}
             todos="Todos os setores"
-            disabled={!produtividade}
-            title={produtividade ? undefined : 'O filtro de setor se aplica à produtividade.'}
             onChange={definir('setorId')}
           />
         </Campo>
@@ -198,14 +196,17 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
 /** Carrega os dados de apoio do relatório (KPIs e tabelas) conforme o tipo; as demandas paginadas vêm à parte. */
 function carregarApoio(tipo, filtros) {
   const periodo = { de: filtros.de || undefined, ate: filtros.ate || undefined };
+  const setorId = filtros.setorId || undefined;
   if (tipo === 'demandas') return obterRelatorioDemandas(filtros, { page: 0, size: 100 });
   if (tipo === 'produtividade') {
-    return obterProdutividade({ ...periodo, setorId: filtros.setorId || undefined });
+    return obterProdutividade({ ...periodo, setorId });
   }
-  if (tipo === 'documentos') return listarDocumentos({ ...periodo, size: 100 });
+  if (tipo === 'documentos') return listarDocumentos({ ...periodo, setorId, size: 100 });
   return Promise.all([
     obterResumoPrazos(),
-    ...['VENCIDA', 'PROXIMA', 'NO_PRAZO'].map((estado) => listarPrazos({ estado, size: 100 })),
+    ...['VENCIDA', 'PROXIMA', 'NO_PRAZO'].map((estado) =>
+      listarPrazos({ estado, setorId, size: 100 }),
+    ),
   ]).then(([resumo, ...paginas]) => ({
     resumo,
     itens: paginas
@@ -229,11 +230,12 @@ export default function RelatoriosPage() {
   }, [searchParams]);
   const chave = JSON.stringify(filtros);
   const tipo = filtros.tipo;
-  // Filtros enviados à API de demandas (sem `tipo`/`setorId`).
+  // Filtros enviados à API de demandas (sem `tipo`).
   const filtrosDemanda = useMemo(
     () => ({
       de: filtros.de,
       ate: filtros.ate,
+      setorId: filtros.setorId,
       ...Object.fromEntries(CAMPOS_DEMANDA.map((c) => [c, filtros[c]])),
     }),
     [filtros],
@@ -244,10 +246,10 @@ export default function RelatoriosPage() {
   const { data: categorias } = useCarregar(listarCategorias);
   const { data: status } = useCarregar(listarStatus);
   const { data: prioridades } = useCarregar(listarPrioridades);
-  const { data: panorama } = useCarregar(obterProdutividade);
+  const { data: listaSetores } = useCarregar(listarSetores);
   const setores = useMemo(
-    () => (panorama?.porSetorSituacao ?? []).map((s) => ({ id: s.setorId, nome: s.setor })),
-    [panorama],
+    () => (listaSetores ?? []).map((s) => ({ id: s.id, nome: s.nome })),
+    [listaSetores],
   );
   const catalogos = { municipios, biomas, categorias, status };
 
@@ -290,7 +292,7 @@ export default function RelatoriosPage() {
     const incluir = (c) => {
       if (c === 'tipo') return true;
       if (c === 'de' || c === 'ate') return novos.tipo !== 'prazos';
-      if (c === 'setorId') return novos.tipo === 'produtividade';
+      if (c === 'setorId') return true;
       return novos.tipo === 'demandas';
     };
     CAMPOS.filter(incluir).forEach((c) => novos[c] && params.set(c, novos[c]));
@@ -323,6 +325,7 @@ export default function RelatoriosPage() {
   const resumoFiltros = [
     filtros.de && `De ${formatarData(filtros.de)}`,
     filtros.ate && `Até ${formatarData(filtros.ate)}`,
+    filtros.setorId && `Setor: ${rotuloDe(setores, filtros.setorId)}`,
     tipo === 'demandas' &&
       filtros.municipioId &&
       `Município: ${rotuloDe(municipios, filtros.municipioId)}`,
@@ -339,8 +342,7 @@ export default function RelatoriosPage() {
     periodo = `${formatarData(filtros.de)} a ${formatarData(filtros.ate)}`;
   } else if (filtros.de) periodo = `a partir de ${formatarData(filtros.de)}`;
   else if (filtros.ate) periodo = `até ${formatarData(filtros.ate)}`;
-  const setorRotulo =
-    tipo === 'produtividade' && filtros.setorId ? rotuloDe(setores, filtros.setorId) : 'Todos';
+  const setorRotulo = filtros.setorId ? rotuloDe(setores, filtros.setorId) : 'Todos';
 
   const data = (campo) => (r) => (r[campo] ? formatarData(r[campo]) : '—');
   const colunas = [

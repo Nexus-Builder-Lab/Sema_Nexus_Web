@@ -348,3 +348,9 @@
 - `antigaFinalizada` (novo `src/pages/flux/kanbanDados.js`) usa `concluidaEm` com fallback para `atualizadoEm`; sem data de conclusão a demanda finalizada aparece. `carregarTodasDemandas` pagina (size 200) até esgotar; removido o aviso das "100 mais recentes". Mock de listagem passou a expor `concluidaEm`/`atualizadoEm`.
 - Dependência: API#89 (campos `concluidaEm`/`atualizadoEm` no resumo da listagem e size máximo). Sem eles, finalizadas sem data aparecem (comportamento seguro).
 - Testes: `kanbanDados.test.js` e `KanbanPage.test.jsx` (11 ok); suíte completa e build a confirmar pelo validador.
+
+## GH-91 — Filtro de setor em Análise de indicadores e Relatórios gerenciais (12/11/2026)
+- `IndicadoresPage`: seletor "Setor" habilitado (lista de `/api/setores`), envia `setorId` aos 5 indicadores (inclusive no período de comparação); nota "Filtro por setor indisponível" removida.
+- `RelatoriosPage`: filtro de setor ativo em todos os tipos; `setorId` vai à API de demandas (JSON e CSV), produtividade, prazos e documentos, e aparece no resumo/folha. Lista de setores vinda de `/api/setores` (antes derivada da produtividade).
+- Observação: no código da API (#90) `setorId` está em indicadores, relatório de demandas e produtividade; endpoints de prazos/documentos não o declaram (ignorado) e `/flux/prazos/resumo` não filtra por setor.
+- Testes: `IndicadoresPage.test.jsx` e `RelatoriosPage.test.jsx` (23 ok); lint 0 erros. Suíte completa, build e Docker: a confirmar pelo validador.

@@ -153,9 +153,22 @@ describe('RelatoriosPage', () => {
     const user = userEvent.setup();
     renderPagina('/intelligence/relatorios?tipo=produtividade');
     expect(await screen.findByRole('heading', { name: 'Por setor' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText('Setor')).toBeEnabled());
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: /Fiscalização/ })).toBeInTheDocument(),
+    );
     await user.selectOptions(screen.getByLabelText('Setor'), '2');
     await user.click(screen.getByRole('button', { name: 'Filtrar' }));
+    await waitFor(() => expect(consulta?.searchParams.get('setorId')).toBe('2'));
+    server.events.removeAllListeners();
+  });
+
+  it('filtro de setor habilitado e enviado no relatório de demandas', async () => {
+    let consulta = null;
+    server.events.on('request:start', ({ request }) => {
+      if (/\/relatorios\/demandas(\?|$)/.test(request.url)) consulta = new URL(request.url);
+    });
+    renderPagina('/intelligence/relatorios?tipo=demandas&setorId=2');
+    expect(screen.getByLabelText('Setor')).toBeEnabled();
     await waitFor(() => expect(consulta?.searchParams.get('setorId')).toBe('2'));
     server.events.removeAllListeners();
   });
