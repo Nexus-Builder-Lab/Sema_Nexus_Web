@@ -157,3 +157,12 @@
 - **Arquivos principais:** `src/pages/intelligence/IndicadoresPage.jsx`, `src/pages/flux/PainelFiscalizacaoPage.jsx`, `src/hooks/useIndicador.js`, `src/App.jsx`, `src/layout/navigation.js`, testes das duas páginas.
 - **Testes:** afetados (2 páginas novas, App, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-11 — GH-16 · Assistente DocIA com referências e modo identificado
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/assistente` (`AssistentePage`): chat com sugestões de perguntas, campo limitado a 500 caracteres, estados de envio/erro; cada resposta exibe o `modo` devolvido pela API em destaque e as referências (título com link para o documento + trecho). Resposta "Não há informação suficiente" aparece como tal, sem referências. Item "Assistente" no menu DocIA.
+- **Decisões técnicas:** o modo vem sempre da API (a tela nunca afirma IA real); contrato conforme `POST /api/docia/perguntas` da API (#27); o `openapi.json` local ainda não contém o endpoint, então os testes usam handlers MSW próprios.
+- **Arquivos principais:** `src/pages/docia/AssistentePage.jsx`, `src/api/assistenteApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Assistente.test.jsx`.
+- **Testes:** afetados (Assistente.test, App.test) → 15 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.

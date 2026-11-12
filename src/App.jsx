@@ -15,6 +15,7 @@ import PainelFiscalizacaoPage from './pages/flux/PainelFiscalizacaoPage.jsx';
 import DocumentoDetailPage from './pages/docia/DocumentoDetailPage.jsx';
 import DocumentoFormPage from './pages/docia/DocumentoFormPage.jsx';
 import DocumentosPage from './pages/docia/DocumentosPage.jsx';
+import AssistentePage from './pages/docia/AssistentePage.jsx';
 import DemandaDetailPage from './pages/flux/DemandaDetailPage.jsx';
 import DemandaFormPage from './pages/flux/DemandaFormPage.jsx';
 import DemandasListPage from './pages/flux/DemandasListPage.jsx';
@@ -47,7 +48,8 @@ export default function App() {
                 <Route path="/docia/documentos/novo" element={<DocumentoFormPage />} />
               </Route>
               <Route path="/docia/documentos/:id" element={<DocumentoDetailPage />} />
-              <Route path="*" element={<NotFoundPage />} />
+              <Route path="/docia/assistente" element={<AssistentePage />} />
+              <Route path="*"element={<NotFoundPage />} />
             </Route>
           </Route>
         </Routes>
