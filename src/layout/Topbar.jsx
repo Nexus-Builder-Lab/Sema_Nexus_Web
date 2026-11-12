@@ -1,9 +1,10 @@
 import Icon from '../components/Icon.jsx';
 import Breadcrumbs from './Breadcrumbs.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 /**
  * Barra superior. `user` e `onLogout` chegam do AuthContext (Issue #4);
- * o sino de notificações fica desabilitado até a Issue de notificações.
+ * o sino (NotificationBell) consulta /api/notificacoes.
  */
 export default function Topbar({ sidebarId, mobileOpen, onToggleMobile, user, onLogout }) {
   return (
@@ -20,15 +21,7 @@ export default function Topbar({ sidebarId, mobileOpen, onToggleMobile, user, on
       </button>
       <Breadcrumbs />
       <div className="nx-topbar-actions">
-        <button
-          type="button"
-          className="nx-icon-btn"
-          disabled
-          aria-label="Notificações (em breve)"
-          title="Notificações (em breve)"
-        >
-          <Icon name="bell" />
-        </button>
+        <NotificationBell />
         {user && (
           <div className="nx-user text-truncate">
             <strong className="text-truncate">{user.nome}</strong>

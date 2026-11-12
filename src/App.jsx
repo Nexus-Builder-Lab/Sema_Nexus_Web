@@ -13,6 +13,7 @@ import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
 import LoginPage from './pages/core/LoginPage.jsx';
 import UsuariosPage from './pages/core/admin/UsuariosPage.jsx';
+import AuditoriaPage from './pages/core/admin/AuditoriaPage.jsx';
 import EstruturaPage from './pages/core/admin/EstruturaPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
@@ -65,6 +66,7 @@ export default function App() {
               <Route element={<RequireRole roles={PERFIS_ADMIN} />}>
                 <Route path="/admin/usuarios" element={<UsuariosPage />} />
                 <Route path="/admin/estrutura" element={<EstruturaPage />} />
+                <Route path="/admin/auditoria" element={<AuditoriaPage />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>

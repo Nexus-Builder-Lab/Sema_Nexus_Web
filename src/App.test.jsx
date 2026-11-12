@@ -85,8 +85,8 @@ describe('App e layout', () => {
     expect(container.querySelector('.nx-app')).not.toHaveClass('is-mobile-open');
   });
 
-  it('deixa o sino de notificações desabilitado (funcionalidade futura)', () => {
+  it('exibe o sino de notificações habilitado para o usuário autenticado', async () => {
     renderAt('/');
-    expect(screen.getByRole('button', { name: 'Notificações (em breve)' })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: /^Notificações/ })).toBeEnabled();
   });
 });
