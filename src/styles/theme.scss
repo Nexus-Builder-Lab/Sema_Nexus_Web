@@ -412,6 +412,13 @@ body {
   min-width: 0;
 }
 
+// Tabelas largas rolam só dentro do próprio contêiner. Sem `position: relative`, os
+// elementos absolutos internos (ex.: `.visually-hidden` em cabeçalhos e ações) escapam
+// do recorte e esticam a página inteira em telas estreitas (verificado em 375 e 768 px).
+.table-responsive {
+  position: relative;
+}
+
 .nx-footer {
   padding: 14px 24px;
   font-size: 12px;

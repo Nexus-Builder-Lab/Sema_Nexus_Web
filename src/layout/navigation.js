@@ -15,6 +15,12 @@ export const NAVIGATION = [
         icon: 'map',
       },
       { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'dashboard' },
+      {
+        to: '/intelligence/relatorios',
+        label: 'Relatórios',
+        icon: 'file',
+        roles: ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'],
+      },
     ],
   },
   {
@@ -29,13 +35,14 @@ export const NAVIGATION = [
     items: [
       { to: '/docia/documentos', label: 'Documentos', icon: 'file' },
       { to: '/docia/assistente', label: 'Assistente', icon: 'inbox' },
+      { to: '/docia/comparacao', label: 'Comparação', icon: 'file' },
     ],
   },
   {
     group: 'Administração',
     items: [
-      { to: '/admin/usuarios', label: 'Usuários', icon: 'users' },
-      { to: '/admin/equipes', label: 'Equipes', icon: 'team' },
+      { to: '/admin/usuarios', label: 'Usuários', icon: 'users', roles: ['ADMIN'] },
+      { to: '/admin/estrutura', label: 'Setores e equipes', icon: 'team', roles: ['ADMIN'] },
     ],
   },
 ];
@@ -52,4 +59,14 @@ export function findNavItem(pathname) {
     }
   }
   return best;
+}
+
+/** Rótulo do trecho final de rotas aninhadas (nova, detalhes, edição). */
+export function subCrumb(base, pathname) {
+  const rest = pathname.slice(base.length).split('/').filter(Boolean);
+  if (rest.length === 0) return null;
+  if (rest[0] === 'nova') return 'Nova demanda';
+  if (rest[0] === 'novo') return 'Novo documento';
+  if (rest[1] === 'editar') return 'Editar';
+  return 'Detalhes';
 }

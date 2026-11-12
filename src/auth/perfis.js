@@ -59,3 +59,9 @@ export function acoesDisponiveis(status, usuario, demanda) {
 export const PERFIS_ESCRITA_DOCUMENTO = ['ADMIN', 'GESTOR', 'FISCAL', 'ANALISTA'];
 export const podeEscreverDocumentos = (usuario) =>
   Boolean(usuario) && PERFIS_ESCRITA_DOCUMENTO.includes(usuario.perfil);
+
+/** Administração de usuários, setores e equipes: somente ADMIN (a API responde 403 aos demais). */
+export const PERFIS_ADMIN = ['ADMIN'];
+
+/** Relatórios de demandas: FISCAL recebe 403 da API. */
+export const PERFIS_RELATORIOS = ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'];

@@ -42,9 +42,9 @@ export default function InteligenciaAmbientalPage() {
   // Estado derivado: a consulta está "carregando" enquanto a resposta guardada não for a da chave atual.
   // Os filtros do satélite (satDe/satAte) não fazem parte da consulta das demandas fictícias.
   const filtrosDemanda = useMemo(() => {
-    const { satDe, satAte, ...resto } = aplicados;
-    void satDe;
-    void satAte;
+    const resto = { ...aplicados };
+    delete resto.satDe;
+    delete resto.satAte;
     return resto;
   }, [aplicados]);
   const chave = `${tentativa}|${JSON.stringify(filtrosDemanda)}`;

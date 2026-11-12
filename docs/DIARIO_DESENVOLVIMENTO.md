@@ -174,3 +174,37 @@
 - **Arquivos principais:** `src/pages/intelligence/{SatelliteLayer,SatelliteLegend,SatelliteSidePanel}.jsx`, `useReferenciaSatelite.js`, `useGeoJson.js`, `InteligenciaAmbientalPage.jsx`, `MapFilters.jsx`, `src/api/intelligenceApi.js`, `src/mocks/fixtures/intelligence.js`, `CamadaInpe.test.jsx`.
 - **Testes:** `src/pages/intelligence` + `src/mocks` → 34 passaram; lint 0 problemas. Suíte completa, build, rede desligada e Docker contra a API real: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+## 2026-11-12 — GH-15 · Tela de comparação documental
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/comparacao` (`ComparacaoPage`): seleção de dois documentos (bloqueia o mesmo documento), metadados lado a lado com Igual/Diferente, diff por linhas (`DiffView`, fonte monoespaçada, cor + sinal + rótulo acessível), trechos semelhantes, termos exclusivos e similaridade como informação secundária. Aviso fixo de comparação determinística (não é IA). Erros da API (ex.: documento sem texto extraído) exibidos via `detail` do ProblemDetail. Item "Comparação" no menu DocIA.
+- **Decisões técnicas:** contrato conforme `ComparacaoResponse` da API (#26); aviso de texto truncado quando `truncado=true`.
+- **Arquivos principais:** `src/pages/docia/ComparacaoPage.jsx`, `src/components/DiffView.jsx`, `src/api/comparacaoApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Comparacao.test.jsx`.
+- **Testes:** afetados (Comparacao.test, App.test, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-13 · Gestão de usuários, setores e equipes
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/admin/usuarios` (listagem paginada, pesquisa por nome/e-mail, filtro por perfil e situação, cadastro, edição, ativar/desativar com confirmação, equipe) e `/admin/estrutura` (setores e equipes: cadastro, edição, membros e responsável). Rotas só para ADMIN (`RequireRole`) e itens do menu Administração visíveis apenas ao ADMIN; senha validada com 8 a 72 caracteres (obrigatória no cadastro, opcional na edição). Menu: `/admin/equipes` virou `/admin/estrutura`.
+- **Decisões técnicas:** a API não guarda equipe no usuário; o campo "Equipe" do formulário grava a associação via `PUT /api/equipes/{id}/membros` depois de salvar (aviso se essa segunda chamada falhar). Erros 400 por campo e 409 (e-mail/sigla duplicados, último ADMIN) exibidos a partir do ProblemDetail. Contrato conforme `docs/API.md` da API (#24); o `openapi.json` local ainda não tem esses endpoints, então os mocks MSW (`src/mocks/fixtures/admin.js`, store em memória) foram escritos à mão a partir do doc.
+- **Arquivos principais:** `src/pages/core/admin/*`, `src/api/adminApi.js`, `src/mocks/fixtures/admin.js`, `src/App.jsx`, `src/layout/{navigation.js,Sidebar.jsx}`, `src/auth/perfis.js`.
+- **Testes:** afetados (Admin.test, App, auth, layout, flux) → 102 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-18 · Relatórios com filtros e exportação CSV/PDF
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/intelligence/relatorios` (`RelatoriosPage`): filtros período, município, bioma, categoria e status (na URL, validação de período), tabela paginada com estados de carregamento/vazio/erro, botão "Baixar CSV" (`GET /api/relatorios/demandas.csv` com os mesmos filtros e token, download via Blob) e "Salvar como PDF" (`window.print()`). `src/styles/print.css` (`@media print`): esconde menu, topbar, filtros e botões, A4 paisagem, cabeçalho "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS" com resumo dos filtros. Item "Relatórios" no menu e rota restrita a ADMIN/GESTOR/ANALISTA/CONSULTA (FISCAL → 403 na API).
+- **Decisões técnicas:** contrato conforme `docs/API.md` da API (#28); o `openapi.json` local ainda não contém `/relatorios`, então os mocks MSW (`src/mocks/fixtures/relatorios.js`) foram escritos à mão seguindo o contrato documentado. PDF é só impressão do navegador (sem biblioteca).
+- **Arquivos principais:** `src/pages/intelligence/RelatoriosPage.jsx`, `src/api/relatoriosApi.js`, `src/styles/print.css`, `src/mocks/fixtures/relatorios.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/auth/perfis.js`, `RelatoriosPage.test.jsx`.
+- **Testes:** afetados (RelatoriosPage.test, App, layout, mocks) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-11 — GH-11 · Integração final com a API real e revisão visual (parcial)
+- **PR:** (preenchido no PR) · **Status:** parcial — roteiro Docker com a API real e revisão em 375/768/1366 px pendentes
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** trilha de navegação (`Breadcrumbs`) agora cobre rotas aninhadas (Nova demanda, Detalhes, Editar, Novo documento) via `subCrumb` em `layout/navigation.js`. A faixa demonstrativa já vem do layout em todas as telas autenticadas.
+- **Limitação:** não havia API com credenciais demonstrativas (a API local em 18080 respondeu `demo:false`) nem navegador automatizado nesta sessão; o roteiro completo no Docker, o console limpo e a revisão em 3 larguras não foram executados e não são declarados como feitos.
+- **Testes:** afetados (`src/layout`, `src/App.test.jsx`) passaram; lint a reconfirmar. Suíte completa, build e Docker: a confirmar pelo validador.
+- **Atualização 12/11/2026 (revisão visual pelo Chrome, autorizada pelo proprietário):** roteiro no Docker com a API real após `demo-reset`: login com o usuário de teste, 13 telas (Início, Dashboard ambiental, Inteligência ambiental/mapa, Indicadores, Relatórios, Demandas, Detalhes da demanda, Painel de fiscalização, Documentos, Assistente, Comparação, Usuários, Setores e equipes) sem erros de console e sem alertas de erro, faixa demonstrativa presente. Em 375 e 768 px, Demandas, Usuários e Setores e equipes geravam rolagem horizontal da página: elementos `position: absolute` (`.visually-hidden`) dentro de `.table-responsive` escapavam do recorte. Correção: `.table-responsive { position: relative; }` em `theme.scss`. Depois: 13/13 telas sem rolagem horizontal em 375, 768 e 1366 px. `npm test` → 223 passaram; lint e build OK.

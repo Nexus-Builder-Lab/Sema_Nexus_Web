@@ -14,7 +14,7 @@ import {
   NOME_CAMADA_FOCOS,
   rotuloDoBioma,
 } from './mapaConfig.js';
-import { formatarDataHora } from './satelliteFormat.js';
+import { criarPopupMunicipio, formatarDataHora } from './satelliteFormat.js';
 import useGeoJson from './useGeoJson.js';
 
 const rotuloTipo = { FOCO_CALOR: 'Foco de calor', DESMATAMENTO: 'Alerta DETER' };
@@ -74,9 +74,7 @@ function Coropletico({ itens, fonte }) {
       })}
       onEachFeature={(feature, layer) => {
         const item = porId.get(Number(feature.properties?.id));
-        layer.bindPopup(
-          `${feature.properties?.nome}: ${item?.total ?? 0} foco(s) de calor — Fonte: ${fonte}`,
-        );
+        layer.bindPopup(criarPopupMunicipio(feature.properties?.nome, item?.total, fonte));
       }}
     />
   );
