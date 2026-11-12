@@ -343,3 +343,8 @@
 - Novo `src/pages/intelligence/filtroBioma.js` (`municipiosDoBioma`, `aplicarBioma`): ao escolher o bioma, o seletor de municípios mostra só os do bioma (campo `bioma` do catálogo) e o município incompatível é limpo.
 - Aplicado em Inteligência ambiental (`MapFilters`), Dashboard ambiental e Relatórios gerenciais (tipo demandas). Análise de indicadores não tem filtro de bioma/município.
 - Testes: `filtroBioma.test.js`; `src/pages/intelligence` rodou local (61 ok); suíte completa e build a confirmar pelo validador.
+
+## GH-89 — Fluxo de atividades mostra finalizadas e carrega todas as demandas (12/11/2026)
+- `antigaFinalizada` (novo `src/pages/flux/kanbanDados.js`) usa `concluidaEm` com fallback para `atualizadoEm`; sem data de conclusão a demanda finalizada aparece. `carregarTodasDemandas` pagina (size 200) até esgotar; removido o aviso das "100 mais recentes". Mock de listagem passou a expor `concluidaEm`/`atualizadoEm`.
+- Dependência: API#89 (campos `concluidaEm`/`atualizadoEm` no resumo da listagem e size máximo). Sem eles, finalizadas sem data aparecem (comportamento seguro).
+- Testes: `kanbanDados.test.js` e `KanbanPage.test.jsx` (11 ok); suíte completa e build a confirmar pelo validador.

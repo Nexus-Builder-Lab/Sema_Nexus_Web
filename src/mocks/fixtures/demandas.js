@@ -102,6 +102,8 @@ const resumo = (d) => ({
   atrasada: d.atrasada,
   equipe: d.equipe,
   fiscal: d.fiscal,
+  concluidaEm: d.concluidaEm,
+  atualizadoEm: d.atualizadoEm,
 });
 
 const semAcento = (texto) => String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

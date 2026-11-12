@@ -4,7 +4,6 @@ import {
   detalharDemanda,
   iniciarExecucao,
   iniciarTriagem,
-  listarDemandas,
 } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { podeEditarDemandas } from '../../auth/perfis.js';
@@ -24,10 +23,10 @@ import { carregarCatalogosFlux } from './catalogosFlux.js';
 import ConclusaoModal from './ConclusaoModal.jsx';
 import DistribuicaoModal from './DistribuicaoModal.jsx';
 import FiscalizacaoModal from './FiscalizacaoModal.jsx';
+import { antigaFinalizada, carregarTodasDemandas } from './kanbanDados.js';
 import { acaoDaTransicao, transicoesPermitidas } from './kanbanTransicoes.js';
 import TriagemModal from './TriagemModal.jsx';
 
-const LIMITE = 100;
 const PESO = { URGENTE: 4, ALTA: 3, MEDIA: 2, BAIXA: 1 };
 const ORDEM_STATUS = Object.keys(STATUS_DEMANDA);
 const CONFIRMACOES = {
@@ -52,12 +51,6 @@ const iniciais = (nome = '') =>
     .slice(0, 2)
     .map((p) => p[0].toUpperCase())
     .join('');
-
-function antigaFinalizada(d) {
-  if (d.status !== 'FINALIZADA') return false;
-  const ref = (d.atualizadoEm ?? d.criadoEm ?? d.dataRecebimento ?? '').slice(0, 10);
-  return Boolean(ref) && diasEntre(ref, hojeISO()) > 30;
-}
 
 function Prazo({ d }) {
   if (d.status === 'FINALIZADA') return <span className="nx-prazo-ok">Concluída</span>;
@@ -201,9 +194,7 @@ export default function KanbanPage() {
   const [sobre, setSobre] = useState(null);
   const [acao, setAcao] = useState(null);
 
-  const lista = useCarregar(
-    useCallback(() => listarDemandas({ page: 0, size: LIMITE, sort: 'numero,desc' }), []),
-  );
+  const lista = useCarregar(carregarTodasDemandas);
   const catalogos = useCarregar(carregarCatalogosFlux);
 
   const todas = lista.data?.content;
@@ -268,12 +259,6 @@ export default function KanbanPage() {
     }
     return (
       <>
-        {lista.data.totalElements > LIMITE && (
-          <div className="alert alert-info py-2 small" role="status">
-            Exibindo as {LIMITE} demandas mais recentes de {lista.data.totalElements}. Use a lista
-            de demandas para ver as demais.
-          </div>
-        )}
         <div className="nx-kanban">
           {ORDEM_STATUS.map((status) => {
             const itens = visiveis
