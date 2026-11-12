@@ -1,8 +1,15 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../auth/useAuth.js';
 import Icon from '../components/Icon.jsx';
 import { NAVIGATION } from './navigation.js';
 
 export default function Sidebar({ id, collapsed, onToggleCollapse, onNavigate }) {
+  const { usuario } = useAuth();
+  // Esconder o item é conveniência: a API é quem autoriza (403).
+  const grupos = NAVIGATION.map((g) => ({
+    ...g,
+    items: g.items.filter((i) => !i.roles || i.roles.includes(usuario?.perfil)),
+  })).filter((g) => g.items.length > 0);
   return (
     <aside className="nx-sidebar" id={id} aria-label="Menu principal">
       <div className="nx-sidebar-head">
@@ -15,7 +22,7 @@ export default function Sidebar({ id, collapsed, onToggleCollapse, onNavigate })
         </span>
       </div>
       <nav aria-label="Módulos">
-        {NAVIGATION.map(({ group, items }) => (
+        {grupos.map(({ group, items }) => (
           <div className="nx-nav-group" key={group}>
             <p className="nx-nav-group-title">{group}</p>
             <ul className="list-unstyled mb-0">

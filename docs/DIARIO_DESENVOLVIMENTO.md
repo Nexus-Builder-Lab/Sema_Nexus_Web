@@ -174,3 +174,12 @@
 - **Arquivos principais:** `src/pages/docia/ComparacaoPage.jsx`, `src/components/DiffView.jsx`, `src/api/comparacaoApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Comparacao.test.jsx`.
 - **Testes:** afetados (Comparacao.test, App.test, layout) passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 — GH-13 · Gestão de usuários, setores e equipes
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/admin/usuarios` (listagem paginada, pesquisa por nome/e-mail, filtro por perfil e situação, cadastro, edição, ativar/desativar com confirmação, equipe) e `/admin/estrutura` (setores e equipes: cadastro, edição, membros e responsável). Rotas só para ADMIN (`RequireRole`) e itens do menu Administração visíveis apenas ao ADMIN; senha validada com 8 a 72 caracteres (obrigatória no cadastro, opcional na edição). Menu: `/admin/equipes` virou `/admin/estrutura`.
+- **Decisões técnicas:** a API não guarda equipe no usuário; o campo "Equipe" do formulário grava a associação via `PUT /api/equipes/{id}/membros` depois de salvar (aviso se essa segunda chamada falhar). Erros 400 por campo e 409 (e-mail/sigla duplicados, último ADMIN) exibidos a partir do ProblemDetail. Contrato conforme `docs/API.md` da API (#24); o `openapi.json` local ainda não tem esses endpoints, então os mocks MSW (`src/mocks/fixtures/admin.js`, store em memória) foram escritos à mão a partir do doc.
+- **Arquivos principais:** `src/pages/core/admin/*`, `src/api/adminApi.js`, `src/mocks/fixtures/admin.js`, `src/App.jsx`, `src/layout/{navigation.js,Sidebar.jsx}`, `src/auth/perfis.js`.
+- **Testes:** afetados (Admin.test, App, auth, layout, flux) → 102 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
