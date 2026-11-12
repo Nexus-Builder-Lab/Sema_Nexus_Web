@@ -1152,3 +1152,111 @@ figure.nx-chart-figure {
   background: rgba(255, 255, 255, 0.55);
   pointer-events: none;
 }
+
+// ---------- Painel Inteligência ambiental (paridade com o protótipo) ----------
+.nx-map-card:fullscreen {
+  background: #fff;
+  overflow: auto;
+  .nx-map {
+    height: calc(100vh - 120px);
+  }
+}
+
+.nx-map-tools {
+  position: absolute;
+  top: 70px;
+  right: 18px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nx-map-legend {
+  position: absolute;
+  left: 18px;
+  bottom: 40px;
+  z-index: 1000;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+  }
+  i {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+  }
+}
+
+.mun-tip {
+  font-size: 0.85rem;
+}
+
+.nx-chip {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 999px;
+  background: #fff;
+  &.active {
+    background: $nx-green-700;
+    border-color: $nx-green-700;
+    color: #fff;
+  }
+}
+
+.nx-ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--bs-border-color);
+  background: transparent;
+  text-align: left;
+  &:hover,
+  &:focus-visible {
+    background: #f4f7f5;
+  }
+}
+
+.nx-ranking-pos {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  &.top {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.nx-ranking-bar {
+  display: block;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  > span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: #ea580c;
+  }
+}
+
+.nx-table-scroll {
+  max-height: 360px;
+  overflow: auto;
+}

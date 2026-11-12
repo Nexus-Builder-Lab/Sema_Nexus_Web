@@ -10,7 +10,9 @@ import {
   FileText,
   FolderOpen,
   GitCompare,
+  Globe,
   Home,
+  Maximize2,
   Inbox,
   LayoutDashboard,
   Layers,
@@ -31,6 +33,8 @@ import {
 // Ícones Lucide (mesma família do protótipo), importados individualmente.
 const ICONS = {
   home: Home,
+  globe: Globe,
+  expand: Maximize2,
   dashboard: LayoutDashboard,
   map: MapIcon,
   indicators: BarChart3,

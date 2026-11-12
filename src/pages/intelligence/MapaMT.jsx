@@ -16,10 +16,13 @@ import {
   corDaCategoria,
   rotuloDaCategoria,
 } from './mapaConfig.js';
+import ConcentracaoLayer from './ConcentracaoLayer.jsx';
+import { COR_CONTORNO_UF } from './concentracao.js';
 import useGeoJson from './useGeoJson.js';
 
 const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
-const ESTILO_MUNICIPIO = { color: '#8aa595', weight: 0.6, fillOpacity: 0 };
+const ESTILO_MUNICIPIO = { color: '#94A3B8', weight: 0.6, fillColor: '#FFFFFF', fillOpacity: 0.55 };
+const ESTILO_CONTORNO = { color: COR_CONTORNO_UF, weight: 2.2, fill: false };
 
 function PopupDemanda({ ponto }) {
   return (
@@ -37,28 +40,53 @@ function PopupDemanda({ ponto }) {
 }
 
 /**
- * Mapa de Mato Grosso. Camadas: malha IBGE local (base), "Demandas (fictícias)" (ligada) e
- * tiles OpenStreetMap (desligados por padrão). A camada "Focos de calor — INPE" (Web#22)
+ * Mapa de Mato Grosso. Camadas: malha IBGE local (base), "Demandas (fictícias)" (modo Ocorrências),
+ * coroplético de concentração por município e tiles OpenStreetMap opcionais (`fundoOnline`, desligado por padrão). A camada "Focos de calor — INPE" (Web#22)
  * entra como mais um <LayersControl.Overlay> passado em `children`.
  */
-export default function MapaMT({ pontos = [], children }) {
+export default function MapaMT({
+  pontos = [],
+  modo = 'pontos',
+  concentracao = [],
+  municipios = [],
+  onSelecionarMunicipio,
+  fundoOnline = false,
+  children,
+}) {
   const uf = useGeoJson('/geo/mt-uf.geojson');
-  const municipios = useGeoJson('/geo/mt-municipios.geojson');
+  const malha = useGeoJson('/geo/mt-municipios.geojson');
 
   return (
     <MapContainer center={CENTRO_MT} zoom={ZOOM_MT} minZoom={5} scrollWheelZoom className="nx-map">
-      {uf && <GeoJSON data={uf} style={ESTILO_UF} interactive={false} />}
-      {municipios && <GeoJSON data={municipios} style={ESTILO_MUNICIPIO} interactive={false} />}
+      {uf && (
+        <GeoJSON
+          key={`uf-${fundoOnline}`}
+          data={uf}
+          style={{ ...ESTILO_UF, fillOpacity: fundoOnline ? 0 : 1 }}
+          interactive={false}
+        />
+      )}
+      {fundoOnline && (
+        <TileLayer
+          attribution="&copy; colaboradores do OpenStreetMap"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          opacity={0.55}
+        />
+      )}
+      {malha && <GeoJSON data={malha} style={ESTILO_MUNICIPIO} interactive={false} />}
+      {malha && modo === 'concentracao' && (
+        <ConcentracaoLayer
+          malha={malha}
+          itens={concentracao}
+          municipios={municipios}
+          onSelecionar={onSelecionarMunicipio}
+        />
+      )}
+      {uf && <GeoJSON data={uf} style={ESTILO_CONTORNO} interactive={false} />}
       <LayersControl position="topright">
-        <LayersControl.Overlay name="Tiles OpenStreetMap (requer internet)">
-          <TileLayer
-            attribution="&copy; colaboradores do OpenStreetMap"
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-        </LayersControl.Overlay>
         <LayersControl.Overlay checked name="Demandas (fictícias)">
           <LayerGroup>
-            {pontos.map((p) => (
+            {(modo === 'pontos' ? pontos : []).map((p) => (
               <CircleMarker
                 key={p.demandaId}
                 center={[p.latitude, p.longitude]}

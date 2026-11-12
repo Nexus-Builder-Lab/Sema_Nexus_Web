@@ -1,20 +1,41 @@
-import { useEffect, useMemo, useState } from 'react';
-import { listarBiomas, listarCategorias, listarMunicipios } from '../../api/catalogosApi.js';
-import { obterMapa } from '../../api/intelligenceApi.js';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  listarBiomas,
+  listarCategorias,
+  listarMunicipios,
+  listarStatus,
+} from '../../api/catalogosApi.js';
+import { obterMapa, obterPorMunicipio } from '../../api/intelligenceApi.js';
 import EmptyState from '../../components/EmptyState.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
 import Loading from '../../components/Loading.jsx';
+import Icon from '../../components/Icon.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
+import useIndicador from '../../hooks/useIndicador.js';
+import ConcentracaoLegenda from './ConcentracaoLegenda.jsx';
+import { gerarCsv, intervaloDoPeriodo, PERIODOS } from './concentracao.js';
 import MapFilters from './MapFilters.jsx';
 import MapLegend from './MapLegend.jsx';
 import MapaMT from './MapaMT.jsx';
+import { GraficosPainel, KpisPainel, TabelaMunicipios } from './PainelIndicadores.jsx';
+import RankingMunicipios from './RankingMunicipios.jsx';
 import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
 import { FILTROS_VAZIOS } from './mapaConfig.js';
 
-const CATALOGOS_VAZIOS = { municipios: [], biomas: [], categorias: [] };
+const CATALOGOS_VAZIOS = { municipios: [], biomas: [], categorias: [], situacoes: [] };
+
+function baixarCsv(itens) {
+  const blob = new Blob(['\uFEFF', gerarCsv(itens)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'indicadores-por-municipio.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function InteligenciaAmbientalPage() {
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
@@ -25,13 +46,17 @@ export default function InteligenciaAmbientalPage() {
   const [ligadas, setLigadas] = useState({ FOCO_CALOR: false, DESMATAMENTO: false });
   const [agregadoManual, setAgregadoManual] = useState(false);
   const [tentativaSat, setTentativaSat] = useState(0);
+  const [modo, setModo] = useState('pontos');
+  const [fundoOnline, setFundoOnline] = useState(false);
+  const [telaCheia, setTelaCheia] = useState(false);
+  const cartaoMapa = useRef(null);
 
   // Catálogos dos filtros: se falharem, o mapa ainda funciona (filtros ficam só com "Todos").
   useEffect(() => {
     let ativo = true;
-    Promise.all([listarMunicipios(), listarBiomas(), listarCategorias()])
-      .then(([municipios, biomas, categorias]) => {
-        if (ativo) setCatalogos({ municipios, biomas, categorias });
+    Promise.all([listarMunicipios(), listarBiomas(), listarCategorias(), listarStatus()])
+      .then(([municipios, biomas, categorias, situacoes]) => {
+        if (ativo) setCatalogos({ municipios, biomas, categorias, situacoes });
       })
       .catch(() => {});
     return () => {
@@ -61,6 +86,29 @@ export default function InteligenciaAmbientalPage() {
   const sat = useReferenciaSatelite(aplicados, ligadas, agregadoManual, tentativaSat);
   const aoLigar = (tipo, ligada) => setLigadas((atual) => ({ ...atual, [tipo]: ligada }));
 
+  const porMunicipio = useIndicador(obterPorMunicipio, filtrosDemanda);
+  const itensMunicipio = porMunicipio.data?.itens ?? [];
+
+  const aplicarParcial = (parcial) => {
+    setRascunho((atual) => ({ ...atual, ...parcial }));
+    setAplicados((atual) => ({ ...atual, ...parcial }));
+  };
+  const filtrarPorMunicipio = (id) => aplicarParcial({ municipioId: String(id) });
+  const periodoAtivo = PERIODOS.find((p) => {
+    const i = intervaloDoPeriodo(p.id);
+    return i.de === aplicados.de && i.ate === aplicados.ate;
+  })?.id;
+
+  useEffect(() => {
+    const aoMudar = () => setTelaCheia(document.fullscreenElement === cartaoMapa.current);
+    document.addEventListener('fullscreenchange', aoMudar);
+    return () => document.removeEventListener('fullscreenchange', aoMudar);
+  }, []);
+  const alternarTelaCheia = () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else cartaoMapa.current?.requestFullscreen?.();
+  };
+
   const limpar = () => {
     setRascunho(FILTROS_VAZIOS);
     setAplicados(FILTROS_VAZIOS);
@@ -75,19 +123,91 @@ export default function InteligenciaAmbientalPage() {
         module="SEMA Intelligence"
         title="Inteligência ambiental"
         description="Distribuição territorial das demandas de fiscalização em Mato Grosso (dados fictícios)."
+        actions={
+          <button
+            type="button"
+            className="btn btn-outline-secondary btn-sm"
+            disabled={itensMunicipio.length === 0}
+            onClick={() => baixarCsv(itensMunicipio)}
+          >
+            Exportar CSV
+          </button>
+        }
       />
+      <div className="alert alert-warning py-2 small">
+        Os dados de demandas exibidos são fictícios, gerados para demonstração. Municípios e biomas
+        são do IBGE; a camada de satélite usa dados públicos do INPE, identificados e separados.
+      </div>
       <MapFilters
         valores={rascunho}
         onChange={setRascunho}
         onSubmit={() => setAplicados(rascunho)}
         onClear={limpar}
+        onPeriodo={(id) => aplicarParcial(intervaloDoPeriodo(id))}
+        periodoAtivo={periodoAtivo}
         {...catalogos}
       />
+      <KpisPainel filtros={filtrosDemanda} />
       <div className="row g-3">
         <div className="col-12 col-xl-9">
-          <section className="card shadow-sm" aria-label="Mapa de Mato Grosso">
+          <section
+            ref={cartaoMapa}
+            className="card shadow-sm nx-map-card"
+            aria-label="Mapa de Mato Grosso"
+          >
+            <div className="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <h2 className="h6 mb-0 d-flex align-items-center gap-2">
+                <Icon name="map" size={16} /> Mapa de Mato Grosso
+              </h2>
+              <div className="btn-group btn-group-sm" role="group" aria-label="Modo do mapa">
+                <button
+                  type="button"
+                  className={`btn btn-outline-success${modo === 'pontos' ? ' active' : ''}`}
+                  aria-pressed={modo === 'pontos'}
+                  onClick={() => setModo('pontos')}
+                >
+                  Ocorrências
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-outline-success${modo === 'concentracao' ? ' active' : ''}`}
+                  aria-pressed={modo === 'concentracao'}
+                  onClick={() => setModo('concentracao')}
+                >
+                  Concentração por município
+                </button>
+              </div>
+            </div>
             <div className="card-body p-2 position-relative">
-              <MapaMT pontos={pontos}>
+              <div className="nx-map-tools">
+                <button
+                  type="button"
+                  className="btn btn-light btn-sm shadow-sm"
+                  aria-label={telaCheia ? 'Sair da tela cheia' : 'Mapa em tela cheia'}
+                  onClick={alternarTelaCheia}
+                >
+                  <Icon name="expand" size={16} />
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-light btn-sm shadow-sm${fundoOnline ? ' active' : ''}`}
+                  aria-label="Mapa de fundo OpenStreetMap (requer internet)"
+                  aria-pressed={fundoOnline}
+                  title="Mapa de fundo OpenStreetMap (requer internet)"
+                  onClick={() => setFundoOnline((v) => !v)}
+                >
+                  <Icon name="globe" size={16} />
+                </button>
+              </div>
+              {modo === 'concentracao' && <ConcentracaoLegenda itens={itensMunicipio} />}
+              <MapaMT
+                pontos={pontos}
+                modo={modo}
+                concentracao={itensMunicipio}
+                municipios={catalogos.municipios}
+                onSelecionarMunicipio={filtrarPorMunicipio}
+                fundoOnline={fundoOnline}
+              >
                 <SatelliteLayer
                   focos={sat.focos}
                   deter={sat.deter}
@@ -162,6 +282,14 @@ export default function InteligenciaAmbientalPage() {
           )}
         </div>
         <div className="col-12 col-xl-3">
+          <RankingMunicipios
+            itens={itensMunicipio}
+            municipios={catalogos.municipios}
+            carregando={porMunicipio.loading}
+            erro={porMunicipio.error}
+            onRetry={porMunicipio.recarregar}
+            onSelecionar={filtrarPorMunicipio}
+          />
           <SatelliteSidePanel
             carregando={sat.resumo.carregando}
             erro={sat.resumo.erro}
@@ -170,9 +298,17 @@ export default function InteligenciaAmbientalPage() {
             itens={sat.resumo.itens}
             atualizadoEm={sat.atualizadoEm}
           />
-          <MapLegend />
+          {modo === 'pontos' && <MapLegend />}
         </div>
       </div>
+      <GraficosPainel filtros={filtrosDemanda} />
+      <TabelaMunicipios
+        itens={itensMunicipio}
+        municipios={catalogos.municipios}
+        carregando={porMunicipio.loading}
+        erro={porMunicipio.error}
+        onRetry={porMunicipio.recarregar}
+      />
     </>
   );
 }

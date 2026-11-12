@@ -7,6 +7,18 @@ import App from '../../App.jsx';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao } from '../../test/auth.js';
 
+vi.mock('react-chartjs-2', () => {
+  const stub = (tipo) =>
+    function Grafico({ data, 'aria-label': ariaLabel }) {
+      return (
+        <div data-testid={`grafico-${tipo}`} role="img" aria-label={ariaLabel}>
+          {JSON.stringify(data.labels)}
+        </div>
+      );
+    };
+  return { Bar: stub('bar'), Line: stub('line'), Doughnut: stub('doughnut') };
+});
+
 const ROTA = '/intelligence/inteligencia-ambiental';
 const BANNER = 'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS';
 
@@ -94,16 +106,20 @@ describe('Inteligência ambiental (mapa)', () => {
     expect(screen.getByText('Status: Em andamento')).toBeInTheDocument();
   });
 
-  it('tem controle de camadas com "Demandas (fictícias)" ligada e OpenStreetMap desligado', async () => {
+  it('tem controle de camadas com "Demandas (fictícias)" ligada e fundo OpenStreetMap desligado', async () => {
+    const user = userEvent.setup();
     const { container } = renderPagina();
     await screen.findByText('4 demandas no mapa');
     await waitFor(() => expect(container.querySelector('.leaflet-control-layers')).toBeTruthy());
     const camadas = container.querySelector('.leaflet-control-layers');
     const demandas = within(camadas).getByText(/Demandas \(fictícias\)/);
-    const osm = within(camadas).getByText(/OpenStreetMap/);
     expect(demandas.closest('label').querySelector('input')).toBeChecked();
-    expect(osm.closest('label').querySelector('input')).not.toBeChecked();
+    const fundo = screen.getByRole('button', { name: /Mapa de fundo OpenStreetMap/ });
+    expect(fundo).toHaveAttribute('aria-pressed', 'false');
     expect(container.querySelector('.leaflet-tile-pane img')).toBeNull();
+    await user.click(fundo);
+    expect(fundo).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() => expect(container.querySelector('.leaflet-tile-pane img')).toBeTruthy());
   });
 
   it('envia os filtros à API e atualiza os marcadores; Limpar restaura', async () => {
