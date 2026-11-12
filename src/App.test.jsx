@@ -1,8 +1,21 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
+import { vi } from 'vitest';
 import App from './App.jsx';
 import { iniciarSessao } from './test/auth.js';
+
+vi.mock('react-chartjs-2', () => {
+  const stub = (tipo) =>
+    function Grafico({ data, 'aria-label': ariaLabel }) {
+      return (
+        <div data-testid={`grafico-${tipo}`} role="img" aria-label={ariaLabel}>
+          {JSON.stringify(data.labels)}
+        </div>
+      );
+    };
+  return { Bar: stub('bar'), Line: stub('line'), Doughnut: stub('doughnut') };
+});
 
 function renderAt(path) {
   return render(
@@ -19,7 +32,12 @@ describe('App e layout', () => {
 
   it('exibe a página inicial dentro do layout', () => {
     renderAt('/');
-    expect(screen.getByRole('heading', { level: 1, name: 'SEMA NEXUS' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        level: 1,
+        name: /^(Bom dia|Boa tarde|Boa noite), Administrador/,
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Menu principal' })).toBeInTheDocument();
     expect(screen.getByRole('main')).toBeInTheDocument();
   });

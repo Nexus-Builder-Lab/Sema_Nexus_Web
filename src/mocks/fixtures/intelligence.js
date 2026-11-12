@@ -385,3 +385,86 @@ export const handlersReferencia = [
     protegido((r) => referenciaPorMunicipioMock(new URL(r.url).searchParams)),
   ),
 ];
+
+// ---------- Prazos e produtividade do Flux (API#84), usados pelo dashboard inicial ----------
+
+const HOJE_MOCK = () => new Date().toISOString().slice(0, 10);
+
+export function prazoItensMock() {
+  const hoje = HOJE_MOCK();
+  const base = (id, estado, dias, prioridade) => ({
+    id,
+    numero: `DEM-2026/${String(id).padStart(4, '0')}`,
+    titulo: `Demanda fictícia ${id}`,
+    municipio: 'Cuiabá',
+    equipe: 'Equipe Cerrado',
+    fiscal: 'Fiscal Demonstrativo 1',
+    prazo: hoje,
+    prioridade,
+    status: 'EM_ANDAMENTO',
+    estado,
+    diasAtraso: estado === 'VENCIDA' ? dias : null,
+    diasRestantes: estado === 'PROXIMA' ? dias : null,
+    demonstrativo: true,
+  });
+  return [
+    base(31, 'VENCIDA', 6, 'ALTA'),
+    base(32, 'VENCIDA', 2, 'MEDIA'),
+    base(33, 'PROXIMA', 3, 'ALTA'),
+  ];
+}
+
+export const prazoResumoMock = () => ({
+  vencidas: 2,
+  proximas: 1,
+  noPrazo: 8,
+  concluidasNoPrazo: 5,
+  concluidasComAtraso: 1,
+  maisAntigaVencida: { numero: 'DEM-2026/0031', diasAtraso: 6 },
+  demonstrativo: true,
+});
+
+export const produtividadeMock = () => ({
+  kpis: {
+    demandasNoPeriodo: 20,
+    concluidas: 6,
+    percentualConclusao: 30,
+    tempoMedioConclusaoDias: 12.5,
+    percentualConcluidasNoPrazo: 80,
+    atrasadasAtivas: 2,
+  },
+  porSetorSituacao: [
+    {
+      setorId: 1,
+      setor: 'Fiscalização Ambiental',
+      total: 12,
+      concluidas: 4,
+      ativas: 8,
+      atrasadas: 2,
+    },
+    { setorId: 2, setor: 'Licenciamento', total: 8, concluidas: 2, ativas: 6, atrasadas: 0 },
+  ],
+  tempoMedioPorSetor: [],
+  historicoMensal: [],
+  porResponsavel: [],
+  demonstrativo: true,
+});
+
+export const handlersFluxDashboard = [
+  http.get(
+    '/api/flux/prazos/resumo',
+    protegido(() => prazoResumoMock()),
+  ),
+  http.get(
+    '/api/flux/prazos',
+    protegido((r) => {
+      const estado = new URL(r.url).searchParams.get('estado');
+      const content = prazoItensMock().filter((i) => !estado || i.estado === estado);
+      return { content, totalElements: content.length, page: 0, size: 20, totalPages: 1 };
+    }),
+  ),
+  http.get(
+    '/api/flux/produtividade',
+    protegido(() => produtividadeMock()),
+  ),
+];

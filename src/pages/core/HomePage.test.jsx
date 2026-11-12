@@ -1,17 +1,33 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
+import AuthProvider from '../../auth/AuthProvider.jsx';
 import { dashboardMock } from '../../mocks/fixtures/intelligence.js';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao } from '../../test/auth.js';
+import { vi } from 'vitest';
 import HomePage from './HomePage.jsx';
+
+vi.mock('react-chartjs-2', () => {
+  const stub = (tipo) =>
+    function Grafico({ data, 'aria-label': ariaLabel }) {
+      return (
+        <div data-testid={`grafico-${tipo}`} role="img" aria-label={ariaLabel}>
+          {JSON.stringify(data.labels)}
+        </div>
+      );
+    };
+  return { Bar: stub('bar'), Line: stub('line'), Doughnut: stub('doughnut') };
+});
 
 function renderPagina() {
   return render(
-    <MemoryRouter>
-      <HomePage />
-    </MemoryRouter>,
+    <AuthProvider>
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
+    </AuthProvider>,
   );
 }
 
@@ -24,43 +40,64 @@ const valorDoCard = (rotulo) =>
 describe('HomePage (dashboard inicial)', () => {
   beforeEach(() => iniciarSessao());
 
-  it('mostra os cinco indicadores vindos de /api/dashboard', async () => {
+  it('mostra saudação, ações e os 8 indicadores vindos da API', async () => {
     renderPagina();
     const { resumo } = dashboardMock();
-    await waitFor(() => expect(valorDoCard('Demandas totais')).toBe(String(resumo.totalDemandas)));
-    expect(valorDoCard('Em andamento')).toBe(String(resumo.emAndamento));
-    expect(valorDoCard('Finalizadas')).toBe(String(resumo.finalizadas));
+    expect(
+      screen.getByRole('heading', { level: 1, name: /^(Bom dia|Boa tarde|Boa noite)/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Relatórios/ })).toHaveAttribute(
+      'href',
+      '/intelligence/relatorios',
+    );
+    expect(screen.getByRole('link', { name: /Nova demanda/ })).toHaveAttribute(
+      'href',
+      '/flux/demandas/nova',
+    );
+    await waitFor(() =>
+      expect(valorDoCard('Total de demandas')).toBe(String(resumo.totalDemandas)),
+    );
+    expect(valorDoCard('Concluídas')).toBe(String(resumo.finalizadas));
     expect(valorDoCard('Atrasadas')).toBe(String(resumo.atrasadas));
-    expect(valorDoCard('Documentos')).toBe(String(resumo.totalDocumentos));
-    expect(screen.getAllByRole('button', { name: /^Sobre o indicador/ })).toHaveLength(5);
+    expect(valorDoCard('Documentos cadastrados')).toBe(String(resumo.totalDocumentos));
+    await waitFor(() => expect(valorDoCard('Municípios atendidos')).not.toBe('—'));
+    await waitFor(() => expect(valorDoCard('Demandas georreferenciadas')).not.toBe('—'));
+    expect(screen.getAllByRole('button', { name: /^Sobre o indicador/ })).toHaveLength(8);
+    expect(screen.getByText(/vencem nos próximos 5 dias/)).toBeInTheDocument();
   });
 
-  it('lista as atividades recentes com link para a demanda', async () => {
+  it('mostra os gráficos e as listas de atenção e atividades', async () => {
     renderPagina();
-    const lista = await screen.findByRole('list');
-    const itens = within(lista).getAllByRole('listitem');
-    expect(itens).toHaveLength(dashboardMock().atividadesRecentes.length);
-    expect(within(itens[0]).getByText('Conclusão')).toBeInTheDocument();
-    expect(within(itens[0]).getByRole('link', { name: /DEM-2026\/0070/ })).toHaveAttribute(
+    expect(
+      await screen.findByRole('heading', { name: 'Evolução mensal das atividades' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Demandas por situação').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('grafico-doughnut')).toHaveLength(1);
+    expect(
+      await screen.findByRole('heading', { name: 'Municípios com mais demandas' }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Demandas ativas por setor' }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /DEM-2026\/0031/ })).toHaveAttribute(
+      'href',
+      '/flux/demandas/31',
+    );
+    expect(await screen.findByRole('link', { name: /DEM-2026\/0070/ })).toHaveAttribute(
       'href',
       '/flux/demandas/70',
     );
+    expect(screen.getAllByTestId('demo-seal').length).toBeGreaterThanOrEqual(4);
   });
 
-  it('tem atalhos para os três módulos e o selo demonstrativo', async () => {
+  it('mostra estado vazio sem demandas críticas', async () => {
+    server.use(
+      http.get('/api/flux/prazos', () =>
+        HttpResponse.json({ content: [], page: 0, size: 7, totalElements: 0, totalPages: 0 }),
+      ),
+    );
     renderPagina();
-    expect(screen.getByRole('link', { name: /SEMA Intelligence/ })).toHaveAttribute(
-      'href',
-      '/intelligence',
-    );
-    expect(screen.getByRole('link', { name: /SEMA Flux/ })).toHaveAttribute(
-      'href',
-      '/flux/demandas',
-    );
-    expect(screen.queryByRole('link', { name: /SEMA DocIA/ })).not.toBeInTheDocument();
-    expect(screen.getByText('Planejado')).toBeInTheDocument();
-    expect(screen.getAllByTestId('demo-seal').length).toBeGreaterThanOrEqual(2);
-    await waitFor(() => expect(valorDoCard('Demandas totais')).not.toBe('—'));
+    expect(await screen.findByText('Nenhuma demanda crítica')).toBeInTheDocument();
   });
 
   it('mostra estado vazio sem atividades', async () => {
@@ -91,7 +128,7 @@ describe('HomePage (dashboard inicial)', () => {
     expect(alertas[0]).toHaveTextContent(/indisponível no momento/i);
     falhar = false;
     await user.click(screen.getAllByRole('button', { name: 'Tentar novamente' })[0]);
-    await waitFor(() => expect(valorDoCard('Demandas totais')).not.toBe('—'));
+    await waitFor(() => expect(valorDoCard('Total de demandas')).not.toBe('—'));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
