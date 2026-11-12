@@ -1708,3 +1708,31 @@ figure.nx-chart-figure {
 .nx-mark-num {
   background: #fef3c7;
 }
+
+// ---------- DocIA: comparação documental ----------
+.nx-cmp-table {
+  thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--bs-secondary-color);
+  }
+
+  td {
+    overflow-wrap: anywhere;
+  }
+
+  .nx-cmp-same {
+    background: #ecfdf3;
+  }
+
+  .nx-cmp-diff {
+    background: #fffbeb;
+  }
+
+  .nx-cmp-missing {
+    background: #fef2f2;
+    color: var(--bs-secondary-color);
+    font-style: italic;
+  }
+}
