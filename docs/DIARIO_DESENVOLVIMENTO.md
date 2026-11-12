@@ -324,3 +324,10 @@
 - **Decisões:** continua usando `POST /api/docia/perguntas`; sugestões limitadas ao que a API responde (documentos). Sem dados de negócio em storage. Ícones `trash`, `history`, `flask`, `sparkles`, `send` adicionados ao `Icon`.
 - **Arquivos principais:** `AssistentePage.jsx`, `Assistente.test.jsx`, `Icon.jsx`, `theme.scss`.
 - **Testes:** afetados (Assistente + components: 46) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
+
+## 2026-11-12 — GH-67 · Área administrativa igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** página única `/admin` ("Área administrativa") com cabeçalho, aviso "Controle de acesso demonstrativo" e abas Usuários, Setores e equipes, Perfis e permissões (matriz somente leitura dos 5 perfis) e Histórico de atividades (auditoria com filtros). Menu lateral com um único item; somente ADMIN. Sem "Configurações" nem "Dados e backup".
+- **Decisões:** as telas existentes foram reaproveitadas com a prop `embedded` (sem cabeçalho próprio); abas são rotas (`/admin`, `/admin/estrutura`, `/admin/perfis`, `/admin/auditoria`; `/admin/usuarios` redireciona). A matriz deriva de `src/auth/perfis.js` (a API autoriza).
+- **Arquivos principais:** `AdminPage.jsx`, `PerfisPermissoes.jsx`, `UsuariosPage.jsx`, `EstruturaPage.jsx`, `AuditoriaPage.jsx`, `App.jsx`, `navigation.js`, `Admin.test.jsx`.
+- **Testes:** afetados (admin + App + layout: 35 antes dos ajustes finais) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).

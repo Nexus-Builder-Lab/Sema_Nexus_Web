@@ -25,7 +25,7 @@ async function carregarEquipesComMembros() {
   return { equipes, membrosPorEquipe };
 }
 
-export default function UsuariosPage() {
+export default function UsuariosPage({ embedded = false }) {
   const { showToast } = useToast();
   const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
@@ -147,22 +147,24 @@ export default function UsuariosPage() {
   const temFiltro = Boolean(filtros.q || filtros.perfil || filtros.ativo);
   const definir = (campo) => (e) => setRascunho((r) => ({ ...r, [campo]: e.target.value }));
 
+  const botaoNovo = (
+    <button type="button" className="btn btn-primary" onClick={() => setModal({ usuario: null })}>
+      Novo usuário
+    </button>
+  );
+
   return (
     <>
-      <PageHeader
-        module="Core"
-        title="Usuários"
-        description="Cadastre e mantenha os usuários e suas equipes. Dados fictícios de demonstração."
-        actions={
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setModal({ usuario: null })}
-          >
-            Novo usuário
-          </button>
-        }
-      />
+      {embedded ? (
+        <div className="d-flex justify-content-end mb-3">{botaoNovo}</div>
+      ) : (
+        <PageHeader
+          module="Core"
+          title="Usuários"
+          description="Cadastre e mantenha os usuários e suas equipes. Dados fictícios de demonstração."
+          actions={botaoNovo}
+        />
+      )}
 
       <FilterBar
         label="Filtros de usuários"

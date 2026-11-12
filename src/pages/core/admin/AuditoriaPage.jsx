@@ -26,7 +26,7 @@ const COLUNAS = [
 ];
 
 /** Consulta de auditoria (somente ADMIN; a rota e a API exigem o perfil). */
-export default function AuditoriaPage() {
+export default function AuditoriaPage({ embedded = false }) {
   const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [pagina, setPagina] = useState(0);
@@ -45,11 +45,13 @@ export default function AuditoriaPage() {
 
   return (
     <>
-      <PageHeader
-        module="Core"
-        title="Auditoria"
-        description="Histórico das operações realizadas no sistema, mais recentes primeiro. Dados fictícios de demonstração."
-      />
+      {!embedded && (
+        <PageHeader
+          module="Core"
+          title="Auditoria"
+          description="Histórico das operações realizadas no sistema, mais recentes primeiro. Dados fictícios de demonstração."
+        />
+      )}
 
       <FilterBar
         label="Filtros de auditoria"

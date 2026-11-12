@@ -99,7 +99,7 @@ function SetorCard({ setor, responsavel, membros, contagem, onEditar, onAlternar
   );
 }
 
-export default function EstruturaPage() {
+export default function EstruturaPage({ embedded = false }) {
   const { showToast } = useToast();
   const setores = useCarregar(listarSetores);
   const equipes = useCarregar(listarEquipes);
@@ -200,11 +200,13 @@ export default function EstruturaPage() {
 
   return (
     <>
-      <PageHeader
-        module="Flux"
-        title="Setores e equipes"
-        description="Estrutura organizacional, membros e responsáveis. Dados fictícios de demonstração."
-      />
+      {!embedded && (
+        <PageHeader
+          module="Flux"
+          title="Setores e equipes"
+          description="Estrutura organizacional, membros e responsáveis. Dados fictícios de demonstração."
+        />
+      )}
 
       <ul className="nav nx-tabs mb-3" role="tablist">
         {[
@@ -298,7 +300,7 @@ export default function EstruturaPage() {
       {aba === 'usuarios' && (
         <section id="painel-usuarios" role="tabpanel" aria-labelledby="aba-usuarios">
           <p className="text-muted">
-            Os usuários e perfis são gerenciados na tela <Link to="/admin/usuarios">Usuários</Link>.
+            Os usuários e perfis são gerenciados na tela <Link to="/admin">Usuários</Link>.
           </p>
         </section>
       )}
