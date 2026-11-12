@@ -48,9 +48,7 @@ export const NAVIGATION = [
   {
     group: 'Administração',
     items: [
-      { to: '/admin/usuarios', label: 'Usuários', icon: 'users', roles: ['ADMIN'] },
-      { to: '/admin/estrutura', label: 'Setores e equipes', icon: 'team', roles: ['ADMIN'] },
-      { to: '/admin/auditoria', label: 'Auditoria', icon: 'audit', roles: ['ADMIN'] },
+      { to: '/admin', label: 'Área administrativa', icon: 'audit', roles: ['ADMIN'] },
     ],
   },
 ];

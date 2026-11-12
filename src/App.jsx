@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import RequireRole from './auth/RequireRole.jsx';
 import {
   PERFIS_ADMIN,
@@ -12,9 +12,7 @@ import { ToastProvider } from './components/Toasts.jsx';
 import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
 import LoginPage from './pages/core/LoginPage.jsx';
-import UsuariosPage from './pages/core/admin/UsuariosPage.jsx';
-import AuditoriaPage from './pages/core/admin/AuditoriaPage.jsx';
-import EstruturaPage from './pages/core/admin/EstruturaPage.jsx';
+import AdminPage from './pages/core/admin/AdminPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
@@ -72,9 +70,11 @@ export default function App() {
               <Route path="/docia/analise" element={<AnaliseDocumentalPage />} />
               <Route path="/docia/comparacao" element={<ComparacaoPage />} />
               <Route element={<RequireRole roles={PERFIS_ADMIN} />}>
-                <Route path="/admin/usuarios" element={<UsuariosPage />} />
-                <Route path="/admin/estrutura" element={<EstruturaPage />} />
-                <Route path="/admin/auditoria" element={<AuditoriaPage />} />
+                <Route path="/admin" element={<AdminPage aba="usuarios" />} />
+                <Route path="/admin/usuarios" element={<Navigate to="/admin" replace />} />
+                <Route path="/admin/estrutura" element={<AdminPage aba="estrutura" />} />
+                <Route path="/admin/perfis" element={<AdminPage aba="perfis" />} />
+                <Route path="/admin/auditoria" element={<AdminPage aba="auditoria" />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>

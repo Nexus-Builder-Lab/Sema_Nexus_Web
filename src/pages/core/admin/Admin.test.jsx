@@ -261,3 +261,38 @@ describe('Setores e equipes', () => {
     });
   });
 });
+
+describe('Área administrativa (abas)', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('mostra cabeçalho, aviso demonstrativo e as 4 abas, sem Configurações/Backup', async () => {
+    renderAt('/admin');
+    expect(
+      await screen.findByRole('heading', { name: 'Área administrativa', level: 1 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Controle de acesso demonstrativo/)).toBeInTheDocument();
+    const abas = within(screen.getByRole('navigation', { name: 'Seções da área administrativa' }));
+    ['Usuários', 'Setores e equipes', 'Perfis e permissões', 'Histórico de atividades'].forEach(
+      (nome) => expect(abas.getByRole('link', { name: nome })).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('Configurações')).not.toBeInTheDocument();
+    expect(screen.queryByText('Dados e backup')).not.toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Novo usuário' })).toBeInTheDocument();
+  });
+
+  it('aba Perfis e permissões exibe a matriz somente leitura dos 5 perfis', async () => {
+    renderAt('/admin/perfis');
+    const tabela = await screen.findByRole('table');
+    ['Administrador', 'Gestor', 'Fiscal', 'Analista', 'Consulta'].forEach((p) =>
+      expect(within(tabela).getByRole('columnheader', { name: p })).toBeInTheDocument(),
+    );
+    expect(within(tabela).queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('navega entre abas sem trocar de página', async () => {
+    const user = userEvent.setup();
+    renderAt('/admin');
+    await user.click(await screen.findByRole('link', { name: 'Perfis e permissões' }));
+    expect(await screen.findByText(/Matriz de permissões por perfil/)).toBeInTheDocument();
+  });
+});
