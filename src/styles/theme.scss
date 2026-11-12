@@ -1736,3 +1736,88 @@ figure.nx-chart-figure {
     font-style: italic;
   }
 }
+
+// Assistente DocIA (visual do protótipo)
+.nx-ai-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1rem;
+  align-items: start;
+  @media (max-width: 991.98px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.nx-ai-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  .nx-ai-msgs {
+    flex: 1;
+    padding: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .nx-ai-form {
+    border-top: 1px solid var(--bs-border-color);
+    padding: 0.75rem 1rem;
+  }
+}
+.nx-ai-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.9rem;
+  &.nx-ai-user {
+    justify-content: flex-end;
+  }
+}
+.nx-ai-avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--bs-primary);
+  color: #fff;
+}
+.nx-ai-bubble {
+  max-width: min(720px, 100%);
+  min-width: 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.6rem;
+  background: var(--bs-body-bg);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+  &.nx-ai-bubble-user {
+    background: var(--bs-primary);
+    color: #fff;
+    border-color: var(--bs-primary);
+  }
+}
+.nx-ai-mode {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 0.25rem;
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.nx-ai-banner {
+  background: #f3e8ff;
+  border: 1px solid #e9d5ff;
+  color: #4c1d95;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+.nx-ai-side .nx-ai-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-size: 0.78rem;
+  margin-bottom: 0.4rem;
+}

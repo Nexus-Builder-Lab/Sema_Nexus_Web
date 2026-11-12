@@ -47,6 +47,11 @@ import {
   Workflow,
   Percent,
   CircleSlash,
+  Trash2,
+  History,
+  FlaskConical,
+  Sparkles,
+  SendHorizontal,
 } from 'lucide-react';
 
 // Ícones Lucide (mesma família do protótipo), importados individualmente.
@@ -99,6 +104,11 @@ const ICONS = {
   workflow: Workflow,
   percent: Percent,
   slash: CircleSlash,
+  trash: Trash2,
+  history: History,
+  flask: FlaskConical,
+  sparkles: Sparkles,
+  send: SendHorizontal,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {

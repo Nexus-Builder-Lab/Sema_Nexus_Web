@@ -317,3 +317,10 @@
 - **Decisões:** continua consumindo `POST /api/documentos/comparacao` (metadados, diff, similaridade). Campos "Rótulo: valor" vêm do `textoExtraido` de `GET /api/documentos/{id}` (cliente, `comparacaoCampos.js`). Quadro "Informações extraídas" do protótipo não incluído (fora do escopo da Issue). Ícones `percent`/`slash` adicionados ao `Icon`.
 - **Arquivos principais:** `ComparacaoPage.jsx`, `comparacaoCampos.js`, `Comparacao.test.jsx`, `src/components/Icon.jsx`, `src/styles/theme.scss`.
 - **Testes:** afetados (Comparacao + components: 47) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
+
+## 2026-11-12 — GH-66 · Assistente DocIA no visual do NEXUS AI
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `/docia/assistente` com banner roxo "Modo demonstração", cabeçalho com "Limpar conversa", chat em bolhas (avatar, saudação com primeiro nome, selo do modo em cada resposta, referências com link) e painel lateral com "Sugestões de perguntas" e "Histórico" (perguntas da sessão, em memória, reenviáveis). Nome da tela continua "Assistente DocIA".
+- **Decisões:** continua usando `POST /api/docia/perguntas`; sugestões limitadas ao que a API responde (documentos). Sem dados de negócio em storage. Ícones `trash`, `history`, `flask`, `sparkles`, `send` adicionados ao `Icon`.
+- **Arquivos principais:** `AssistentePage.jsx`, `Assistente.test.jsx`, `Icon.jsx`, `theme.scss`.
+- **Testes:** afetados (Assistente + components: 46) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).

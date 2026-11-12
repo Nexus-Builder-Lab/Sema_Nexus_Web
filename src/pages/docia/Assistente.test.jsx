@@ -76,4 +76,24 @@ describe('Assistente DocIA', () => {
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByLabelText('Sua pergunta')).toHaveValue('oi');
   });
+
+  it('mostra banner, painel lateral, histórico e limpa a conversa', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({ resposta: 'Resposta X.', modo: MODO, referencias: [] }),
+      ),
+    );
+    abrir();
+    expect(await screen.findByText(/Modo demonstração/)).toBeInTheDocument();
+    expect(screen.getByText('Sugestões de perguntas')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma pergunta nesta sessão.')).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Sua pergunta'), 'teste?');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+    expect(await screen.findByText('Resposta X.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'teste?' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Limpar conversa/ }));
+    expect(screen.queryByText('Resposta X.')).not.toBeInTheDocument();
+    expect(screen.getByText('Nenhuma pergunta nesta sessão.')).toBeInTheDocument();
+  });
 });
