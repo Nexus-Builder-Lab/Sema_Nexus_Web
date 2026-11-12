@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import {
   CircleMarker,
@@ -17,25 +16,10 @@ import {
   corDaCategoria,
   rotuloDaCategoria,
 } from './mapaConfig.js';
+import useGeoJson from './useGeoJson.js';
 
 const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
 const ESTILO_MUNICIPIO = { color: '#8aa595', weight: 0.6, fillOpacity: 0 };
-
-/** Carrega a malha GeoJSON local (public/geo) — o mapa funciona sem internet. */
-function useGeoJson(url) {
-  const [dados, setDados] = useState(null);
-  useEffect(() => {
-    let ativo = true;
-    fetch(url)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((json) => ativo && setDados(json))
-      .catch(() => ativo && setDados(null));
-    return () => {
-      ativo = false;
-    };
-  }, [url]);
-  return dados;
-}
 
 function PopupDemanda({ ponto }) {
   return (

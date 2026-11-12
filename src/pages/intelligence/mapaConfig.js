@@ -40,4 +40,22 @@ export const FONTE_MALHA = 'Malha territorial: IBGE (API de Malhas v3, municípi
 export const CENTRO_MT = [-12.9, -55.9];
 export const ZOOM_MT = 6;
 
-export const FILTROS_VAZIOS = { municipioId: '', bioma: '', categoria: '', de: '', ate: '' };
+export const FILTROS_VAZIOS = {
+  municipioId: '',
+  bioma: '',
+  categoria: '',
+  de: '',
+  ate: '',
+  satDe: '',
+  satAte: '',
+};
+
+// Camada INPE (Web#22): cores e limites. Estilo distinto das demandas (círculos pequenos, sem contorno branco).
+export const COR_FOCO = '#d9480f';
+export const COR_DETER = '#7048e8';
+export const LIMITE_PONTOS_SATELITE = 3000;
+export const NOME_CAMADA_FOCOS = 'Focos de calor — INPE (dados públicos)';
+export const NOME_CAMADA_DETER = 'Alertas de desmatamento — DETER (dados públicos)';
+
+const ROTULOS_BIOMA = { AMAZONIA: 'Amazônia', CERRADO: 'Cerrado', PANTANAL: 'Pantanal' };
+export const rotuloDoBioma = (codigo) => (codigo ? (ROTULOS_BIOMA[codigo] ?? codigo) : 'Sem bioma');

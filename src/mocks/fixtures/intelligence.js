@@ -46,7 +46,10 @@ export function resumoMock(filtros) {
     pendentes: contar(lista, (d) => d.status === 'PENDENTE'),
     emAndamento: contar(lista, (d) => d.status === 'EM_ANDAMENTO'),
     finalizadas: contar(lista, (d) => d.status === 'FINALIZADA'),
-    atrasadas: contar(lista, (d) => d.status !== 'FINALIZADA' && Boolean(d.prazo) && d.prazo < HOJE),
+    atrasadas: contar(
+      lista,
+      (d) => d.status !== 'FINALIZADA' && Boolean(d.prazo) && d.prazo < HOJE,
+    ),
     totalDocumentos: TOTAL_DOCUMENTOS,
   };
 }
@@ -238,3 +241,147 @@ export function filtrarPontos(params) {
     return contrato;
   });
 }
+
+// ---------- Camada de referência INPE (Issue #22) ----------
+// Amostra pequena e FIXA no formato da API#34 (a API real carrega um snapshot de dados públicos do INPE).
+
+const ATRIBUICAO = {
+  fonte: 'INPE — dados públicos',
+  oficialSema: false,
+  atualizadoEm: '2026-11-09T12:00:00',
+  aviso:
+    'Dados públicos reais do INPE (Programa Queimadas / TerraBrasilis), camada de referência separada das demandas fictícias. Não são dados oficiais da SEMA-MT.',
+};
+
+const f = (id, dataHora, latitude, longitude, municipioId, municipio, bioma, satelite) => ({
+  id,
+  tipo: 'FOCO_CALOR',
+  dataHora,
+  latitude,
+  longitude,
+  municipioId,
+  municipio,
+  bioma,
+  satelite,
+  classe: null,
+  areaKm2: null,
+});
+const d = (id, dataHora, latitude, longitude, municipioId, municipio, bioma, classe, areaKm2) => ({
+  id,
+  tipo: 'DESMATAMENTO',
+  dataHora,
+  latitude,
+  longitude,
+  municipioId,
+  municipio,
+  bioma,
+  satelite: 'DETER',
+  classe,
+  areaKm2,
+});
+
+export const PONTOS_REFERENCIA = [
+  f(1, '2026-10-30T17:40:00', -9.88, -56.09, 5100250, 'Alta Floresta', 'AMAZONIA', 'AQUA_M-T'),
+  f(2, '2026-10-29T18:10:00', -9.9, -56.12, 5100250, 'Alta Floresta', 'AMAZONIA', 'NOAA-20'),
+  f(3, '2026-10-28T17:05:00', -9.85, -56.0, 5100250, 'Alta Floresta', 'AMAZONIA', 'AQUA_M-T'),
+  f(4, '2026-10-27T05:20:00', -16.25, -56.62, 5106505, 'Poconé', 'PANTANAL', 'NPP-375'),
+  f(5, '2026-10-26T17:55:00', -16.3, -56.7, 5106505, 'Poconé', 'PANTANAL', 'AQUA_M-T'),
+  f(6, '2026-10-25T17:30:00', -16.47, -54.63, 5107602, 'Rondonópolis', 'CERRADO', 'NOAA-20'),
+  f(7, '2026-10-24T18:00:00', -15.6, -56.1, 5103403, 'Cuiabá', 'CERRADO', 'AQUA_M-T'),
+  f(8, '2026-09-12T17:20:00', -9.95, -56.2, 5100250, 'Alta Floresta', 'AMAZONIA', 'NPP-375'),
+  d(
+    101,
+    '2026-10-20T00:00:00',
+    -9.8,
+    -56.3,
+    5100250,
+    'Alta Floresta',
+    'AMAZONIA',
+    'DESMATAMENTO_CR',
+    0.42,
+  ),
+  d(
+    102,
+    '2026-10-15T00:00:00',
+    -16.2,
+    -56.5,
+    5106505,
+    'Poconé',
+    'PANTANAL',
+    'CICATRIZ_DE_QUEIMADA',
+    0.18,
+  ),
+];
+
+const doTipo = (params) =>
+  PONTOS_REFERENCIA.filter((p) => p.tipo === (params.get('tipo') || 'FOCO_CALOR'));
+
+export function filtrarReferencia(params) {
+  const g = (nome) => params.get(nome);
+  return doTipo(params).filter(
+    (p) =>
+      (!g('municipioId') || String(p.municipioId) === g('municipioId')) &&
+      (!g('bioma') || p.bioma === g('bioma')) &&
+      (!g('de') || p.dataHora.slice(0, 10) >= g('de')) &&
+      (!g('ate') || p.dataHora.slice(0, 10) <= g('ate')),
+  );
+}
+
+export function metadadosReferenciaMock() {
+  const importacao = (tipo, arquivo) => {
+    const lista = PONTOS_REFERENCIA.filter((p) => p.tipo === tipo);
+    return {
+      id: tipo === 'FOCO_CALOR' ? 1 : 2,
+      fonte: tipo === 'FOCO_CALOR' ? 'INPE — Programa Queimadas' : 'INPE — TerraBrasilis (DETER)',
+      tipo,
+      periodoDe: '2026-09-12',
+      periodoAte: '2026-10-30',
+      importadoEm: ATRIBUICAO.atualizadoEm,
+      registros: lista.length,
+      urlOrigem: 'https://dadosabertos.inpe.br/',
+      licenca: 'Dados abertos do INPE',
+      arquivo,
+    };
+  };
+  return {
+    ...ATRIBUICAO,
+    importacoes: [importacao('FOCO_CALOR', 'focos.csv'), importacao('DESMATAMENTO', 'deter.csv')],
+  };
+}
+
+export function referenciaPontosMock(params) {
+  const pontos = filtrarReferencia(params);
+  return { ...ATRIBUICAO, limite: 5000, truncado: false, pontos };
+}
+
+export function referenciaPorMunicipioMock(params) {
+  const lista = filtrarReferencia(params);
+  const mapa = new Map();
+  for (const p of lista) {
+    const atual = mapa.get(p.municipioId) ?? {
+      municipioId: p.municipioId,
+      municipio: p.municipio,
+      bioma: p.bioma,
+      total: 0,
+    };
+    atual.total += 1;
+    mapa.set(p.municipioId, atual);
+  }
+  const itens = [...mapa.values()].sort((a, b) => b.total - a.total);
+  return { ...ATRIBUICAO, total: lista.length, itens };
+}
+
+export const handlersReferencia = [
+  http.get(
+    '/api/intelligence/referencia/metadados',
+    protegido(() => metadadosReferenciaMock()),
+  ),
+  http.get(
+    '/api/intelligence/referencia/pontos',
+    protegido((r) => referenciaPontosMock(new URL(r.url).searchParams)),
+  ),
+  http.get(
+    '/api/intelligence/referencia/por-municipio',
+    protegido((r) => referenciaPorMunicipioMock(new URL(r.url).searchParams)),
+  ),
+];

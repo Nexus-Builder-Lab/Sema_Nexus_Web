@@ -166,6 +166,14 @@
 - **Arquivos principais:** `src/pages/docia/AssistentePage.jsx`, `src/api/assistenteApi.js`, `src/App.jsx`, `src/layout/navigation.js`, `src/pages/docia/Assistente.test.jsx`.
 - **Testes:** afetados (Assistente.test, App.test) → 15 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+## 2026-11-11 — GH-22 · Camada de satélite do INPE no mapa de Inteligência ambiental
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** no mapa de `/intelligence/inteligencia-ambiental`, camadas "Focos de calor — INPE (dados públicos)" e "Alertas de desmatamento — DETER (dados públicos)" (só se `metadados` trouxer DETER) no `LayersControl`, desligadas por padrão; círculos pequenos laranja/roxos sem contorno (distintos das demandas); popup com data/hora UTC, satélite, município, bioma e fonte; legenda/atribuição com data de `atualizadoEm` só com a camada ligada; painel "Referência por satélite (INPE)" (total + top 5); filtros de período do satélite no painel de filtros; modo agregado (coroplético com a malha IBGE local) acima de 3.000 pontos ou por chave manual.
+- **Decisões técnicas:** `por-municipio` só filtra por período, então município/bioma são aplicados no cliente ao resumo; pontos pedidos com `limite=3000` e só com a camada ligada. Sem `preferCanvas` (quebra a contagem de marcadores SVG nos testes jsdom); com ≤3.000 `circleMarker` e agregado acima disso. `openapi.json` local ainda não tem `/referencia/*`: mocks MSW escritos à mão conforme `ReferenciaDto` da API (amostra fixa de 8 focos e 2 alertas DETER).
+- **Arquivos principais:** `src/pages/intelligence/{SatelliteLayer,SatelliteLegend,SatelliteSidePanel}.jsx`, `useReferenciaSatelite.js`, `useGeoJson.js`, `InteligenciaAmbientalPage.jsx`, `MapFilters.jsx`, `src/api/intelligenceApi.js`, `src/mocks/fixtures/intelligence.js`, `CamadaInpe.test.jsx`.
+- **Testes:** `src/pages/intelligence` + `src/mocks` → 34 passaram; lint 0 problemas. Suíte completa, build, rede desligada e Docker contra a API real: a confirmar pelo validador.
+- **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
 ## 2026-11-12 — GH-15 · Tela de comparação documental
 - **PR:** (preenchido no PR) · **Status:** em validação
 - **Executado por:** autopilot (sessão Web, Sonnet 5.5)
