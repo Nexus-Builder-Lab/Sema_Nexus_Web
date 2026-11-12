@@ -60,3 +60,13 @@ export function findNavItem(pathname) {
   }
   return best;
 }
+
+/** Rótulo do trecho final de rotas aninhadas (nova, detalhes, edição). */
+export function subCrumb(base, pathname) {
+  const rest = pathname.slice(base.length).split('/').filter(Boolean);
+  if (rest.length === 0) return null;
+  if (rest[0] === 'nova') return 'Nova demanda';
+  if (rest[0] === 'novo') return 'Novo documento';
+  if (rest[1] === 'editar') return 'Editar';
+  return 'Detalhes';
+}

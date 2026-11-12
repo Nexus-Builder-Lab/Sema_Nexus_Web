@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { findNavItem } from './navigation.js';
+import { findNavItem, subCrumb } from './navigation.js';
 
 export default function Breadcrumbs() {
   const { pathname } = useLocation();
@@ -8,7 +8,9 @@ export default function Breadcrumbs() {
   const crumbs = [{ label: 'Início', to: '/' }];
   if (match && match.item.to !== '/') {
     crumbs.push({ label: match.group });
+    const sub = subCrumb(match.item.to, pathname);
     crumbs.push({ label: match.item.label, to: match.item.to });
+    if (sub) crumbs.push({ label: sub });
   } else if (!match) {
     crumbs.push({ label: 'Página não encontrada' });
   }
