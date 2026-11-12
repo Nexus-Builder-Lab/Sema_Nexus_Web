@@ -351,6 +351,7 @@
 
 ## GH-91 — Filtro de setor em Análise de indicadores e Relatórios gerenciais (12/11/2026)
 - `IndicadoresPage`: seletor "Setor" habilitado (lista de `/api/setores`), envia `setorId` aos 5 indicadores (inclusive no período de comparação); nota "Filtro por setor indisponível" removida.
-- `RelatoriosPage`: filtro de setor ativo em todos os tipos; `setorId` vai à API de demandas (JSON e CSV), produtividade, prazos e documentos, e aparece no resumo/folha. Lista de setores vinda de `/api/setores` (antes derivada da produtividade).
-- Observação: no código da API (#90) `setorId` está em indicadores, relatório de demandas e produtividade; endpoints de prazos/documentos não o declaram (ignorado) e `/flux/prazos/resumo` não filtra por setor.
+- `RelatoriosPage`: filtro de setor ativo em demandas (JSON e CSV) e produtividade, e no resumo/folha. Lista de setores vinda de `/api/setores`.
+- Revisão: documentos (`DocumentoResumo`) e prazos (`PrazoItem`, só nome da equipe) não têm campo de setor na API, e `/flux/prazos/resumo` não filtra. O filtro fica desabilitado nesses tipos, com nota, sem enviar `setorId` e sem "Setor:" no resumo. Pendência de contrato: expor `setorId` em documentos e prazos na API (a abrir como Issue na API, se aprovada).
+- Correção correlata: `modelos.js` renderizava `municipio`/`responsavel` (objetos `{id,nome}`) no relatório de documentos; agora usa `nome`.
 - Testes: `IndicadoresPage.test.jsx` e `RelatoriosPage.test.jsx` (23 ok); lint 0 erros. Suíte completa, build e Docker: a confirmar pelo validador.

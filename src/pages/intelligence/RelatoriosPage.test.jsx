@@ -173,6 +173,25 @@ describe('RelatoriosPage', () => {
     server.events.removeAllListeners();
   });
 
+  it.each(['documentos', 'prazos'])(
+    'setor desabilitado e não enviado no relatório de %s',
+    async (tipo) => {
+      const urls = [];
+      server.events.on('request:start', ({ request }) => urls.push(request.url));
+      renderPagina(`/intelligence/relatorios?tipo=${tipo}&setorId=2`);
+      expect(screen.getByLabelText('Setor')).toBeDisabled();
+      expect(screen.getByText(/a API não expõe setor/)).toBeInTheDocument();
+      await waitFor(() =>
+        expect(urls.some((u) => /\/(documentos|flux\/prazos)/.test(u))).toBe(true),
+      );
+      expect(
+        urls.filter((u) => /\/(documentos|flux\/prazos)/.test(u) && u.includes('setorId')),
+      ).toEqual([]);
+      expect(screen.getByTestId('cabecalho-impressao')).not.toHaveTextContent('Setor: ');
+      server.events.removeAllListeners();
+    },
+  );
+
   it('relatório de documentos mostra estado vazio sem registros', async () => {
     server.use(
       http.get('/api/documentos', () =>

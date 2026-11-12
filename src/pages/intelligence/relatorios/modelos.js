@@ -21,6 +21,7 @@ const num = (n, casas = 0) =>
   });
 const pct = (parte, total, casas = 1) => (total ? `${num((parte * 100) / total, casas)}%` : '—');
 const valor = (v) => (v == null || v === '' ? '—' : v);
+const ref = (r) => (r && typeof r === 'object' ? (r.nome ?? null) : r);
 const percentual = (n) => (n == null ? '—' : `${num(n, 1)}%`);
 const tempo = (n) => (n == null ? '—' : num(n, 1));
 
@@ -152,7 +153,7 @@ export function modeloProdutividade(p) {
 export function modeloDocumentos(pagina) {
   const lista = pagina?.content ?? [];
   const total = pagina?.totalElements ?? lista.length;
-  const distintos = (campo) => new Set(lista.map((d) => d[campo]).filter(Boolean)).size;
+  const distintos = (campo) => new Set(lista.map((d) => ref(d[campo])).filter(Boolean)).size;
   return {
     kpis: [
       { label: 'Documentos', valor: num(total) },
@@ -167,9 +168,9 @@ export function modeloDocumentos(pagina) {
         d.titulo,
         valor(d.categoria),
         valor(d.tipo),
-        valor(d.municipio),
+        valor(ref(d.municipio)),
         formatarData(d.dataDocumento),
-        valor(d.responsavel),
+        valor(ref(d.responsavel)),
       ]),
     },
     truncado: total > lista.length,

@@ -1,6 +1,7 @@
 import { FileSpreadsheet, Printer } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { listarSetores } from '../../api/adminApi.js';
 import {
   listarBiomas,
   listarCategorias,
@@ -9,7 +10,6 @@ import {
   listarStatus,
 } from '../../api/catalogosApi.js';
 import { listarDocumentos } from '../../api/documentosApi.js';
-import { listarSetores } from '../../api/adminApi.js';
 import { listarPrazos, obterProdutividade, obterResumoPrazos } from '../../api/fluxApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { baixarEGuardarCsv, obterRelatorioDemandas, salvarBlob } from '../../api/relatoriosApi.js';
@@ -84,12 +84,17 @@ function Select({ id, valor, itens, onChange, todos = 'Todos', disabled = false,
   );
 }
 
+const SETOR_INDISPONIVEL =
+  'Indisponível para este tipo: a API não expõe setor em documentos e prazos.';
+const tipoUsaSetor = (tipo) => tipo === 'demandas' || tipo === 'produtividade';
+
 function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
   const [rascunho, setRascunho] = useState(inicial);
   const [erro, setErro] = useState(null);
   const definir = (campo) => (valor) => setRascunho((r) => ({ ...r, [campo]: valor }));
   const demandas = rascunho.tipo === 'demandas';
   const semPeriodo = rascunho.tipo === 'prazos';
+  const semSetor = !tipoUsaSetor(rascunho.tipo);
 
   function enviar() {
     const mensagem = validarPeriodo(rascunho);
@@ -139,11 +144,14 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
         <Campo id="r-setor" label="Setor">
           <Select
             id="r-setor"
-            valor={rascunho.setorId}
+            valor={semSetor ? '' : rascunho.setorId}
             itens={setores}
             todos="Todos os setores"
+            disabled={semSetor}
+            title={semSetor ? SETOR_INDISPONIVEL : undefined}
             onChange={definir('setorId')}
           />
+          {semSetor && <div className="form-text">{SETOR_INDISPONIVEL}</div>}
         </Campo>
         {demandas && (
           <>
@@ -196,17 +204,16 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
 /** Carrega os dados de apoio do relatório (KPIs e tabelas) conforme o tipo; as demandas paginadas vêm à parte. */
 function carregarApoio(tipo, filtros) {
   const periodo = { de: filtros.de || undefined, ate: filtros.ate || undefined };
+  // Documentos e prazos não têm setor no contrato da API: o filtro não se aplica a eles.
   const setorId = filtros.setorId || undefined;
   if (tipo === 'demandas') return obterRelatorioDemandas(filtros, { page: 0, size: 100 });
   if (tipo === 'produtividade') {
     return obterProdutividade({ ...periodo, setorId });
   }
-  if (tipo === 'documentos') return listarDocumentos({ ...periodo, setorId, size: 100 });
+  if (tipo === 'documentos') return listarDocumentos({ ...periodo, size: 100 });
   return Promise.all([
     obterResumoPrazos(),
-    ...['VENCIDA', 'PROXIMA', 'NO_PRAZO'].map((estado) =>
-      listarPrazos({ estado, setorId, size: 100 }),
-    ),
+    ...['VENCIDA', 'PROXIMA', 'NO_PRAZO'].map((estado) => listarPrazos({ estado, size: 100 })),
   ]).then(([resumo, ...paginas]) => ({
     resumo,
     itens: paginas
@@ -292,7 +299,7 @@ export default function RelatoriosPage() {
     const incluir = (c) => {
       if (c === 'tipo') return true;
       if (c === 'de' || c === 'ate') return novos.tipo !== 'prazos';
-      if (c === 'setorId') return true;
+      if (c === 'setorId') return tipoUsaSetor(novos.tipo);
       return novos.tipo === 'demandas';
     };
     CAMPOS.filter(incluir).forEach((c) => novos[c] && params.set(c, novos[c]));
@@ -325,7 +332,7 @@ export default function RelatoriosPage() {
   const resumoFiltros = [
     filtros.de && `De ${formatarData(filtros.de)}`,
     filtros.ate && `Até ${formatarData(filtros.ate)}`,
-    filtros.setorId && `Setor: ${rotuloDe(setores, filtros.setorId)}`,
+    tipoUsaSetor(tipo) && filtros.setorId && `Setor: ${rotuloDe(setores, filtros.setorId)}`,
     tipo === 'demandas' &&
       filtros.municipioId &&
       `Município: ${rotuloDe(municipios, filtros.municipioId)}`,
@@ -342,7 +349,8 @@ export default function RelatoriosPage() {
     periodo = `${formatarData(filtros.de)} a ${formatarData(filtros.ate)}`;
   } else if (filtros.de) periodo = `a partir de ${formatarData(filtros.de)}`;
   else if (filtros.ate) periodo = `até ${formatarData(filtros.ate)}`;
-  const setorRotulo = filtros.setorId ? rotuloDe(setores, filtros.setorId) : 'Todos';
+  const setorRotulo =
+    tipoUsaSetor(tipo) && filtros.setorId ? rotuloDe(setores, filtros.setorId) : 'Todos';
 
   const data = (campo) => (r) => (r[campo] ? formatarData(r[campo]) : '—');
   const colunas = [
