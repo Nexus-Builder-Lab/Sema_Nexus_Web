@@ -15,6 +15,12 @@ export const NAVIGATION = [
         icon: 'map',
       },
       { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'dashboard' },
+      {
+        to: '/intelligence/relatorios',
+        label: 'Relatórios',
+        icon: 'file',
+        roles: ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'],
+      },
     ],
   },
   {

@@ -1,6 +1,11 @@
 import { Route, Routes } from 'react-router-dom';
 import RequireRole from './auth/RequireRole.jsx';
-import { PERFIS_ADMIN, PERFIS_EDICAO_DEMANDA, PERFIS_ESCRITA_DOCUMENTO } from './auth/perfis.js';
+import {
+  PERFIS_ADMIN,
+  PERFIS_EDICAO_DEMANDA,
+  PERFIS_ESCRITA_DOCUMENTO,
+  PERFIS_RELATORIOS,
+} from './auth/perfis.js';
 import AuthProvider from './auth/AuthProvider.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { ToastProvider } from './components/Toasts.jsx';
@@ -12,6 +17,7 @@ import EstruturaPage from './pages/core/admin/EstruturaPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
+import RelatoriosPage from './pages/intelligence/RelatoriosPage.jsx';
 import IndicadoresPage from './pages/intelligence/IndicadoresPage.jsx';
 import PainelFiscalizacaoPage from './pages/flux/PainelFiscalizacaoPage.jsx';
 import DocumentoDetailPage from './pages/docia/DocumentoDetailPage.jsx';
@@ -39,6 +45,9 @@ export default function App() {
                 element={<InteligenciaAmbientalPage />}
               />
               <Route path="/intelligence/indicadores" element={<IndicadoresPage />} />
+              <Route element={<RequireRole roles={PERFIS_RELATORIOS} />}>
+                <Route path="/intelligence/relatorios" element={<RelatoriosPage />} />
+              </Route>
               <Route path="/flux/painel" element={<PainelFiscalizacaoPage />} />
               <Route path="/flux/demandas" element={<DemandasListPage />} />
               <Route path="/flux/demandas/:id" element={<DemandaDetailPage />} />
