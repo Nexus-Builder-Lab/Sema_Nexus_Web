@@ -5,7 +5,7 @@ Regras permanentes. Detalhes (arquitetura, API, Docker, autopilot, agentes, Defi
 ## Projeto
 - Plataforma **demonstrativa** (inteligência ambiental, demandas de fiscalização, gestão documental) de **Mato Grosso**. **Só dados fictícios** (municípios/biomas do IBGE são reais). Exceção aprovada: dados públicos do INPE na camada de satélite, sempre identificados e separados.
 - **Nenhuma integração institucional** (SEMA-MT, SIGA, SISREV…). Telas com dados simulados exibem "AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS".
-- Implementação até 25/11/2026 · revisão/tag 26/11 · apresentação 27/11.
+- **Meta de implementação: 15/11/2026 · limite máximo 20/11/2026** (redefinido pelo proprietário em 12/11) · ensaio/revisão/tag até 26/11 · apresentação 27/11.
 - Repos: este = frontend; `Sema_Nexus_API` = backend + compose/docs; `FabricioJorge0/prototipo_SEMA_NEXUS` = referência, nunca alterar. Nunca misturar código: uma Issue e um PR por repositório.
 
 ## Stack e arquitetura
