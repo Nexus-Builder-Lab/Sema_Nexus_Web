@@ -14,6 +14,7 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
 | Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
 | Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
+| Paridade visual: sidebar com subtítulos, ícones Lucide e badge de atrasadas; topbar com pesquisa, avatar e menu do usuário; `PageHeader` e `KpiCard` do protótipo (Issue #54) | **Implementado** (12/11/2026); validação em Docker pendente |
 | Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
 | Home e dashboard ambiental (Intelligence) contra mocks MSW (Issue #8) | **Implementado** (11/11/2026) com mocks; **Em desenvolvimento**: validação contra a API real e subida via Docker aguardam Sema_Nexus_API#17 |
 | Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |

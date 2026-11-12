@@ -74,6 +74,14 @@ describe('FilterBar', () => {
 });
 
 describe('KpiCard, ChartCard e PageHeader', () => {
+  it('KpiCard mostra ícone em chip colorido e rodapé', () => {
+    const { container } = render(
+      <KpiCard label="Atrasadas" value={7} variant="red" hint="Rodapé" />,
+    );
+    expect(container.querySelector('.nx-kpi-ico-red svg')).not.toBeNull();
+    expect(screen.getByText('Rodapé')).toHaveClass('nx-kpi-foot');
+  });
+
   it('KpiCard mostra valor ou carregamento', () => {
     const { rerender } = render(<KpiCard label="Demandas" value={42} hint="Dados fictícios" />);
     expect(screen.getByText('42')).toBeInTheDocument();
@@ -106,7 +114,7 @@ describe('KpiCard, ChartCard e PageHeader', () => {
       />,
     );
     expect(screen.getByRole('heading', { level: 1, name: 'Demandas' })).toBeInTheDocument();
-    expect(screen.getByText('Flux')).toBeInTheDocument();
+    expect(screen.getByText('SEMA Flux')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Nova demanda' })).toBeInTheDocument();
   });
 });

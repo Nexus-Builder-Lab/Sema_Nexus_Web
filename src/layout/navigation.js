@@ -2,40 +2,43 @@
 // implementadas caem na página "não encontrada" dentro do layout.
 export const NAVIGATION = [
   {
-    group: 'Core',
-    items: [{ to: '/', label: 'Início', icon: 'home', end: true }],
+    group: 'Visão geral',
+    items: [{ to: '/', label: 'Início', icon: 'dashboard', end: true }],
   },
   {
-    group: 'Intelligence',
+    group: 'SEMA Intelligence',
+    subtitle: 'Gestão e análise ambiental',
     items: [
-      { to: '/intelligence', label: 'Dashboard ambiental', icon: 'dashboard', end: true },
+      { to: '/intelligence', label: 'Dashboard ambiental', icon: 'layers', end: true },
       {
         to: '/intelligence/inteligencia-ambiental',
         label: 'Inteligência ambiental',
         icon: 'map',
       },
-      { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'dashboard' },
+      { to: '/intelligence/indicadores', label: 'Indicadores', icon: 'indicators' },
       {
         to: '/intelligence/relatorios',
         label: 'Relatórios',
-        icon: 'file',
+        icon: 'report',
         roles: ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'],
       },
     ],
   },
   {
-    group: 'Flux',
+    group: 'SEMA Flux',
+    subtitle: 'Processos e demandas',
     items: [
       { to: '/flux/demandas', label: 'Demandas', icon: 'clipboard' },
-      { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'dashboard' },
+      { to: '/flux/painel', label: 'Painel de fiscalização', icon: 'indicators' },
     ],
   },
   {
-    group: 'DocIA',
+    group: 'SEMA DocIA',
+    subtitle: 'Documentos e processos',
     items: [
-      { to: '/docia/documentos', label: 'Documentos', icon: 'file' },
-      { to: '/docia/assistente', label: 'Assistente', icon: 'inbox' },
-      { to: '/docia/comparacao', label: 'Comparação', icon: 'file' },
+      { to: '/docia/documentos', label: 'Documentos', icon: 'folder' },
+      { to: '/docia/assistente', label: 'Assistente DocIA', icon: 'assistant' },
+      { to: '/docia/comparacao', label: 'Comparação', icon: 'compare' },
     ],
   },
   {
@@ -43,10 +46,18 @@ export const NAVIGATION = [
     items: [
       { to: '/admin/usuarios', label: 'Usuários', icon: 'users', roles: ['ADMIN'] },
       { to: '/admin/estrutura', label: 'Setores e equipes', icon: 'team', roles: ['ADMIN'] },
-      { to: '/admin/auditoria', label: 'Auditoria', icon: 'file', roles: ['ADMIN'] },
+      { to: '/admin/auditoria', label: 'Auditoria', icon: 'audit', roles: ['ADMIN'] },
     ],
   },
 ];
+
+/** Módulo (eyebrow do cabeçalho de página) → rótulo e ícone, como no protótipo. */
+export const MODULES = {
+  core: { label: 'SEMA NEXUS', icon: 'leaf' },
+  intelligence: { label: 'SEMA Intelligence', icon: 'layers' },
+  flux: { label: 'SEMA Flux', icon: 'clipboard' },
+  docia: { label: 'SEMA DocIA', icon: 'folder' },
+};
 
 /** Localiza o item do menu que corresponde ao caminho (prefixo mais longo). */
 export function findNavItem(pathname) {

@@ -227,7 +227,8 @@ describe('Logout e sessão expirada', () => {
     });
     renderAt('/');
 
-    await user.click(screen.getByRole('button', { name: 'Sair' }));
+    await user.click(screen.getByRole('button', { name: 'Menu do usuário' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Sair' }));
 
     expect(await screen.findByLabelText('E-mail')).toBeInTheDocument();
     expect(logoutChamado).toBe(true);
