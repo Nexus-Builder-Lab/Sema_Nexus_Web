@@ -64,7 +64,7 @@ function Coropletico({ itens, fonte }) {
   if (!malha) return null;
   return (
     <GeoJSON
-      key={`coropletico-${itens.length}-${maximo}`}
+      key={`coropletico-${itens.map((i) => `${i.municipioId}:${i.total}`).join()}`}
       data={malha}
       style={(feature) => ({
         color: '#8a5a44',

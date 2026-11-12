@@ -23,7 +23,13 @@ function useConsulta(chave, buscar, ativo = true) {
     // `buscar` é recriada a cada render; a chave identifica a consulta.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chave, ativo]);
-  return { ...resp, carregando: ativo && resp.chave !== chave };
+  const atual = resp.chave === chave;
+  return {
+    chave: resp.chave,
+    erro: atual ? resp.erro : null,
+    dados: atual ? resp.dados : null,
+    carregando: ativo && !atual,
+  };
 }
 
 /**

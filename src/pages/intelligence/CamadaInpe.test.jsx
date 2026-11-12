@@ -7,6 +7,9 @@ import App from '../../App.jsx';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao } from '../../test/auth.js';
 
+// O mapa Leaflet em jsdom é lento com a suíte completa em paralelo.
+vi.setConfig({ testTimeout: 20000 });
+
 const ROTA = '/intelligence/inteligencia-ambiental';
 const FOCOS = 'Focos de calor — INPE (dados públicos)';
 const DETER = 'Alertas de desmatamento — DETER (dados públicos)';
@@ -54,7 +57,7 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
   it('lista as camadas INPE desligadas, ao lado de Demandas (fictícias), sem legenda', async () => {
     const { container } = renderPagina();
     await screen.findByText('4 demandas no mapa');
-    await waitFor(() => expect(camadas(container)).toBeTruthy());
+    await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
     expect(await within(camadas(container)).findByText(DETER)).toBeInTheDocument();
     expect(entrada(container, FOCOS)).not.toBeChecked();
     expect(entrada(container, /Demandas \(fictícias\)/)).toBeChecked();
@@ -65,18 +68,20 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
     const user = userEvent.setup();
     const { container } = renderPagina();
     await screen.findByText('4 demandas no mapa');
-    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
-    await waitFor(() => expect(camadas(container)).toBeTruthy());
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4), { timeout: 5000 });
+    await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
 
+    // O controle é reconstruído quando a camada DETER entra (metadados): espera antes de clicar.
+    await within(camadas(container)).findByText(DETER, {}, { timeout: 5000 });
     await user.click(entrada(container, FOCOS));
     const legenda = await screen.findByRole('region', { name: 'Legenda da camada INPE' });
     expect(legenda).toHaveTextContent(
       'Fonte: INPE — dados públicos, não oficiais da SEMA. Atualizado em 09/11/2026',
     );
-    await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 8));
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 8), { timeout: 5000 });
 
     await user.click(entrada(container, FOCOS));
-    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4), { timeout: 5000 });
     expect(screen.queryByRole('region', { name: 'Legenda da camada INPE' })).toBeNull();
     // As demandas fictícias não mudam.
     expect(screen.getByText('4 demandas no mapa')).toBeInTheDocument();
@@ -85,9 +90,11 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
   it('popup do foco traz data/hora, satélite, município, bioma e a fonte', async () => {
     const user = userEvent.setup();
     const { container } = renderPagina();
-    await waitFor(() => expect(camadas(container)).toBeTruthy());
+    await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
+    // O controle é reconstruído quando a camada DETER entra (metadados): espera antes de clicar.
+    await within(camadas(container)).findByText(DETER, {}, { timeout: 5000 });
     await user.click(entrada(container, FOCOS));
-    await waitFor(() => expect(marcadores(container).length).toBeGreaterThan(4));
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 8), { timeout: 5000 });
     // Os focos entram depois das demandas.
     fireEvent.click([...marcadores(container)].at(-1));
     const popup = await screen.findByText(/Satélite:/);
@@ -131,8 +138,10 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
     );
     const user = userEvent.setup();
     const { container } = renderPagina();
-    await waitFor(() => expect(camadas(container)).toBeTruthy());
+    await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
     await screen.findByText('3500');
+    // O controle é reconstruído quando a camada DETER entra (metadados): espera antes de clicar.
+    await within(camadas(container)).findByText(DETER, {}, { timeout: 5000 });
     await user.click(entrada(container, FOCOS));
     expect(await screen.findByText(/automático: muitos pontos/)).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Legenda da camada INPE' })).toHaveTextContent(
@@ -154,7 +163,7 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
       ),
     );
     const { container } = renderPagina();
-    await waitFor(() => expect(camadas(container)).toBeTruthy());
+    await waitFor(() => expect(camadas(container)).toBeTruthy(), { timeout: 5000 });
     expect(within(camadas(container)).getByText(FOCOS)).toBeInTheDocument();
     await screen.findByText('8');
     expect(within(camadas(container)).queryByText(DETER)).toBeNull();
@@ -184,7 +193,9 @@ describe('Camada INPE no mapa de Inteligência ambiental', () => {
     await user.type(screen.getByLabelText('Satélite (INPE) de'), '2026-10-27');
     await user.click(screen.getByRole('button', { name: 'Filtrar' }));
     const painel = screen.getByRole('region', { name: 'Referência por satélite (INPE)' });
-    await waitFor(() => expect(within(painel).getByText('4')).toBeInTheDocument());
+    await waitFor(() => expect(within(painel).getByText('4')).toBeInTheDocument(), {
+      timeout: 5000,
+    });
     expect(
       consultas.some((c) => c.includes('referencia/por-municipio?tipo=FOCO_CALOR&de=2026-10-27')),
     ).toBe(true);
