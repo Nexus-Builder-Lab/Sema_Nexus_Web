@@ -1,6 +1,10 @@
 import { acoesDisponiveis } from '../../auth/perfis.js';
 
-/** Transições válidas da máquina de estados (espelham as ações da tela de detalhes). */
+/**
+ * Transições válidas da máquina de estados. Contrato da API: endpoints de `/api/demandas/{id}`
+ * `triagem/iniciar`, `triagem`, `distribuicao`, `inicio`, `fiscalizacao`, `conclusao` e `devolucao`
+ * (ver `src/api/demandasApi.js`); a API valida a transição (409) e autoriza (403).
+ */
 export const TRANSICOES = {
   PENDENTE: [{ para: 'EM_TRIAGEM', acao: 'INICIAR_TRIAGEM' }],
   EM_TRIAGEM: [

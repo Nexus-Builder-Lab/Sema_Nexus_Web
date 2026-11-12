@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   detalharDemanda,
   iniciarExecucao,
@@ -74,12 +74,15 @@ function AcaoKanban({ acao, demandaId, catalogos, onClose, onSucesso }) {
   const d = detalhe.data;
   const confirmacao = CONFIRMACOES[acao];
 
-  if (detalhe.error) {
-    showToast({ variant: 'danger', message: mensagemDeErro(detalhe.error) });
+  const falha = detalhe.error;
+  useEffect(() => {
+    if (!falha) return;
+    showToast({ variant: 'danger', message: mensagemDeErro(falha) });
     onClose();
-    return null;
-  }
-  if (!d) return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [falha]);
+
+  if (falha || !d) return null;
 
   async function confirmar() {
     setExecutando(true);
@@ -132,7 +135,7 @@ function AcaoKanban({ acao, demandaId, catalogos, onClose, onSucesso }) {
   return <ConclusaoModal demanda={d} modo={acao} onClose={onClose} onSucesso={onSucesso} />;
 }
 
-function Cartao({ d, usuario, onDragStart, onDragEnd, onMover, onAbrir }) {
+function Cartao({ d, usuario, onDragStart, onDragEnd, onMover }) {
   const destinos = transicoesPermitidas(d, usuario);
   return (
     <div
@@ -143,14 +146,7 @@ function Cartao({ d, usuario, onDragStart, onDragEnd, onMover, onAbrir }) {
       onDragEnd={onDragEnd}
     >
       <div className="d-flex justify-content-between align-items-center gap-2">
-        <Link
-          to={`/flux/demandas/${d.id}`}
-          className="nx-num-mono"
-          onClick={(e) => {
-            e.preventDefault();
-            onAbrir(d);
-          }}
-        >
+        <Link to={`/flux/demandas/${d.id}`} className="nx-num-mono">
           {d.numero}
         </Link>
         {d.prioridade && <PriorityBadge prioridade={d.prioridade} />}
@@ -200,7 +196,6 @@ function Cartao({ d, usuario, onDragStart, onDragEnd, onMover, onAbrir }) {
 export default function KanbanPage() {
   const { usuario } = useAuth();
   const { showToast } = useToast();
-  const navigate = useNavigate();
   const [filtros, setFiltros] = useState({ q: '', equipe: '', prioridade: '', ocultar: true });
   const [arrastando, setArrastando] = useState(null);
   const [sobre, setSobre] = useState(null);
@@ -327,7 +322,6 @@ export default function KanbanPage() {
                           setSobre(null);
                         }}
                         onMover={tentarMover}
-                        onAbrir={(item) => navigate(`/flux/demandas/${item.id}`)}
                       />
                     ))
                   )}
