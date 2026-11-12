@@ -13,3 +13,10 @@ export function formatarData(iso) {
   const [ano, mes, dia] = String(iso).slice(0, 10).split('-');
   return ano && mes && dia ? `${dia}/${mes}/${ano}` : '—';
 }
+
+/** Dias entre `de` e `ate` ("AAAA-MM-DD"); positivo quando `ate` é posterior. */
+export function diasEntre(de, ate) {
+  const [a1, m1, d1] = String(de).slice(0, 10).split('-').map(Number);
+  const [a2, m2, d2] = String(ate).slice(0, 10).split('-').map(Number);
+  return Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 86400000);
+}

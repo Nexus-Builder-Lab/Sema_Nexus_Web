@@ -28,17 +28,18 @@ describe('Listagem de demandas', () => {
 
   it('mostra o carregamento e depois a tabela com as colunas da Issue', async () => {
     renderAt('/flux/demandas');
-    expect(screen.getByRole('status')).toHaveTextContent('Carregando...');
+    expect(screen.getAllByText('Carregando...').length).toBeGreaterThan(0);
 
     await aguardarLista();
     for (const coluna of [
       'Número',
-      'Título',
-      'Município',
-      'Categoria',
+      'Demanda',
+      'Equipe',
+      'Responsável',
       'Prioridade',
-      'Status',
+      'Situação',
       'Prazo',
+      'Abertura',
     ]) {
       expect(screen.getByRole('columnheader', { name: new RegExp(coluna) })).toBeInTheDocument();
     }
@@ -50,8 +51,40 @@ describe('Listagem de demandas', () => {
       '/flux/demandas/25',
     );
     expect(primeira.getByText('Distribuída')).toBeInTheDocument();
-    expect(primeira.getByText('Atrasada')).toBeInTheDocument();
+    expect(primeira.getByText(/Vencida há \d+ dias?/)).toBeInTheDocument();
+    expect(primeira.getByText(/· .*\/MT|.*\/MT/)).toBeInTheDocument();
     expect(screen.getByText(/Página 1 de 2/)).toBeInTheDocument();
+  });
+
+  it('mostra os 6 indicadores por situação e o cabeçalho da central', async () => {
+    renderAt('/flux/demandas');
+    await aguardarLista();
+    expect(screen.getByRole('heading', { name: 'Central de demandas' })).toBeInTheDocument();
+    const kpis = screen.getByRole('region', { name: 'Indicadores por situação' });
+    for (const rotulo of [
+      'Total',
+      'Abertas',
+      'Em triagem',
+      'Em andamento',
+      'Finalizadas',
+      'Vencidas',
+    ]) {
+      expect(within(kpis).getByText(rotulo)).toBeInTheDocument();
+    }
+    await waitFor(() => expect(within(kpis).getByText('25')).toBeInTheDocument());
+  });
+
+  it('Exportar CSV baixa o arquivo autenticado com os filtros', async () => {
+    const user = userEvent.setup();
+    const criar = vi.fn(() => 'blob:csv');
+    URL.createObjectURL = criar;
+    URL.revokeObjectURL = vi.fn();
+    renderAt('/flux/demandas?status=PENDENTE');
+    await aguardarLista();
+
+    await user.click(screen.getByRole('button', { name: /Exportar CSV/ }));
+
+    await waitFor(() => expect(criar).toHaveBeenCalled());
   });
 
   it('paginação usa a API: a página 2 vai para a URL e mostra o restante', async () => {
@@ -107,7 +140,8 @@ describe('Listagem de demandas', () => {
     expect(screen.getByTestId('local')).toHaveTextContent('categoria=FAUNA_SILVESTRE');
     expect(screen.getByTestId('local')).toHaveTextContent('de=2026-10-01');
     await waitFor(() => {
-      for (const linha of linhas()) expect(within(linha).getByText('Sinop')).toBeInTheDocument();
+      for (const linha of linhas())
+        expect(within(linha).getByText(/Sinop\/MT/)).toBeInTheDocument();
     });
 
     await user.click(screen.getByRole('button', { name: 'Limpar' }));

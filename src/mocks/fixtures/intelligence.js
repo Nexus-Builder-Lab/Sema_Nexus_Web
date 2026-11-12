@@ -444,9 +444,36 @@ export const produtividadeMock = () => ({
     },
     { setorId: 2, setor: 'Licenciamento', total: 8, concluidas: 2, ativas: 6, atrasadas: 0 },
   ],
-  tempoMedioPorSetor: [],
-  historicoMensal: [],
-  porResponsavel: [],
+  tempoMedioPorSetor: [
+    { setorId: 1, setor: 'Fiscalização Ambiental', tempoMedioDias: 14.2 },
+    { setorId: 2, setor: 'Licenciamento', tempoMedioDias: 9 },
+  ],
+  historicoMensal: [
+    { mes: '2026-10', recebidas: 8, concluidas: 3 },
+    { mes: '2026-11', recebidas: 12, concluidas: 3 },
+  ],
+  porResponsavel: [
+    {
+      fiscalId: 1,
+      fiscal: 'Fiscal Demo A',
+      total: 5,
+      concluidas: 2,
+      ativas: 3,
+      atrasadas: 1,
+      tempoMedioDias: 11.5,
+      percentualConclusao: 40,
+    },
+    {
+      fiscalId: 2,
+      fiscal: 'Fiscal Demo B',
+      total: 9,
+      concluidas: 4,
+      ativas: 5,
+      atrasadas: 0,
+      tempoMedioDias: null,
+      percentualConclusao: 44.4,
+    },
+  ],
   demonstrativo: true,
 });
 

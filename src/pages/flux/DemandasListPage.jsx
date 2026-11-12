@@ -3,16 +3,20 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { listarMembros, listarEquipes } from '../../api/catalogosApi.js';
 import { listarDemandas } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
-import { podeEditarDemandas, STATUS_EDITAVEIS } from '../../auth/perfis.js';
+import { obterPorSituacao, obterResumo } from '../../api/intelligenceApi.js';
+import { baixarEGuardarCsv } from '../../api/relatoriosApi.js';
+import { PERFIS_RELATORIOS, podeEditarDemandas, STATUS_EDITAVEIS } from '../../auth/perfis.js';
 import { useAuth } from '../../auth/useAuth.js';
 import DataTable from '../../components/DataTable.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
+import Icon from '../../components/Icon.jsx';
+import KpiCard from '../../components/KpiCard.jsx';
 import FilterBar from '../../components/FilterBar.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import PriorityBadge from '../../components/PriorityBadge.jsx';
 import StatusBadge from '../../components/StatusBadge.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
-import { formatarData } from '../../utils/datas.js';
+import { diasEntre, formatarData, hojeISO } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
 
 const TAMANHO_PAGINA = 20;
@@ -33,10 +37,10 @@ function filtrosDaUrl(searchParams) {
   return Object.fromEntries(CAMPOS_FILTRO.map((campo) => [campo, searchParams.get(campo) ?? '']));
 }
 
-function Campo({ id, label, className = 'col-12 col-sm-6 col-lg-3', children }) {
+function Campo({ id, label, className = 'col-12 col-sm-6 col-lg-auto', children }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="form-label small mb-1">
+      <label htmlFor={id} className="visually-hidden">
         {label}
       </label>
       {children}
@@ -81,6 +85,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
 
   return (
     <FilterBar
+      className="nx-demandas-filtros"
       label="Filtros de demandas"
       onSubmit={() => onAplicar(rascunho)}
       onClear={() => {
@@ -88,12 +93,12 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
         onLimpar();
       }}
     >
-      <Campo id="filtro-q" label="Pesquisar por número ou título" className="col-12 col-lg-6">
+      <Campo id="filtro-q" label="Pesquisar por número ou título" className="col-12 col-lg-4">
         <input
           id="filtro-q"
           type="search"
           className="form-control"
-          placeholder="Ex.: DEM-2026/0010 ou parte do título"
+          placeholder="Pesquisar por número, título..."
           value={rascunho.q}
           onChange={(e) => definir('q')(e.target.value)}
         />
@@ -101,6 +106,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
       <Campo id="filtro-municipio" label="Município">
         <SelectCatalogo
           id="filtro-municipio"
+          vazio="Todos os municípios"
           valor={rascunho.municipioId}
           itens={(catalogos?.municipios ?? []).map((m) => ({ id: m.id, nome: m.nome }))}
           onChange={definir('municipioId')}
@@ -109,6 +115,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
       <Campo id="filtro-categoria" label="Categoria">
         <SelectCatalogo
           id="filtro-categoria"
+          vazio="Todas as categorias"
           valor={rascunho.categoria}
           itens={catalogos?.categorias}
           onChange={definir('categoria')}
@@ -117,6 +124,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
       <Campo id="filtro-prioridade" label="Prioridade">
         <SelectCatalogo
           id="filtro-prioridade"
+          vazio="Todas as prioridades"
           valor={rascunho.prioridade}
           itens={catalogos?.prioridades}
           onChange={definir('prioridade')}
@@ -125,6 +133,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
       <Campo id="filtro-status" label="Status">
         <SelectCatalogo
           id="filtro-status"
+          vazio="Todas as situações"
           valor={rascunho.status}
           itens={catalogos?.status}
           onChange={definir('status')}
@@ -135,6 +144,7 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
           <Campo id="filtro-equipe" label="Equipe responsável">
             <SelectCatalogo
               id="filtro-equipe"
+              vazio="Todas as equipes"
               valor={rascunho.equipeId}
               itens={equipes.map((e) => ({ id: e.id, nome: e.nome }))}
               onChange={trocarEquipe}
@@ -174,16 +184,57 @@ function FiltrosDemanda({ inicial, catalogos, equipes, onAplicar, onLimpar }) {
   );
 }
 
+/** Nota do prazo: "No prazo (N dias)" / "Vencida há N dias"; finalizada mostra só "Concluída". */
+function PrazoNota({ demanda }) {
+  if (demanda.status === 'FINALIZADA') return <div className="nx-prazo-ok">Concluída</div>;
+  const dias = diasEntre(hojeISO(), demanda.prazo);
+  if (demanda.atrasada || dias < 0) {
+    const n = Math.abs(dias);
+    return (
+      <div className="nx-prazo-venc">
+        Vencida há {n} {n === 1 ? 'dia' : 'dias'}
+      </div>
+    );
+  }
+  return (
+    <div className="nx-prazo-ok">
+      No prazo ({dias} {dias === 1 ? 'dia' : 'dias'})
+    </div>
+  );
+}
+
+// Indicadores por situação; se a API negar (ex.: perfil sem acesso), os cartões mostram "—".
+async function carregarIndicadores() {
+  try {
+    const [resumo, situacoes] = await Promise.all([obterResumo(), obterPorSituacao()]);
+    const por = (codigo) => situacoes?.itens?.find((i) => i.codigo === codigo)?.total;
+    return {
+      total: resumo.totalDemandas,
+      abertas: por('PENDENTE'),
+      emTriagem: por('EM_TRIAGEM'),
+      emAndamento: resumo.emAndamento,
+      finalizadas: resumo.finalizadas,
+      vencidas: resumo.atrasadas,
+    };
+  } catch {
+    return null;
+  }
+}
+
 const carregarEquipesSePermitido = () => listarEquipes().catch(() => null);
 
 export default function DemandasListPage() {
   const { usuario } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const podeEditar = podeEditarDemandas(usuario);
+  const podeExportar = PERFIS_RELATORIOS.includes(usuario?.perfil);
+  const [exportando, setExportando] = useState(false);
+  const [erroExport, setErroExport] = useState(null);
 
   const { data: catalogos } = useCarregar(carregarCatalogosFlux);
   // Equipes são restritas a ADMIN/GESTOR na API: para os demais, o filtro simplesmente não aparece.
   const { data: equipes } = useCarregar(carregarEquipesSePermitido);
+  const { data: ind, loading: carregandoInd } = useCarregar(carregarIndicadores);
 
   const filtros = filtrosDaUrl(searchParams);
   const pagina = Math.max(0, Number(searchParams.get('page')) || 0);
@@ -208,6 +259,24 @@ export default function DemandasListPage() {
     setSearchParams(proximo);
   }
 
+  async function exportar() {
+    setExportando(true);
+    setErroExport(null);
+    try {
+      await baixarEGuardarCsv({
+        de: filtros.de,
+        ate: filtros.ate,
+        municipioId: filtros.municipioId,
+        categoria: filtros.categoria,
+        status: filtros.status,
+      });
+    } catch (e) {
+      setErroExport(mensagemDeErro(e));
+    } finally {
+      setExportando(false);
+    }
+  }
+
   const colunas = useMemo(
     () => [
       {
@@ -215,15 +284,32 @@ export default function DemandasListPage() {
         header: 'Número',
         sortable: true,
         className: 'text-nowrap',
-        render: (d) => <Link to={`/flux/demandas/${d.id}`}>{d.numero}</Link>,
+        render: (d) => (
+          <Link to={`/flux/demandas/${d.id}`} className="nx-num-mono">
+            {d.numero}
+          </Link>
+        ),
       },
-      { key: 'titulo', header: 'Título', sortable: true },
-      { key: 'municipio', header: 'Município', render: (d) => d.municipio?.nome ?? '—' },
       {
-        key: 'categoria',
-        header: 'Categoria',
-        render: (d) => rotuloDoCatalogo(catalogos?.categorias, d.categoria),
+        key: 'titulo',
+        header: 'Demanda',
+        sortable: true,
+        render: (d) => (
+          <>
+            <div className="nx-demanda-titulo">{d.titulo}</div>
+            <div className="nx-demanda-sub">
+              {[
+                rotuloDoCatalogo(catalogos?.categorias, d.categoria),
+                d.municipio?.nome && `${d.municipio.nome}/MT`,
+              ]
+                .filter((t) => t && t !== '—')
+                .join(' · ')}
+            </div>
+          </>
+        ),
       },
+      { key: 'equipe', header: 'Equipe', render: (d) => d.equipe?.nome ?? '—' },
+      { key: 'fiscal', header: 'Responsável', render: (d) => d.fiscal?.nome ?? '—' },
       {
         key: 'prioridade',
         header: 'Prioridade',
@@ -232,7 +318,7 @@ export default function DemandasListPage() {
       },
       {
         key: 'status',
-        header: 'Status',
+        header: 'Situação',
         sortable: true,
         render: (d) => <StatusBadge status={d.status} />,
       },
@@ -243,50 +329,100 @@ export default function DemandasListPage() {
         className: 'text-nowrap',
         render: (d) => (
           <>
-            {formatarData(d.prazo)}
-            {d.atrasada && <span className="nx-badge nx-badge-red ms-2">Atrasada</span>}
+            <div>{formatarData(d.prazo)}</div>
+            {d.prazo && <PrazoNota demanda={d} />}
           </>
         ),
       },
-      ...(podeEditar
-        ? [
-            {
-              key: 'acoes',
-              header: <span className="visually-hidden">Ações</span>,
-              className: 'text-end text-nowrap',
-              render: (d) =>
-                STATUS_EDITAVEIS.includes(d.status) ? (
-                  <Link
-                    to={`/flux/demandas/${d.id}/editar`}
-                    className="btn btn-sm btn-outline-secondary"
-                    aria-label={`Editar ${d.numero}`}
-                  >
-                    Editar
-                  </Link>
-                ) : null,
-            },
-          ]
-        : []),
+      {
+        key: 'dataRecebimento',
+        header: 'Abertura',
+        className: 'text-nowrap',
+        render: (d) => formatarData(d.dataRecebimento),
+      },
+      {
+        key: 'acoes',
+        header: <span className="visually-hidden">Ações</span>,
+        className: 'text-end text-nowrap',
+        render: (d) => (
+          <>
+            <Link
+              to={`/flux/demandas/${d.id}`}
+              className="nx-acao-icone"
+              aria-label={`Ver ${d.numero}`}
+              title="Ver detalhes"
+            >
+              <Icon name="eye" size={16} />
+            </Link>
+            {podeEditar && STATUS_EDITAVEIS.includes(d.status) && (
+              <Link
+                to={`/flux/demandas/${d.id}/editar`}
+                className="nx-acao-icone"
+                aria-label={`Editar ${d.numero}`}
+                title="Editar"
+              >
+                <Icon name="pencil" size={16} />
+              </Link>
+            )}
+          </>
+        ),
+      },
     ],
     [catalogos, podeEditar],
   );
 
   const temFiltro = CAMPOS_FILTRO.some((campo) => filtros[campo]);
+  const kpis = [
+    { label: 'Total', value: ind?.total, variant: 'green', icon: 'clipboard' },
+    { label: 'Abertas', value: ind?.abertas, variant: 'blue', icon: 'inbox' },
+    { label: 'Em triagem', value: ind?.emTriagem, variant: 'blue', icon: 'search' },
+    { label: 'Em andamento', value: ind?.emAndamento, variant: 'blue', icon: 'loader' },
+    { label: 'Finalizadas', value: ind?.finalizadas, variant: 'green', icon: 'check' },
+    { label: 'Vencidas', value: ind?.vencidas, variant: 'red', icon: 'alarm' },
+  ];
 
   return (
     <>
       <PageHeader
         module="Flux"
-        title="Demandas de fiscalização"
-        description="Pesquise, filtre e acompanhe as demandas. Dados fictícios de demonstração."
+        title="Central de demandas"
+        description="Cadastro, acompanhamento e movimentação das demandas administrativas e operacionais. Dados fictícios de demonstração."
         actions={
-          podeEditar && (
-            <Link to="/flux/demandas/nova" className="btn btn-primary">
-              Nova demanda
-            </Link>
-          )
+          <>
+            {podeExportar && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={exportar}
+                disabled={exportando}
+              >
+                <Icon name="download" size={15} className="me-1" />
+                {exportando ? 'Exportando...' : 'Exportar CSV'}
+              </button>
+            )}
+            {podeEditar && (
+              <Link to="/flux/demandas/nova" className="btn btn-primary">
+                <Icon name="plus" size={15} className="me-1" />
+                Nova demanda
+              </Link>
+            )}
+          </>
         }
       />
+
+      {erroExport && (
+        <div className="alert alert-danger" role="alert">
+          Não foi possível exportar o CSV. {erroExport}
+        </div>
+      )}
+
+      <section className="row g-3 mb-3" aria-label="Indicadores por situação">
+        {kpis.map((k) => (
+          <div className="col-6 col-md-4 col-xl-2" key={k.label}>
+            <KpiCard {...k} loading={carregandoInd} />
+          </div>
+        ))}
+      </section>
 
       <FiltrosDemanda
         key={chaveFiltros}
