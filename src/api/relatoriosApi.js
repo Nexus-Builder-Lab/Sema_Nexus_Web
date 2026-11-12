@@ -12,23 +12,12 @@ export async function obterRelatorioDemandas(filtros = {}, { page = 0, size = 20
   return data;
 }
 
-/** Lê o Blob como texto; `Blob.text()` não existe em todos os ambientes (ex.: jsdom), então usa FileReader. */
-function lerTexto(blob) {
-  if (typeof blob.text === 'function') return blob.text();
-  return new Promise((resolve, reject) => {
-    const leitor = new FileReader();
-    leitor.onload = () => resolve(String(leitor.result));
-    leitor.onerror = () => reject(leitor.error);
-    leitor.readAsText(blob);
-  });
-}
-
-/** Com `responseType: 'blob'` o problem+json do erro chega como Blob: converte para objeto. */
-async function lerErroBlob(erro) {
+/** Com `responseType: 'arraybuffer'` o problem+json do erro chega como ArrayBuffer: converte para objeto. */
+function lerErroBinario(erro) {
   const dados = erro?.response?.data;
-  if (typeof Blob !== 'undefined' && dados instanceof Blob) {
+  if (dados instanceof ArrayBuffer) {
     try {
-      erro.response.data = JSON.parse(await lerTexto(dados));
+      erro.response.data = JSON.parse(new TextDecoder('utf-8').decode(dados));
     } catch {
       erro.response.data = undefined;
     }
@@ -36,16 +25,19 @@ async function lerErroBlob(erro) {
   return erro;
 }
 
-/** GET /api/relatorios/demandas.csv (mesmos filtros, sem paginação) → Blob. Exige o token. */
+/**
+ * GET /api/relatorios/demandas.csv (mesmos filtros, sem paginação) → Blob. Exige o token.
+ * Usa `arraybuffer` (e não `blob`) para não depender do Blob do XHR, que quebra sob o MSW no Node 22.
+ */
 export async function baixarCsvDemandas(filtros = {}) {
   try {
     const { data } = await httpClient.get('/relatorios/demandas.csv', {
       params: limparFiltros(filtros),
-      responseType: 'blob',
+      responseType: 'arraybuffer',
     });
-    return data;
+    return new Blob([data], { type: 'text/csv;charset=utf-8' });
   } catch (erro) {
-    throw await lerErroBlob(erro);
+    throw lerErroBinario(erro);
   }
 }
 
