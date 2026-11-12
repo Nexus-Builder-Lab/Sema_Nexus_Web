@@ -54,7 +54,9 @@ describe('Biblioteca de documentos', () => {
     abrir('/docia/documentos');
     expect(await screen.findByRole('link', { name: A.titulo })).toBeVisible();
     expect(screen.getByText(/A pesquisa é textual/)).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Novo documento' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Todas (2)' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Relatório técnico (2)' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Cadastrar documento' })).toBeVisible();
 
     await user.type(screen.getByLabelText('Pesquisar nos documentos'), 'vistoria');
     await user.type(screen.getByLabelText('Categoria'), 'Relatório');
