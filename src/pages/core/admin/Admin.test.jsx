@@ -173,17 +173,33 @@ describe('Usuários', () => {
 describe('Setores e equipes', () => {
   beforeEach(() => iniciarSessao());
 
-  it('lista setores e equipes com responsável e membros', async () => {
+  it('desativa um setor pelo cartão', async () => {
+    const user = userEvent.setup();
     renderAt('/admin/estrutura');
+    await screen.findByText('DEMO-DOC');
+    await user.click(screen.getByRole('button', { name: 'Desativar setor DEMO-DOC' }));
+    expect(await screen.findByText('Setor desativado.')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Reativar setor DEMO-DOC' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lista setores e equipes com responsável e membros', async () => {
+    const user = userEvent.setup();
+    renderAt('/admin/estrutura');
+    const cartao = (await screen.findByText('DEMO-FISC')).closest('article');
+    expect(cartao).toHaveTextContent('Setor de Fiscalização');
+    expect(await within(cartao).findByText(/ativas/)).toBeInTheDocument();
+    expect(within(cartao).getByText('Desativar')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /Equipes/ }));
     await screen.findByRole('table', { name: /lista de equipes/i });
-    expect(screen.getByRole('table', { name: /lista de setores/i })).toHaveTextContent('DEMO-FISC');
     expect(linhaDe('Equipe Alfa')).toHaveTextContent('DEMO-FISC');
   });
 
   it('cadastra setor e equipe com responsável', async () => {
     const user = userEvent.setup();
     renderAt('/admin/estrutura');
-    await screen.findByRole('table', { name: /lista de equipes/i });
+    await screen.findByText('DEMO-FISC');
 
     await user.click(screen.getByRole('button', { name: 'Novo setor' }));
     let dialogo = screen.getByRole('dialog');
@@ -193,6 +209,7 @@ describe('Setores e equipes', () => {
     expect(await screen.findByText('Setor cadastrado com sucesso.')).toBeInTheDocument();
     expect(await screen.findByText('DEMO-NOVO')).toBeInTheDocument();
 
+    await user.click(screen.getByRole('tab', { name: /Equipes/ }));
     await user.click(screen.getByRole('button', { name: 'Nova equipe' }));
     dialogo = screen.getByRole('dialog');
     await user.click(within(dialogo).getByRole('button', { name: 'Salvar' }));
@@ -214,6 +231,7 @@ describe('Setores e equipes', () => {
   it('atualiza os membros e o responsável de uma equipe', async () => {
     const user = userEvent.setup();
     renderAt('/admin/estrutura');
+    await user.click(await screen.findByRole('tab', { name: /Equipes/ }));
     await screen.findByRole('table', { name: /lista de equipes/i });
     await user.click(
       screen.getByRole('button', { name: 'Membros de Equipe Bravo (demonstração)' }),
