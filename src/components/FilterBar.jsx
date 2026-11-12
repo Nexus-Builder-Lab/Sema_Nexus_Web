@@ -5,6 +5,7 @@ export default function FilterBar({
   onClear,
   label = 'Filtros',
   submitLabel = 'Filtrar',
+  className = '',
 }) {
   function handleSubmit(event) {
     event.preventDefault();
@@ -13,7 +14,7 @@ export default function FilterBar({
 
   return (
     <form
-      className="card card-body shadow-sm mb-3"
+      className={`card card-body shadow-sm mb-3 ${className}`.trim()}
       role="search"
       aria-label={label}
       onSubmit={handleSubmit}

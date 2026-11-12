@@ -1304,3 +1304,54 @@ figure.nx-chart-figure {
   font-size: 11px;
   font-weight: 700;
 }
+
+// ---------- Central de demandas ----------
+.nx-demandas-filtros {
+  .form-select,
+  .form-control {
+    font-size: 13px;
+  }
+}
+
+.nx-num-mono {
+  font-family: $font-family-monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: $nx-gray-700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.nx-demanda-titulo {
+  font-weight: 600;
+  font-size: 13px;
+  min-width: 220px;
+}
+
+.nx-demanda-sub {
+  font-size: 12px;
+  color: $nx-gray-600;
+}
+
+.nx-prazo-ok {
+  font-size: 12px;
+  color: $nx-gray-600;
+}
+
+.nx-prazo-venc {
+  font-size: 12px;
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.nx-acao-icone {
+  color: $nx-gray-600;
+  padding: 4px;
+  display: inline-flex;
+  border-radius: 6px;
+
+  &:hover {
+    color: $nx-gray-800;
+    background: $nx-gray-100;
+  }
+}
