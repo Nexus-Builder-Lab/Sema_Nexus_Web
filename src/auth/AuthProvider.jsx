@@ -20,13 +20,23 @@ export default function AuthProvider({ children }) {
     [],
   );
 
-  const login = useCallback(async (email, senha) => {
-    const { token, usuario } = await authApi.login(email, senha);
+  const iniciar = useCallback(({ token, usuario }) => {
     saveSession({ token, usuario });
     setSession({ token, usuario });
     setSessaoExpirada(false);
     return usuario;
   }, []);
+
+  const login = useCallback(
+    async (email, senha) => iniciar(await authApi.login(email, senha)),
+    [iniciar],
+  );
+
+  // Login demonstrativo por perfil (profile `demo` da API): o Web não conhece senhas.
+  const loginDemo = useCallback(
+    async (perfil) => iniciar(await authApi.loginDemo(perfil)),
+    [iniciar],
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -45,9 +55,10 @@ export default function AuthProvider({ children }) {
       autenticado: Boolean(session?.token),
       sessaoExpirada,
       login,
+      loginDemo,
       logout,
     }),
-    [session, sessaoExpirada, login, logout],
+    [session, sessaoExpirada, login, loginDemo, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

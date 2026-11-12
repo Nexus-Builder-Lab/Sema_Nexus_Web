@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth.js';
 import Icon from '../components/Icon.jsx';
+import Logo from '../components/Logo.jsx';
 import { NAVIGATION } from './navigation.js';
 
 export default function Sidebar({ id, collapsed, onToggleCollapse, onNavigate }) {
@@ -13,13 +14,7 @@ export default function Sidebar({ id, collapsed, onToggleCollapse, onNavigate })
   return (
     <aside className="nx-sidebar" id={id} aria-label="Menu principal">
       <div className="nx-sidebar-head">
-        <span className="nx-brand-mark" aria-hidden="true">
-          SN
-        </span>
-        <span className="nx-brand-text">
-          <strong>SEMA NEXUS</strong>
-          <span>Ambiente demonstrativo</span>
-        </span>
+        <Logo />
       </div>
       <nav aria-label="Módulos">
         {grupos.map(({ group, items }) => (
