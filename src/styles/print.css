@@ -3,6 +3,76 @@
   display: none;
 }
 
+/* Folha do relatório gerencial (tela e impressão). */
+.nx-report-sheet .card-body {
+  padding: 1.5rem;
+}
+
+.nx-report-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid var(--nx-green-800, #166534);
+}
+
+.nx-report-inst {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.nx-report-meta {
+  text-align: right;
+}
+
+.nx-report-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.nx-report-kpis > div {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+}
+
+.nx-report-kpis span {
+  font-size: 0.75rem;
+  color: var(--bs-secondary-color);
+}
+
+.nx-report-kpis strong {
+  font-size: 1.35rem;
+}
+
+.nx-report-table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--bs-secondary-color);
+  background: var(--bs-tertiary-bg);
+}
+
+.nx-report-foot {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+
+@media (max-width: 575.98px) {
+  .nx-report-meta {
+    text-align: left;
+  }
+}
+
 @media print {
   .nx-sidebar,
   .nx-backdrop,
@@ -23,6 +93,21 @@
     width: 100% !important;
     background: #fff !important;
     color: #000 !important;
+  }
+
+  .nx-report-sheet {
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .nx-report-sheet .card-body {
+    padding: 0 !important;
+  }
+
+  .nx-report-table th,
+  .nx-report-kpis > div {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .nx-print-header {
