@@ -262,3 +262,10 @@
 - **Decisões:** sem ação de excluir (a API não tem endpoint); "Concluída" no prazo de finalizadas (a API não informa se foi no prazo); setor do protótipo substituído por equipe, conforme o domínio. KPIs mostram "—" se a API negar.
 - **Arquivos principais:** `src/pages/flux/DemandasListPage.jsx` (+ teste), `src/components/{FilterBar,Icon}.jsx`, `src/utils/datas.js`, `src/styles/theme.scss`.
 - **Testes:** afetados (pages/flux, components, App, fluxosCriticos: 76) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador.
+
+## 2026-11-12 — GH-19 · Fluxo de atividades (Kanban) igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** nova tela `/flux/kanban` (menu SEMA Flux > "Fluxo de atividades") com 7 colunas pelos status do SEMA NEXUS, contador por coluna, cartões (número, prioridade, título, equipe, município, prazo, iniciais do responsável; borda por prioridade) ordenados por prioridade, filtros (pesquisa, equipe, prioridade, ocultar finalizadas há mais de 30 dias) e estados de carregamento/vazio/erro. Arrastar e soltar (HTML5) e menu "Mover para" (toque) só para transições válidas (`kanbanTransicoes.js`, filtradas por `acoesDisponiveis`); destino inválido mostra aviso e não chama a API. Cada movimentação abre o mesmo formulário/confirmação da tela de detalhes (triagem, complementação, distribuição, início de execução, fiscalização, conclusão/devolução); a API continua autorizando (403/409 viram aviso).
+- **Decisões:** setor do protótipo substituído por equipe (a API de demandas não expõe setor e `/equipes` é restrito a ADMIN/GESTOR); carrega as 100 demandas mais recentes com aviso se houver mais; "Cancelada" não existe nos 7 status.
+- **Arquivos principais:** `src/pages/flux/{KanbanPage.jsx,kanbanTransicoes.js}` (+ testes), `src/App.jsx`, `src/layout/navigation.js`, `src/components/Icon.jsx`, `src/styles/theme.scss`.
+- **Testes:** afetados (Kanban, kanbanTransicoes, layout: 13) passaram; lint 0 problemas. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador.

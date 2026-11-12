@@ -1355,3 +1355,134 @@ figure.nx-chart-figure {
     background: $nx-gray-100;
   }
 }
+
+// ---------- Fluxo de atividades (Kanban) ----------
+.nx-kanban {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(250px, 1fr);
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.nx-kb-col {
+  min-width: 0;
+  background: $nx-gray-50;
+  border: 1px solid $nx-gray-200;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.nx-kb-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: $nx-gray-800;
+}
+
+.nx-kb-count {
+  margin-left: auto;
+  background: $nx-gray-200;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 11px;
+}
+
+.nx-kb-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: $nx-gray-400;
+  &-violet {
+    background: #7c3aed;
+  }
+  &-amber {
+    background: $nx-amber-600;
+  }
+  &-blue {
+    background: #2563eb;
+  }
+  &-orange {
+    background: #ea580c;
+  }
+  &-teal {
+    background: #0d9488;
+  }
+  &-green {
+    background: $nx-green-600;
+  }
+}
+
+.nx-kb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 8px 8px;
+  min-height: 120px;
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  &.nx-kb-drop-ok {
+    outline: 2px dashed $nx-green-500;
+    outline-offset: -2px;
+  }
+  &.nx-kb-over {
+    background: $nx-green-50;
+  }
+}
+
+.nx-kb-card {
+  background: #fff;
+  border: 1px solid $nx-gray-200;
+  border-left: 4px solid $nx-gray-300;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: grab;
+  &.nx-kb-locked {
+    cursor: default;
+  }
+  &.nx-kb-p-URGENTE {
+    border-left-color: $nx-red-600;
+  }
+  &.nx-kb-p-ALTA {
+    border-left-color: $nx-amber-600;
+  }
+  &.nx-kb-p-MEDIA {
+    border-left-color: #2563eb;
+  }
+}
+
+.nx-kb-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+
+.nx-kb-meta,
+.nx-kb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: $nx-gray-600;
+}
+
+.nx-kb-foot {
+  margin-top: 6px;
+}
+
+.nx-kb-tag {
+  background: $nx-gray-100;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-weight: 600;
+}

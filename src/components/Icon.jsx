@@ -44,6 +44,7 @@ import {
   Users,
   Network,
   X,
+  Workflow,
 } from 'lucide-react';
 
 // Ícones Lucide (mesma família do protótipo), importados individualmente.
@@ -93,6 +94,7 @@ const ICONS = {
   image: ImageDown,
   lightbulb: Lightbulb,
   table: Table2,
+  workflow: Workflow,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {
