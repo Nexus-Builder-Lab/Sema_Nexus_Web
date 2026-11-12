@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import FilterBar from '../../components/FilterBar.jsx';
 import { PERIODOS } from './concentracao.js';
+import { aplicarBioma, municipiosDoBioma } from './filtroBioma.js';
 
 function Selecao({ id, label, valor, onChange, vazio, opcoes, className }) {
   return (
@@ -45,7 +46,7 @@ export default function MapFilters({
         vazio="Todos"
         valor={valores.municipioId}
         onChange={set('municipioId')}
-        opcoes={municipios.map((m) => ({ valor: m.id, rotulo: m.nome }))}
+        opcoes={municipiosDoBioma(municipios, valores.bioma).map((m) => ({ valor: m.id, rotulo: m.nome }))}
       />
       <Selecao
         id={`${id}-bio`}
@@ -53,7 +54,7 @@ export default function MapFilters({
         label="Bioma"
         vazio="Todos"
         valor={valores.bioma}
-        onChange={set('bioma')}
+        onChange={(event) => onChange(aplicarBioma(valores, event.target.value, municipios))}
         opcoes={biomas.map((b) => ({ valor: b.codigo, rotulo: b.rotulo }))}
       />
       <Selecao

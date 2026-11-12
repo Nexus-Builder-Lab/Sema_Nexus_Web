@@ -338,3 +338,8 @@
 - **Decisões:** usa `GET /demandas`, `/documentos` e `/usuarios` com `q` (usuários só para ADMIN; a API segue autorizando). Ocorrências e setores do protótipo ficaram fora (sem endpoint de listagem com `q` previsto na Issue). Campo oculto no mobile, como antes.
 - **Arquivos principais:** `GlobalSearch.jsx`, `GlobalSearch.test.jsx`, `Topbar.jsx`, `theme.scss`.
 - **Testes:** afetados (layout + App + fluxosCriticos: 19) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
+
+## GH-90 — Filtro de bioma restringe os municípios (12/11/2026)
+- Novo `src/pages/intelligence/filtroBioma.js` (`municipiosDoBioma`, `aplicarBioma`): ao escolher o bioma, o seletor de municípios mostra só os do bioma (campo `bioma` do catálogo) e o município incompatível é limpo.
+- Aplicado em Inteligência ambiental (`MapFilters`), Dashboard ambiental e Relatórios gerenciais (tipo demandas). Análise de indicadores não tem filtro de bioma/município.
+- Testes: `filtroBioma.test.js`; `src/pages/intelligence` rodou local (61 ok); suíte completa e build a confirmar pelo validador.

@@ -37,6 +37,8 @@ import {
 import { validarPeriodo } from './validarFiltros.js';
 import '../../styles/print.css';
 
+import { aplicarBioma, municipiosDoBioma } from './filtroBioma.js';
+
 const CAMPOS_DEMANDA = ['municipioId', 'bioma', 'categoria', 'status'];
 const CAMPOS = ['tipo', 'de', 'ate', 'setorId', ...CAMPOS_DEMANDA];
 const TAMANHO_PAGINA = 20;
@@ -151,7 +153,7 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
               <Select
                 id="r-municipio"
                 valor={rascunho.municipioId}
-                itens={catalogos.municipios}
+                itens={municipiosDoBioma(catalogos.municipios, rascunho.bioma)}
                 onChange={definir('municipioId')}
               />
             </Campo>
@@ -160,7 +162,9 @@ function Filtros({ inicial, catalogos, setores, onAplicar, onLimpar }) {
                 id="r-bioma"
                 valor={rascunho.bioma}
                 itens={catalogos.biomas}
-                onChange={definir('bioma')}
+                onChange={(b) =>
+                  setRascunho((atual) => aplicarBioma(atual, b, catalogos.municipios))
+                }
               />
             </Campo>
             <Campo id="r-categoria" label="Categoria">
