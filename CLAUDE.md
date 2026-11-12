@@ -20,7 +20,7 @@ React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Ro
 ## Segurança (inegociável)
 - Sem segredos no código, Dockerfile, imagem ou `nginx.conf`.
 - Credencial `admin@admin.com` / `12345678` **só demonstrativa**: aparece só no aviso do login quando `/api/auth/config` indicar `demo: true`; nunca pré-preenchida; texto puro só em README e testes.
-- Nunca `docker compose down -v`, apagar volumes, parar/remover containers de outros projetos, nem encerrar processos que você não iniciou (API local na porta 18080).
+- Nunca `docker compose down -v`, apagar volumes, parar/remover containers de outros projetos, nem encerrar processos que você não iniciou. Acesse sempre por `127.0.0.1` (em `localhost`/IPv6 as portas 8080 e 3000 são de outro serviço) e use as portas do `.env` da API (hoje `API_PORT=18081`, `WEB_PORT=3000`).
 - GitHub: nunca se adicionar como colaborador, convidar contas, mudar permissões/visibilidade, apagar histórico, force push ou push na `main`. Tag/release só com autorização.
 
 ## Fluxo

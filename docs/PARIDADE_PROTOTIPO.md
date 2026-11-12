@@ -47,4 +47,4 @@ Leia **só** o arquivo e o trecho relacionados à tela da sua Issue (Grep antes 
 
 - Comparação lado a lado com a captura de referência (descrever no PR as diferenças que restarem e por quê).
 - Testes de componente atualizados; lint, testes e build verdes; tela funcionando contra a API real no Docker.
-- Responsivo (375/768/1366 px), sem rolagem horizontal da página, console sem erros.
+- Responsivo (375/768/1366 px), sem rolagem horizontal da página, console sem erros — **conferido em lote pela sessão principal no Chrome**; o autopilot (sem navegador) registra `VISUAL PENDENTE (lote)` no PR e não reprova por isso.
