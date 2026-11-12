@@ -1,10 +1,51 @@
+import {
+  ArrowRight,
+  Briefcase,
+  ClipboardCheck,
+  Eye,
+  FileSearch,
+  LineChart,
+  LogIn,
+  Radar,
+  ShieldCheck,
+  TriangleAlert,
+  Workflow,
+} from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import * as authApi from '../../api/authApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { useAuth } from '../../auth/useAuth.js';
+import Logo from '../../components/Logo.jsx';
 import DemoBanner from '../../layout/DemoBanner.jsx';
+import ContornoMT from './ContornoMT.jsx';
 import { validarLogin } from './validarLogin.js';
+
+const ICONES_PERFIL = {
+  ADMIN: ShieldCheck,
+  GESTOR: Briefcase,
+  FISCAL: ClipboardCheck,
+  ANALISTA: LineChart,
+  CONSULTA: Eye,
+};
+
+const MODULOS = [
+  {
+    icone: Radar,
+    nome: 'SEMA Intelligence',
+    texto: 'Indicadores, mapa de ocorrências dos 142 municípios e relatórios gerenciais.',
+  },
+  {
+    icone: Workflow,
+    nome: 'SEMA Flux',
+    texto: 'Demandas, fluxo de trabalho, prazos e produtividade por setor.',
+  },
+  {
+    icone: FileSearch,
+    nome: 'SEMA DocIA',
+    texto: 'Gestão documental, análise, comparação e assistente demonstrativo.',
+  },
+];
 
 function mensagemDeLogin(error) {
   const status = error?.response?.status;
@@ -22,7 +63,7 @@ function destinoAposLogin(location) {
 }
 
 export default function LoginPage() {
-  const { autenticado, login, sessaoExpirada } = useAuth();
+  const { autenticado, login, loginDemo, sessaoExpirada } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const emailId = useId();
@@ -33,15 +74,18 @@ export default function LoginPage() {
   const [erros, setErros] = useState({});
   const [erroGeral, setErroGeral] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [demo, setDemo] = useState(false);
+  const [perfisDemo, setPerfisDemo] = useState([]);
 
-  // O aviso com o usuário de teste só aparece quando a API informa `demo: true`.
+  // Os cartões de "Modo demonstração" só aparecem quando a API informa `demo: true`.
   useEffect(() => {
     let ativo = true;
     authApi
       .config()
-      .then((cfg) => ativo && setDemo(cfg?.demo === true))
-      .catch(() => ativo && setDemo(false));
+      .then((cfg) => {
+        if (!ativo) return;
+        setPerfisDemo(cfg?.demo === true && Array.isArray(cfg.perfisDemo) ? cfg.perfisDemo : []);
+      })
+      .catch(() => ativo && setPerfisDemo([]));
     return () => {
       ativo = false;
     };
@@ -51,16 +95,11 @@ export default function LoginPage() {
     return <Navigate to={destinoAposLogin(location)} replace />;
   }
 
-  async function aoEnviar(event) {
-    event.preventDefault();
-    const encontrados = validarLogin({ email, senha });
-    setErros(encontrados);
+  async function executar(acao) {
     setErroGeral('');
-    if (Object.keys(encontrados).length > 0) return;
-
     setEnviando(true);
     try {
-      await login(email.trim(), senha);
+      await acao();
       navigate(destinoAposLogin(location), { replace: true });
     } catch (error) {
       setErroGeral(mensagemDeLogin(error));
@@ -68,26 +107,57 @@ export default function LoginPage() {
     }
   }
 
+  function aoEnviar(event) {
+    event.preventDefault();
+    const encontrados = validarLogin({ email, senha });
+    setErros(encontrados);
+    setErroGeral('');
+    if (Object.keys(encontrados).length > 0) return;
+    executar(() => login(email.trim(), senha));
+  }
+
   return (
     <div className="nx-login">
       <DemoBanner />
-      <main className="nx-login-main">
-        <section className="card shadow-sm nx-login-card" aria-labelledby="login-titulo">
-          <div className="card-body p-4">
-            <div className="nx-module-tag">Core</div>
-            <h1 id="login-titulo" className="h4 mb-1">
-              SEMA NEXUS
-            </h1>
-            <p className="text-body-secondary mb-3">Entre com seu e-mail e senha.</p>
+      <div className="nx-login-grid">
+        <section className="nx-login-hero" aria-label="Apresentação do SEMA NEXUS">
+          <ContornoMT />
+          <div className="nx-login-hero-body">
+            <Logo subtitulo="Gestão ambiental · Mato Grosso" />
+            <h1>Plataforma Inteligente de Gestão, Análise e Apoio à Decisão Ambiental</h1>
+            <p className="nx-login-lead">
+              Integra dados ambientais, demandas de fiscalização e documentos em um único ambiente
+              demonstrativo de Mato Grosso.
+            </p>
+            <ul className="nx-login-pillars list-unstyled">
+              {MODULOS.map(({ icone: Icone, nome, texto }) => (
+                <li key={nome} className="nx-login-pillar">
+                  <span className="nx-login-pillar-ico" aria-hidden="true">
+                    <Icone size={20} />
+                  </span>
+                  <span>
+                    <strong>{nome}</strong>
+                    <span>{texto}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <footer className="nx-login-hero-foot">
+            Protótipo demonstrativo com dados fictícios. Amazônia · Cerrado · Pantanal.
+          </footer>
+        </section>
+
+        <main className="nx-login-panel">
+          <section className="nx-login-card" aria-labelledby="login-titulo">
+            <h2 id="login-titulo" className="h4 mb-1">
+              Acesso ao sistema
+            </h2>
+            <p className="text-body-secondary mb-4">Entre com seu e-mail e senha.</p>
 
             {sessaoExpirada && !erroGeral && (
               <div className="alert alert-warning" role="alert">
                 Sua sessão expirou. Entre novamente.
-              </div>
-            )}
-            {demo && (
-              <div className="alert alert-info" role="note">
-                Ambiente demonstrativo — dados fictícios. Usuário de teste: admin@admin.com
               </div>
             )}
             {erroGeral && (
@@ -148,13 +218,56 @@ export default function LoginPage() {
                     Entrando...
                   </>
                 ) : (
-                  'Entrar'
+                  <>
+                    <LogIn size={16} className="me-2" aria-hidden="true" />
+                    Entrar
+                  </>
                 )}
               </button>
             </form>
-          </div>
-        </section>
-      </main>
+
+            {perfisDemo.length > 0 && (
+              <section aria-labelledby="demo-titulo">
+                <h3 id="demo-titulo" className="nx-login-divider">
+                  Modo demonstração
+                </h3>
+                <div className="nx-demo-profiles">
+                  {perfisDemo.map(({ perfil, nome, descricao }) => {
+                    const Icone = ICONES_PERFIL[perfil] ?? Eye;
+                    return (
+                      <button
+                        key={perfil}
+                        type="button"
+                        className="nx-demo-profile"
+                        onClick={() => executar(() => loginDemo(perfil))}
+                        disabled={enviando}
+                        aria-label={`Entrar como ${nome ?? perfil}`}
+                      >
+                        <span className="nx-demo-profile-ico" aria-hidden="true">
+                          <Icone size={18} />
+                        </span>
+                        <span className="nx-demo-profile-txt">
+                          <strong>{nome ?? perfil}</strong>
+                          <span>{descricao}</span>
+                        </span>
+                        <ArrowRight size={16} className="nx-demo-profile-seta" aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            <p className="nx-login-note">
+              <TriangleAlert size={15} aria-hidden="true" />
+              <span>
+                Ambiente de demonstração com dados fictícios, sem integração com sistemas
+                institucionais.
+              </span>
+            </p>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

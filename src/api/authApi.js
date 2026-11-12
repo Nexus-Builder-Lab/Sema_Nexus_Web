@@ -22,3 +22,9 @@ export async function config() {
   const { data } = await httpClient.get('/auth/config');
   return data;
 }
+
+/** POST /api/auth/demo/{perfil} (só no profile `demo`) → mesmo corpo do login; sem senha no Web. */
+export async function loginDemo(perfil) {
+  const { data } = await httpClient.post(`/auth/demo/${encodeURIComponent(perfil)}`);
+  return data;
+}

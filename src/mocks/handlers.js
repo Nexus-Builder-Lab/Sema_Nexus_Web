@@ -62,7 +62,27 @@ const naoAutenticado = (instance) =>
 // Autenticação: o contrato não documenta a resposta 200 do login, então ela é escrita aqui
 // (corpo `{ token, expiresIn, usuario }`, conforme docs/API.md da API).
 const auth = [
-  http.get('/api/auth/config', () => HttpResponse.json({ demo: true })),
+  http.get('/api/auth/config', () =>
+    HttpResponse.json({
+      demo: true,
+      perfisDemo: [
+        { perfil: 'ADMIN', nome: 'Administrador', descricao: 'Acesso total e administração' },
+        { perfil: 'CONSULTA', nome: 'Consulta', descricao: 'Somente leitura' },
+      ],
+    }),
+  ),
+
+  // Existe só no profile `demo` da API (Issue API #83); sem senha no Web.
+  http.post('/api/auth/demo/:perfil', ({ params }) =>
+    params.perfil === 'ADMIN'
+      ? HttpResponse.json({ token: TOKEN_MOCK, expiresIn: 28800, usuario: USUARIO_MOCK })
+      : problema(
+          404,
+          'Não encontrado',
+          'Perfil sem usuário demonstrativo ativo.',
+          '/api/auth/demo',
+        ),
+  ),
 
   http.post('/api/auth/login', async ({ request }) => {
     const corpo = await request.json().catch(() => ({}));

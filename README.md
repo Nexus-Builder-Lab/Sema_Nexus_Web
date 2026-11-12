@@ -49,7 +49,7 @@ VITE_USE_MOCKS=true
 
 Com os mocks ligados, o login `admin@admin.com` / `12345678` funciona sem API (o mesmo usuário de teste da demonstração). Os handlers são gerados em tempo de execução de `src/mocks/openapi.json`, cópia do artefato `openapi` do job **Exportar contrato OpenAPI** do CI da API; para atualizar o contrato, baixe o artefato (`gh run download <run> -R Nexus-Builder-Lab/Sema_Nexus_API -n openapi`) e substitua o arquivo. Respostas específicas (login, fixtures) ficam em `src/mocks/handlers.js`; catálogos, equipes e demandas têm fixtures fictícias em `src/mocks/fixtures/` (store em memória com filtros, ordenação, paginação, cadastro, edição e validação 400 por campo — os testes a restauram a cada caso com `resetDemandasMock()`). Os mocks **não entram** no build de produção (a Docker usa `VITE_USE_MOCKS=false`) e os mesmos handlers rodam nos testes (`src/mocks/server.js`).
 
-Autenticação: o token JWT fica em memória e em `sessionStorage` (nunca `localStorage`); um `401` em sessão autenticada encerra a sessão e leva ao login; o aviso com o usuário de teste só aparece quando `GET /api/auth/config` devolve `demo: true`. Telas restritas por perfil usam `<RequireRole roles={[...]}>` — é só conveniência de interface, a autorização é da API.
+Autenticação: o token JWT fica em memória e em `sessionStorage` (nunca `localStorage`); um `401` em sessão autenticada encerra a sessão e leva ao login; os cartões "Modo demonstração" do login (`POST /api/auth/demo/{perfil}`, sem senha no Web) só aparecem quando `GET /api/auth/config` devolve `demo: true` e `perfisDemo`. Telas restritas por perfil usam `<RequireRole roles={[...]}>` — é só conveniência de interface, a autorização é da API.
 
 Scripts:
 

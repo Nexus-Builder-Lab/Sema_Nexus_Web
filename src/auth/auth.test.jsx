@@ -31,9 +31,32 @@ async function preencherEEnviar(user, email, senha) {
 }
 
 describe('Login', () => {
+  beforeEach(() => {
+    // Contorno de MT (malha local) do painel do login.
+    server.use(
+      http.get('/geo/mt-uf.geojson', () =>
+        HttpResponse.json({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [-58, -10],
+                [-50, -10],
+                [-54, -17],
+                [-58, -10],
+              ],
+            ],
+          },
+        }),
+      ),
+    );
+  });
+
   it('sem sessão, qualquer rota protegida leva ao login', async () => {
     renderAt('/flux/demandas');
-    expect(await screen.findByRole('heading', { name: 'SEMA NEXUS' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Acesso ao sistema' })).toBeInTheDocument();
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Menu principal' })).not.toBeInTheDocument();
   });
@@ -146,16 +169,30 @@ describe('Login', () => {
     );
   });
 
-  it('exibe o aviso com o usuário de teste só quando /api/auth/config indica demo: true', async () => {
+  it('desenha o contorno de MT a partir da malha local', async () => {
     renderAt('/login');
-    expect(
-      await screen.findByText(
-        'Ambiente demonstrativo — dados fictícios. Usuário de teste: admin@admin.com',
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByTestId('contorno-mt')).toBeInTheDocument();
   });
 
-  it('não exibe a credencial quando demo é false', async () => {
+  it('mostra os cartões do modo demonstração e entra com um clique, sem senha', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    expect(await screen.findByRole('heading', { name: 'Modo demonstração' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Plataforma Inteligente/ })).toBeInTheDocument();
+    expect(screen.queryByText(/Governo de Mato Grosso|credenciais institucionais/)).toBeNull();
+    expect(screen.getByLabelText('Senha')).toHaveValue('');
+    await user.click(screen.getByRole('button', { name: 'Entrar como Administrador' }));
+    expect(await screen.findByText('Administrador Demonstrativo')).toBeInTheDocument();
+  });
+
+  it('erro no login demonstrativo mostra mensagem e mantém a tela', async () => {
+    const user = userEvent.setup();
+    renderAt('/login');
+    await user.click(await screen.findByRole('button', { name: 'Entrar como Consulta' }));
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+  });
+
+  it('não exibe os cartões nem a credencial quando demo é false', async () => {
     let consultou = false;
     server.use(
       http.get('/api/auth/config', () => {
@@ -165,10 +202,9 @@ describe('Login', () => {
     );
     renderAt('/login');
     await waitFor(() => expect(consultou).toBe(true));
-    // aguarda o estado assentar
     await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByText(/Usuário de teste/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/admin@admin\.com/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Modo demonstração')).not.toBeInTheDocument();
+    expect(screen.queryByText(/admin@admin.com/)).not.toBeInTheDocument();
   });
 
   it('usuário já autenticado que abre /login é levado ao início', async () => {

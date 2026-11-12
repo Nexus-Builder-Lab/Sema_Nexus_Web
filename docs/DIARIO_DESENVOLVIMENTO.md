@@ -217,3 +217,11 @@
 - **Arquivos principais:** `src/layout/NotificationBell.jsx`, `src/layout/Topbar.jsx`, `src/pages/core/admin/AuditoriaPage.jsx`, `src/api/notificacoesApi.js`, `src/mocks/fixtures/notificacoes.js`, `src/App.jsx`, `src/layout/navigation.js`, `Notificacoes.test.jsx`.
 - **Testes:** afetados (Notificacoes.test, Admin.test, App, layout, HomePage) → 36 passaram; lint 0 problemas. Suíte completa, build e Docker: a confirmar pelo validador.
 - **API real ou mocks:** somente mocks MSW; validação contra a API real pendente.
+
+## 2026-11-12 09:20 — GH-53 · Tela de login igual ao protótipo, com a logo SEMA NEXUS
+- **PR:** a definir · **Status:** aguardando validação
+- **Executado por:** autopilot (sessão Web)
+- **O que foi feito:** `LoginPage` em layout dividido (painel verde com logo, título, descrição, 3 módulos e contorno de MT a partir de `public/geo/mt-uf.geojson`; formulário "Acesso ao sistema" à direita); seção "Modo demonstração" com cartões por perfil (`perfisDemo` de `GET /api/auth/config` quando `demo: true`; clique em `POST /api/auth/demo/{perfil}` via `loginDemo`, sem senha no Web); aviso demonstrativo no rodapé do formulário; componente `Logo` (usado também na `Sidebar`); em telas estreitas o painel verde vira cabeçalho compacto. Removido o aviso com e-mail de teste. Textos neutros (sem "Governo de Mato Grosso" nem "credenciais institucionais"). Dependência `lucide-react` adicionada (aprovada).
+- **Decisões técnicas:** o `openapi.json` local ainda não traz `/auth/demo` nem `perfisDemo`; handlers MSW escritos à mão (a atualizar com o contrato). `server.js` de teste serve uma malha mínima para o contorno.
+- **Arquivos principais:** `src/pages/core/{LoginPage,ContornoMT}.jsx`, `src/components/Logo.jsx`, `src/layout/Sidebar.jsx`, `src/auth/AuthProvider.jsx`, `src/api/authApi.js`, `src/styles/theme.scss`, `src/mocks/{handlers,server}.js`, `src/auth/auth.test.jsx`.
+- **Testes:** afetados (auth, mocks, layout, components, pages/core, intelligence, App) → 141 passaram; lint 0 problemas. Suíte completa, build, Docker (profile demo) e rolagem em 375/768/1366 px: a confirmar pelo validador.

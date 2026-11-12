@@ -657,24 +657,244 @@ body {
   display: block;
 }
 
-// Tela de login (fora do AppLayout)
+// Tela de login (fora do AppLayout) — paridade com o protótipo
+.nx-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .nx-login {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.nx-login-main {
+.nx-login-grid {
   flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+.nx-login-hero {
+  position: relative;
+  background: $nx-green-900;
+  color: #e7f5ec;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  overflow: hidden;
+
+  h1 {
+    color: #fff;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    margin: 28px 0 0;
+    max-width: 520px;
+  }
+}
+
+.nx-login-hero-body {
+  position: relative;
+  z-index: 1;
+}
+
+.nx-login-map {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  width: 340px;
+  max-width: 60%;
+  opacity: 0.16;
+  pointer-events: none;
+
+  path {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.4;
+  }
+}
+
+.nx-login-lead {
+  font-size: 16px;
+  color: #bfe3cb;
+  max-width: 500px;
+  margin-top: 14px;
+}
+
+.nx-login-pillars {
+  display: grid;
+  gap: 14px;
+  margin: 36px 0 0;
+  max-width: 520px;
+}
+
+.nx-login-pillar {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+
+  strong {
+    display: block;
+    color: #fff;
+    font-size: 14.5px;
+  }
+
+  span span {
+    color: #a7d3b5;
+    font-size: 13px;
+  }
+}
+
+.nx-login-pillar-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: $nx-green-500;
+}
+
+.nx-login-hero-foot {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  color: #8cbf9c;
+}
+
+.nx-login-panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px;
+  padding: 40px 24px;
+  background: $nx-gray-50;
 }
 
 .nx-login-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+}
+
+.nx-login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: $nx-gray-500;
+  font-size: 12px;
+  font-weight: 400;
+  margin: 22px 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid $nx-gray-200;
+  }
+}
+
+.nx-demo-profiles {
+  display: grid;
+  gap: 8px;
+}
+
+.nx-demo-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid $nx-gray-200;
+  border-radius: $border-radius;
+  background: #fff;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+
+  &:hover:not(:disabled) {
+    border-color: $nx-green-600;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  strong {
+    display: block;
+    font-size: 13.5px;
+  }
+
+  .nx-demo-profile-txt span {
+    font-size: 12px;
+    color: $nx-gray-500;
+  }
+}
+
+.nx-demo-profile-ico {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: $nx-green-100;
+  color: $nx-green-800;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.nx-demo-profile-seta {
+  margin-left: auto;
+  color: $nx-gray-400;
+  flex-shrink: 0;
+}
+
+.nx-login-note {
+  margin: 18px 0 0;
+  font-size: 12px;
+  color: $nx-gray-500;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: $nx-amber-600;
+  }
+}
+
+// Telas estreitas: o painel verde vira cabeçalho compacto
+@media (max-width: 991.98px) {
+  .nx-login-grid {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .nx-login-hero {
+    padding: 20px 20px 24px;
+
+    h1 {
+      font-size: 20px;
+      margin-top: 16px;
+    }
+  }
+
+  .nx-login-lead,
+  .nx-login-pillars,
+  .nx-login-map,
+  .nx-login-hero-foot {
+    display: none;
+  }
+
+  .nx-login-panel {
+    padding: 24px 16px;
+  }
 }
 
 // ---------- Dashboards (Issue #8) ----------
