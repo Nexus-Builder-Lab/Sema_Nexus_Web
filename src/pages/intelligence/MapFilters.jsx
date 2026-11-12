@@ -87,6 +87,32 @@ export default function MapFilters({
           onChange={set('ate')}
         />
       </div>
+      <div className="col-6 col-md-3 col-xl-2">
+        <label htmlFor={`${id}-sde`} className="form-label small mb-1">
+          Satélite (INPE) de
+        </label>
+        <input
+          id={`${id}-sde`}
+          type="date"
+          className="form-control"
+          value={valores.satDe}
+          max={valores.satAte || undefined}
+          onChange={set('satDe')}
+        />
+      </div>
+      <div className="col-6 col-md-3 col-xl-2">
+        <label htmlFor={`${id}-sate`} className="form-label small mb-1">
+          Satélite (INPE) até
+        </label>
+        <input
+          id={`${id}-sate`}
+          type="date"
+          className="form-control"
+          value={valores.satAte}
+          min={valores.satDe || undefined}
+          onChange={set('satAte')}
+        />
+      </div>
     </FilterBar>
   );
 }

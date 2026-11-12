@@ -20,6 +20,7 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | Flux: detalhes, triagem, distribuição (Issue #6) | **Implementado** |
 | Flux: execução, atividades, registro de fiscalização, conclusão e devolução (Issue #7) | **Implementado** |
 | Aba Inteligência ambiental: mapa de MT (Leaflet, offline), filtros e legenda (Issue #9) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/mapa` (API#17) |
+| Camada de satélite INPE no mapa (focos de calor, DETER opcional, modo agregado, painel lateral; Issue #22) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/referencia/*` (API#34) e validação via Docker |
 | DocIA: biblioteca (busca textual e filtros), upload com progresso, detalhes/download e vínculo à demanda (Issue #10) | **Implementado** com mocks MSW; validação contra a API real (API#15/#16) pendente |
 | Integração final, testes | **Planejado** — Sprint 3 |
 

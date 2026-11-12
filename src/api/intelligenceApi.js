@@ -37,3 +37,14 @@ export const obterPorBioma = (filtros) => obter('/intelligence/por-bioma', limpa
  * Filtros vazios não são enviados.
  */
 export const obterMapa = (filtros = {}) => obter('/intelligence/mapa', limparFiltros(filtros));
+
+// Camada de referência de satélite — dados públicos do INPE (API#34), separada dos dados fictícios.
+// Toda resposta traz `fonte`, `oficialSema` (false), `atualizadoEm` e `aviso`. `tipo`: FOCO_CALOR | DESMATAMENTO.
+/** → `{ fonte, oficialSema, atualizadoEm, aviso, importacoes: [{ tipo, periodoDe, periodoAte, registros, ... }] }`. */
+export const obterReferenciaMetadados = () => obter('/intelligence/referencia/metadados');
+/** Filtros: `tipo`, `de`, `ate`, `municipioId`, `bioma`, `limite` → `{ ..., limite, truncado, pontos: [] }`. */
+export const obterReferenciaPontos = (filtros = {}) =>
+  obter('/intelligence/referencia/pontos', limparFiltros(filtros));
+/** Filtros: `tipo`, `de`, `ate` → `{ ..., total, itens: [{ municipioId, municipio, bioma, total }] }`. */
+export const obterReferenciaPorMunicipio = (filtros = {}) =>
+  obter('/intelligence/referencia/por-municipio', limparFiltros(filtros));

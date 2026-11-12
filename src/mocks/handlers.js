@@ -1,5 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import { BIOMAS, filtrarPontos, handlersIntelligence } from './fixtures/intelligence.js';
+import {
+  BIOMAS,
+  filtrarPontos,
+  handlersIntelligence,
+  handlersReferencia,
+} from './fixtures/intelligence.js';
 import { criarHandlersDoContrato, exemploDoSchema, problema, temToken } from './contrato.js';
 import {
   CATEGORIAS,
@@ -304,6 +309,7 @@ const fluxo = [
 export const handlers = [
   ...auth,
   ...handlersIntelligence,
+  ...handlersReferencia,
   ...intelligence,
   ...catalogos,
   ...demandas,
