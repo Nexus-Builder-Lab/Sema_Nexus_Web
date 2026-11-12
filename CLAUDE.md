@@ -15,6 +15,8 @@ React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Ro
 - Token JWT em memória + `sessionStorage`; nada de dados de negócio em LocalStorage; nada secreto em `VITE_*`.
 - Interface: tokens do tema, responsivo (375/768/1366 px), estados de carregamento/vazio/erro/sucesso, acessibilidade básica, confirmação em ações destrutivas. Busca documental é textual; IA demonstrativa sempre identificada.
 
+- **Paridade visual:** Issues `paridade-prototipo` seguem `docs/PARIDADE_PROTOTIPO.md` (protótipo em `C:\SEMANEXUS\referencia\prototipo_SEMA_NEXUS`, capturas em `C:\SEMANEXUS\referencia\capturas`). `lucide-react` aprovado para os ícones.
+
 ## Segurança (inegociável)
 - Sem segredos no código, Dockerfile, imagem ou `nginx.conf`.
 - Credencial `admin@admin.com` / `12345678` **só demonstrativa**: aparece só no aviso do login quando `/api/auth/config` indicar `demo: true`; nunca pré-preenchida; texto puro só em README e testes.

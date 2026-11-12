@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { handlersAdmin } from './fixtures/admin.js';
+import { handlersNotificacoes } from './fixtures/notificacoes.js';
 import { handlersRelatorios } from './fixtures/relatorios.js';
 import {
   BIOMAS,
@@ -311,6 +312,7 @@ const fluxo = [
 export const handlers = [
   ...auth,
   ...handlersAdmin,
+  ...handlersNotificacoes,
   ...handlersIntelligence,
   ...handlersReferencia,
   ...handlersRelatorios,
