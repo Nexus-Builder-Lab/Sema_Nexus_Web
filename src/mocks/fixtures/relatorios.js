@@ -64,9 +64,8 @@ export function csvMock(params) {
       br(d.concluidaEm),
     ].join(';'),
   );
-  return `${String.fromCharCode(0xfeff)}${[AVISO, cab.join(";"), ...linhas].join("
-")}
-`;
+  const bom = String.fromCharCode(0xfeff);
+  return `${bom}${[AVISO, cab.join(';'), ...linhas].join('\r\n')}\r\n`;
 }
 
 export const handlersRelatorios = [
