@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Eye, FileText } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { listarMunicipios } from '../../api/catalogosApi.js';
 import { listarDocumentos } from '../../api/documentosApi.js';
@@ -11,6 +12,7 @@ import useCarregar from '../../hooks/useCarregar.js';
 import { formatarData } from '../../utils/datas.js';
 import { formatarTamanho } from './validarDocumento.js';
 
+const carregarTodos = () => listarDocumentos({ page: 0, size: 200 });
 const TAMANHO_PAGINA = 20;
 const ORDEM_PADRAO = 'criadoEm,desc';
 const CAMPOS_FILTRO = ['q', 'categoria', 'tipo', 'municipioId', 'de', 'ate'];
@@ -124,6 +126,8 @@ export default function DocumentosPage() {
   const [campoOrdem, direcaoOrdem] = ordem.split(',');
   const chaveFiltros = CAMPOS_FILTRO.map((c) => searchParams.get(c) ?? '').join('|');
 
+  const { data: todos } = useCarregar(carregarTodos);
+
   const carregar = useCallback(
     () => listarDocumentos({ ...filtros, page: pagina, size: TAMANHO_PAGINA, sort: ordem }),
     // `filtros` deriva de `chaveFiltros`; a chave evita refazer a busca a cada render.
@@ -147,31 +151,71 @@ export default function DocumentosPage() {
         key: 'titulo',
         header: 'Título',
         sortable: true,
-        render: (d) => <Link to={`/docia/documentos/${d.id}`}>{d.titulo}</Link>,
+        render: (d) => (
+          <div className="d-flex align-items-start gap-2">
+            <FileText size={18} className="text-success flex-shrink-0 mt-1" aria-hidden="true" />
+            <div>
+              <Link to={`/docia/documentos/${d.id}`} className="fw-semibold">
+                {d.titulo}
+              </Link>
+              <div className="small text-body-secondary">
+                {d.tipo ? `${d.tipo} · ` : ''}
+                {d.nomeArquivo}
+              </div>
+            </div>
+          </div>
+        ),
       },
-      { key: 'categoria', header: 'Categoria', sortable: true },
-      { key: 'tipo', header: 'Tipo' },
+      {
+        key: 'categoria',
+        header: 'Categoria',
+        sortable: true,
+        render: (d) => <span className="badge text-bg-light border">{d.categoria}</span>,
+      },
       { key: 'municipio', header: 'Município', render: (d) => d.municipio?.nome ?? '—' },
       {
         key: 'dataDocumento',
-        header: 'Data',
+        header: 'Data / responsável',
         sortable: true,
         className: 'text-nowrap',
-        render: (d) => formatarData(d.dataDocumento),
+        render: (d) => (
+          <>
+            <div>{formatarData(d.dataDocumento)}</div>
+            <div className="small text-body-secondary">{d.responsavel?.nome ?? ''}</div>
+          </>
+        ),
       },
       {
-        key: 'nomeArquivo',
-        header: 'Arquivo',
+        key: 'tamanho',
+        header: 'Tamanho',
+        className: 'text-nowrap small',
+        render: (d) => formatarTamanho(d.tamanho),
+      },
+      {
+        key: 'acoes',
+        header: 'Ações',
         render: (d) => (
-          <span className="small">
-            {d.nomeArquivo}{' '}
-            <span className="text-body-secondary">({formatarTamanho(d.tamanho)})</span>
-          </span>
+          <Link
+            to={`/docia/documentos/${d.id}`}
+            className="btn btn-sm btn-outline-secondary"
+            aria-label={`Abrir ${d.titulo}`}
+          >
+            <Eye size={16} aria-hidden="true" />
+          </Link>
         ),
       },
     ],
     [],
   );
+
+  const categorias = useMemo(() => {
+    const contagem = new Map();
+    for (const d of todos?.content ?? []) {
+      contagem.set(d.categoria, (contagem.get(d.categoria) ?? 0) + 1);
+    }
+    return [...contagem.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [todos]);
+  const totalGeral = todos?.totalElements ?? 0;
 
   const temFiltro = CAMPOS_FILTRO.some((c) => filtros[c] !== '');
 
@@ -179,16 +223,35 @@ export default function DocumentosPage() {
     <>
       <PageHeader
         module="DocIA"
-        title="Documentos"
-        description="Biblioteca documental com documentos fictícios. Pesquisa textual."
+        title="Gestão documental"
+        description="Cadastro, consulta e organização dos documentos institucionais (fictícios), com vínculo às demandas. Pesquisa textual."
         actions={
           podeEnviar && (
             <Link to="/docia/documentos/novo" className="btn btn-primary">
-              Novo documento
+              Cadastrar documento
             </Link>
           )
         }
       />
+      <div className="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Categorias">
+        <button
+          type="button"
+          className={`btn btn-sm nx-chip${filtros.categoria === '' ? ' active' : ''}`}
+          onClick={() => atualizarUrl({ categoria: '', page: '' })}
+        >
+          Todas ({totalGeral})
+        </button>
+        {categorias.map(([nome, qtd]) => (
+          <button
+            key={nome}
+            type="button"
+            className={`btn btn-sm nx-chip${filtros.categoria === nome ? ' active' : ''}`}
+            onClick={() => atualizarUrl({ categoria: nome, page: '' })}
+          >
+            {nome} ({qtd})
+          </button>
+        ))}
+      </div>
       <Filtros
         key={chaveFiltros}
         inicial={filtros}
@@ -207,7 +270,7 @@ export default function DocumentosPage() {
         emptyMessage={
           temFiltro
             ? 'Ajuste a pesquisa ou limpe os filtros.'
-            : 'Envie o primeiro documento pelo botão "Novo documento".'
+            : 'Envie o primeiro documento pelo botão "Cadastrar documento".'
         }
         sort={{ key: campoOrdem, direction: direcaoOrdem === 'asc' ? 'asc' : 'desc' }}
         onSortChange={({ key, direction }) =>

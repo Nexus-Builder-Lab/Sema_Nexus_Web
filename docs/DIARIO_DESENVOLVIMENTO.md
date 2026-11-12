@@ -298,3 +298,8 @@
 - **Decisões:** a API de setor não traz responsável nem membros: responsável = responsável da primeira equipe do setor; membros = usuários com `setorId`; contagens vêm de `/api/flux/produtividade` (`porSetorSituacao`) e são omitidas se o perfil não puder consultá-las. Desativar usa `PUT /api/setores/{id}`. Divergência de contrato (responsável/contagens no setor) pode virar Issue na API. "Responsável" do setor é **heurística** (responsável da primeira equipe com responsável), não um dado do setor. Correção do revisor: Desativar setor pede confirmação (`ConfirmDialog`); Reativar segue direto.
 - **Arquivos principais:** `src/pages/core/admin/EstruturaPage.jsx`, `Admin.test.jsx`, `src/styles/theme.scss`.
 - **Testes:** afetados (pages/core/admin: 17) passaram; lint 0 erros. Suíte completa, build, Docker contra a API real e rolagem em 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
+
+## 2026-11-12 — GH-63 · Gestão documental igual ao protótipo
+- `DocumentosPage`: título "Gestão documental", botão "Cadastrar documento", chips por categoria com contagem (calculada sobre até 200 documentos da API), tabela com ícone, título/subtítulo, categoria, município, data/responsável, tamanho e ação.
+- Processo, setor e demandas vinculadas não existem na listagem da API (`DocumentoResumo`); não foram inventados. Ações editar/excluir do protótipo não implementadas (sem endpoint).
+- Testes: Documentos.test e fluxosCriticos ajustados; afetados passaram (25), lint sem erros. Suíte completa/build/Docker: a confirmar pelo validador.
