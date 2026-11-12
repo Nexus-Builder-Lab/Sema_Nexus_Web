@@ -96,4 +96,28 @@ describe('RelatoriosPage', () => {
     const alerta = await screen.findByRole('alert');
     expect(within(alerta).getByRole('button', { name: /tentar novamente/i })).toBeInTheDocument();
   });
+
+  it('o cabeçalho impresso informa a página exibida e o total', async () => {
+    renderPagina();
+    await screen.findByText('DEM-2026/0025');
+    expect(screen.getByTestId('paginacao-impressao')).toHaveTextContent(
+      /Exibindo página 1 de 2 \(25 registros\)/,
+    );
+  });
+
+  it('mostra a mensagem do problem+json quando o CSV falha', async () => {
+    server.use(
+      http.get('/api/relatorios/demandas.csv', () =>
+        HttpResponse.json(
+          { title: 'Acesso negado', detail: 'Perfil sem permissão para relatórios.', status: 403 },
+          { status: 403 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPagina();
+    await screen.findByRole('table');
+    await user.click(screen.getByRole('button', { name: 'Baixar CSV' }));
+    expect(await screen.findByText('Perfil sem permissão para relatórios.')).toBeInTheDocument();
+  });
 });

@@ -12,13 +12,30 @@ export async function obterRelatorioDemandas(filtros = {}, { page = 0, size = 20
   return data;
 }
 
+/** Com `responseType: 'blob'` o problem+json do erro chega como Blob: converte para objeto. */
+async function lerErroBlob(erro) {
+  const dados = erro?.response?.data;
+  if (typeof Blob !== 'undefined' && dados instanceof Blob) {
+    try {
+      erro.response.data = JSON.parse(await dados.text());
+    } catch {
+      erro.response.data = undefined;
+    }
+  }
+  return erro;
+}
+
 /** GET /api/relatorios/demandas.csv (mesmos filtros, sem paginação) → Blob. Exige o token. */
 export async function baixarCsvDemandas(filtros = {}) {
-  const { data } = await httpClient.get('/relatorios/demandas.csv', {
-    params: limparFiltros(filtros),
-    responseType: 'blob',
-  });
-  return data;
+  try {
+    const { data } = await httpClient.get('/relatorios/demandas.csv', {
+      params: limparFiltros(filtros),
+      responseType: 'blob',
+    });
+    return data;
+  } catch (erro) {
+    throw await lerErroBlob(erro);
+  }
 }
 
 export const NOME_ARQUIVO_CSV = 'relatorio-demandas-ficticio.csv';

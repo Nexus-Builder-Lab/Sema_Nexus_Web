@@ -159,6 +159,7 @@ export default function RelatoriosPage() {
     [chave, pagina],
   );
   const relatorio = useCarregar(carregar);
+  const dados = relatorio.data;
 
   function aplicar(novos) {
     const params = new URLSearchParams();
@@ -191,7 +192,6 @@ export default function RelatoriosPage() {
     filtros.status && `Status: ${rotuloDe(status, filtros.status)}`,
   ].filter(Boolean);
 
-  const dados = relatorio.data;
   const data = (campo) => (r) => (r[campo] ? formatarData(r[campo]) : '—');
   const colunas = [
     { key: 'numero', header: 'Número' },
@@ -215,6 +215,12 @@ export default function RelatoriosPage() {
       <div className="nx-print-header" data-testid="cabecalho-impressao">
         <strong>{DEMO_SEAL_TEXT}</strong>
         <div>SEMA NEXUS — Relatório de demandas de fiscalização</div>
+        {dados && (
+          <div data-testid="paginacao-impressao">
+            Exibindo página {dados.page + 1} de {Math.max(dados.totalPages, 1)} (
+            {dados.totalElements} registros)
+          </div>
+        )}
         <div>
           {resumoFiltros.length ? resumoFiltros.join(' · ') : 'Sem filtros (todas as demandas)'}
         </div>
