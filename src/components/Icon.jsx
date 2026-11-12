@@ -45,6 +45,8 @@ import {
   Network,
   X,
   Workflow,
+  Percent,
+  CircleSlash,
 } from 'lucide-react';
 
 // Ícones Lucide (mesma família do protótipo), importados individualmente.
@@ -95,6 +97,8 @@ const ICONS = {
   lightbulb: Lightbulb,
   table: Table2,
   workflow: Workflow,
+  percent: Percent,
+  slash: CircleSlash,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {
