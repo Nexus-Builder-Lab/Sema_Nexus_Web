@@ -7,6 +7,7 @@ import EmptyState from '../../../components/EmptyState.jsx';
 import Loading from '../../../components/Loading.jsx';
 import { listarEquipes, listarMembros } from '../../../api/catalogosApi.js';
 import { mensagemDeErro } from '../../../api/httpClient.js';
+import ConfirmDialog from '../../../components/ConfirmDialog.jsx';
 import DataTable from '../../../components/DataTable.jsx';
 import ErrorState from '../../../components/ErrorState.jsx';
 import PageHeader from '../../../components/PageHeader.jsx';
@@ -106,6 +107,8 @@ export default function EstruturaPage() {
   const contagens = useCarregar(carregarContagens);
   const [aba, setAba] = useState('setores');
   const [modal, setModal] = useState(null); // { tipo, item, membrosIds }
+  const [desativar, setDesativar] = useState(null);
+  const [alterando, setAlterando] = useState(false);
 
   async function aoSalvar(mensagem) {
     setModal(null);
@@ -114,7 +117,13 @@ export default function EstruturaPage() {
     equipes.recarregar();
   }
 
+  function pedirAlternar(s) {
+    if (s.ativo) setDesativar(s);
+    else alternarSetor(s);
+  }
+
   async function alternarSetor(s) {
+    setAlterando(true);
     try {
       await atualizarSetor(s.id, { sigla: s.sigla, nome: s.nome, ativo: !s.ativo });
       showToast({
@@ -127,6 +136,9 @@ export default function EstruturaPage() {
         message: mensagemDeErro(erro, 'Não foi possível alterar o setor.'),
         variant: 'danger',
       });
+    } finally {
+      setAlterando(false);
+      setDesativar(null);
     }
   }
 
@@ -246,7 +258,7 @@ export default function EstruturaPage() {
                       membros={doSetor}
                       contagem={(contagens.data ?? []).find((c) => c.setorId === s.id)}
                       onEditar={() => setModal({ tipo: 'setor', item: s })}
-                      onAlternar={() => alternarSetor(s)}
+                      onAlternar={() => pedirAlternar(s)}
                     />
                   );
                 })}
@@ -312,6 +324,21 @@ export default function EstruturaPage() {
           onSalvo={aoSalvar}
         />
       )}
+      <ConfirmDialog
+        show={Boolean(desativar)}
+        title="Desativar setor"
+        message={
+          desativar && (
+            <>
+              Desativar o setor <strong>{desativar.sigla}</strong>? Você pode reativá-lo depois.
+            </>
+          )
+        }
+        confirmLabel="Desativar"
+        busy={alterando}
+        onConfirm={() => alternarSetor(desativar)}
+        onCancel={() => setDesativar(null)}
+      />
     </>
   );
 }

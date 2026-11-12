@@ -173,11 +173,20 @@ describe('Usuários', () => {
 describe('Setores e equipes', () => {
   beforeEach(() => iniciarSessao());
 
-  it('desativa um setor pelo cartão', async () => {
+  it('desativa um setor pelo cartão somente após confirmação', async () => {
     const user = userEvent.setup();
     renderAt('/admin/estrutura');
     await screen.findByText('DEMO-DOC');
     await user.click(screen.getByRole('button', { name: 'Desativar setor DEMO-DOC' }));
+    const confirmacao = screen.getByRole('dialog', { name: 'Desativar setor' });
+    await user.click(within(confirmacao).getByRole('button', { name: 'Cancelar' }));
+    expect(screen.queryByText('Setor desativado.')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Desativar setor DEMO-DOC' }));
+    await user.click(
+      within(screen.getByRole('dialog', { name: 'Desativar setor' })).getByRole('button', {
+        name: 'Desativar',
+      }),
+    );
     expect(await screen.findByText('Setor desativado.')).toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: 'Reativar setor DEMO-DOC' }),
