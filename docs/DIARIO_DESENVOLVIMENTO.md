@@ -331,3 +331,10 @@
 - **Decisões:** as telas existentes foram reaproveitadas com a prop `embedded` (sem cabeçalho próprio); abas são rotas (`/admin`, `/admin/estrutura`, `/admin/perfis`, `/admin/auditoria`; `/admin/usuarios` redireciona). A matriz deriva de `src/auth/perfis.js` (a API autoriza).
 - **Arquivos principais:** `AdminPage.jsx`, `PerfisPermissoes.jsx`, `UsuariosPage.jsx`, `EstruturaPage.jsx`, `AuditoriaPage.jsx`, `App.jsx`, `navigation.js`, `Admin.test.jsx`.
 - **Testes:** afetados (admin + App + layout: 35 antes dos ajustes finais) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
+
+## 2026-11-12 — GH-68 · Pesquisa global (Ctrl+K) igual ao protótipo
+- **Executado por:** autopilot (sessão Web, Sonnet 5.5)
+- **O que foi feito:** `GlobalSearch` na topbar (substitui o campo que levava à Central de demandas): atalho Ctrl+K/Cmd+K, dica "Ctrl K", painel com resultados agrupados (Demandas, Documentos, Usuários), mínimo de 2 caracteres, debounce, setas/Enter/Esc, estados de busca/vazio/erro por grupo.
+- **Decisões:** usa `GET /demandas`, `/documentos` e `/usuarios` com `q` (usuários só para ADMIN; a API segue autorizando). Ocorrências e setores do protótipo ficaram fora (sem endpoint de listagem com `q` previsto na Issue). Campo oculto no mobile, como antes.
+- **Arquivos principais:** `GlobalSearch.jsx`, `GlobalSearch.test.jsx`, `Topbar.jsx`, `theme.scss`.
+- **Testes:** afetados (layout + App + fluxosCriticos: 19) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
