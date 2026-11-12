@@ -24,7 +24,7 @@ function api({ texto = TEXTO } = {}) {
           { id: 2, titulo: 'Outro documento', categoria: 'Laudo' },
         ],
         page: 0,
-        size: 200,
+        size: 100,
         totalElements: 2,
         totalPages: 1,
       }),

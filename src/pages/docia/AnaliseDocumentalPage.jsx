@@ -306,7 +306,7 @@ export default function AnaliseDocumentalPage() {
 
   useEffect(() => {
     let ativo = true;
-    listarDocumentos({ page: 0, size: 200, sort: 'dataDocumento,desc' })
+    listarDocumentos({ page: 0, size: 100, sort: 'dataDocumento,desc' })
       .then((p) => ativo && (setDocs(p.content ?? []), setErro(null)))
       .catch(
         (e) => ativo && setErro(mensagemDeErro(e, 'Não foi possível carregar os documentos.')),
