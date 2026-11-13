@@ -5,11 +5,13 @@ import react from '@vitejs/plugin-react';
 // /api é sempre relativo: em dev o Vite faz proxy; no Docker, o Nginx (Issue #2).
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:8080';
+  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8080';
 
   return {
     plugins: [react()],
     server: {
+      // 127.0.0.1 explícito: em alguns Windows, `localhost` escuta só em IPv6 (::1).
+      host: '127.0.0.1',
       port: 5173,
       proxy: {
         '/api': {
