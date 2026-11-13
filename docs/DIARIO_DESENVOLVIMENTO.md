@@ -403,3 +403,9 @@
 - **Status:** feito pela sessão principal (pedido do proprietário: o aumento da #92 foi pedido com o navegador em zoom 60%)
 - **O que foi feito:** revert das mudanças de fonte da #92 (`theme.scss`, `IndicatorChart.jsx`, `print.css`) e remoção do `font-size` mínimo do selo `.nx-demo-seal` (#99); rótulos curtos dos núcleos (#99) mantidos.
 - **Testes:** suíte completa e build; CI do PR.
+
+## 2026-11-12 · GH-113 · Número do contador do menu centralizado
+- **Status:** corrigido pela sessão principal (relatado pelo proprietário com print)
+- **Causa:** o grid centralizava a caixa de linha (line-height 1,5 + margens da fonte), não os algarismos, que ficavam acima do centro.
+- **O que foi feito:** `.nx-nav-badge` com `inline-flex`, `line-height: 1`, `text-box: trim-both cap alphabetic` e algarismos tabulares.
+- **Testes:** suíte 318/318 e build; comparação ampliada no Chrome (antes acima do centro, depois centralizado).
