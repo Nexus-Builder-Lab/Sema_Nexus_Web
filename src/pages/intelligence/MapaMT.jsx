@@ -22,7 +22,7 @@ import { COR_CONTORNO_UF } from './concentracao.js';
 import useGeoJson from './useGeoJson.js';
 
 export const PANE_FUNDO_UF = 'nx-fundo-uf';
-const ESTILO_UF ={ color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
+const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
 const ESTILO_MUNICIPIO = { color: '#94A3B8', weight: 0.6, fillColor: '#FFFFFF', fillOpacity: 0.55 };
 const ESTILO_CONTORNO = { color: COR_CONTORNO_UF, weight: 2.2, fill: false };
 
