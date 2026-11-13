@@ -38,8 +38,21 @@ describe('imagem Docker do Web', () => {
     for (const entry of ['node_modules', 'dist', '.git', '.env*']) {
       expect(dockerignore).toContain(entry);
     }
-    expect(`${dockerfile}\n${nginx}`).not.toMatch(
+    // Única exceção: a referência à variável da visão de satélite (Web#107) — o valor vem do .env pelo
+    // compose em tempo de execução, nunca do arquivo.
+    const semReferenciaEsri = nginx
+      .replaceAll('token=$esri_key', '')
+      .replaceAll('${ESRI_API_KEY}', '');
+    expect(`${dockerfile}\n${semReferenciaEsri}`).not.toMatch(
       /12345678|password|secret|api[_-]?key|\btoken\b/i,
     );
+  });
+
+  it('a chave da Esri só é lida da variável de ambiente (nenhum valor no Nginx ou no Dockerfile)', () => {
+    expect(nginx).toContain('set $esri_key "${ESRI_API_KEY}";');
+    expect(nginx).toMatch(/\?token=\$esri_key;/);
+    expect(nginx).not.toMatch(/token=(?!\$esri_key)/);
+    expect(nginx).not.toMatch(/AAPT[A-Za-z0-9._~-]{10,}/); // prefixo das API Keys do ArcGIS
+    expect(dockerfile).not.toMatch(/ESRI/);
   });
 });

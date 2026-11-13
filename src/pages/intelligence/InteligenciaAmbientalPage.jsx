@@ -47,9 +47,25 @@ export default function InteligenciaAmbientalPage() {
   const [agregadoManual, setAgregadoManual] = useState(false);
   const [tentativaSat, setTentativaSat] = useState(0);
   const [modo, setModo] = useState('pontos');
-  const [fundoOnline, setFundoOnline] = useState(false);
+  // Fundo online do mapa: null (padrão, funciona offline) | 'osm' | 'satelite'.
+  const [fundo, setFundo] = useState(null);
+  const [sateliteDisponivel, setSateliteDisponivel] = useState(false);
   const [telaCheia, setTelaCheia] = useState(false);
   const cartaoMapa = useRef(null);
+
+  // A visão de satélite só fica disponível se o Nginx tiver ESRI_API_KEY (status 204).
+  useEffect(() => {
+    let ativo = true;
+    Promise.resolve()
+      .then(() => fetch('/tiles/esri/status', { method: 'HEAD' }))
+      .then((r) => {
+        if (ativo) setSateliteDisponivel(r?.status === 204);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   // Catálogos dos filtros: se falharem, o mapa ainda funciona (filtros ficam só com "Todos").
   useEffect(() => {
@@ -190,14 +206,37 @@ export default function InteligenciaAmbientalPage() {
                 </button>
                 <button
                   type="button"
-                  className={`btn btn-light btn-sm shadow-sm${fundoOnline ? ' active' : ''}`}
+                  className={`btn btn-light btn-sm shadow-sm${fundo === 'osm' ? ' active' : ''}`}
                   aria-label="Mapa de fundo OpenStreetMap (requer internet)"
-                  aria-pressed={fundoOnline}
+                  aria-pressed={fundo === 'osm'}
                   title="Mapa de fundo OpenStreetMap (requer internet)"
-                  onClick={() => setFundoOnline((v) => !v)}
+                  onClick={() => setFundo((f) => (f === 'osm' ? null : 'osm'))}
                 >
                   <Icon name="globe" size={16} />
                 </button>
+                <span
+                  className="d-inline-block"
+                  title={
+                    sateliteDisponivel
+                      ? 'Visão de satélite — Esri World Imagery (requer internet)'
+                      : 'Visão de satélite indisponível: configure ESRI_API_KEY no .env (ver docs/DOCKER.md)'
+                  }
+                >
+                  <button
+                    type="button"
+                    className={`btn btn-light btn-sm shadow-sm${fundo === 'satelite' ? ' active' : ''}`}
+                    aria-label={
+                      sateliteDisponivel
+                        ? 'Visão de satélite (requer internet)'
+                        : 'Visão de satélite indisponível (configure ESRI_API_KEY)'
+                    }
+                    aria-pressed={fundo === 'satelite'}
+                    disabled={!sateliteDisponivel}
+                    onClick={() => setFundo((f) => (f === 'satelite' ? null : 'satelite'))}
+                  >
+                    <Icon name="satellite" size={16} />
+                  </button>
+                </span>
               </div>
               {modo === 'concentracao' && <ConcentracaoLegenda itens={itensMunicipio} />}
               <MapaMT
@@ -206,7 +245,7 @@ export default function InteligenciaAmbientalPage() {
                 concentracao={itensMunicipio}
                 municipios={catalogos.municipios}
                 onSelecionarMunicipio={filtrarPorMunicipio}
-                fundoOnline={fundoOnline}
+                fundo={fundo}
               >
                 <SatelliteLayer
                   focos={sat.focos}

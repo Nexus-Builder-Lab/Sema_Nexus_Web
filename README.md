@@ -125,6 +125,7 @@ A camada base do mapa usa a malha oficial de municípios do **IBGE** (GeoJSON lo
 - Rota `/intelligence/inteligencia-ambiental` (`src/pages/intelligence/`): `MapaMT` (Leaflet + `LayersControl`), `MapFilters`, `MapLegend`. Pontos de `GET /api/intelligence/mapa` (cor por categoria, popup com link para a demanda); filtros de município, bioma, categoria e período.
 - Camadas: malha IBGE (base, `public/geo/mt-uf.geojson` e `mt-municipios.geojson`, copiadas do protótipo), "Demandas (fictícias)" (ligada) e "Tiles OpenStreetMap" (desligada; exige internet). A camada "Focos de calor — INPE" (Issue #22) entra como mais um `LayersControl.Overlay` passado como `children` de `MapaMT`.
 - Os marcadores são `CircleMarker` (sem imagens de ícone externas), então nada depende da rede.
+- **Visão de satélite (opcional, Web#107):** botão ao lado do OpenStreetMap (exclusivos, ambos desligados por padrão e exigem internet). Imagens Esri World Imagery pelo proxy `/tiles/esri/{z}/{y}/{x}` do Nginx, que acrescenta a API Key do ArcGIS Location Platform **só no servidor** (variável do `.env` da API, repassada pelo compose — ver `Sema_Nexus_API/docs/DOCKER.md`). Sem chave, o botão fica desabilitado. Atribuição "Powered by Esri" sempre visível; imagens não são armazenadas localmente. Uso em produção por um órgão exige a licença do próprio órgão.
 
 ## Histórico e autopilot
 

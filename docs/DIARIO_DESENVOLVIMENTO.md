@@ -385,3 +385,9 @@
 - **O que foi feito:** no modo Ocorrências a malha municipal ficou interativa, com tooltip `sticky` com o nome (estilo `.mun-tip`) e destaque do contorno; o modo Concentração mantém o tooltip próprio (nome, total, bioma). Classe `nx-malha-municipio` separa a malha dos marcadores.
 - **Arquivos principais:** `MapaMT.jsx`, `InteligenciaAmbientalPage.test.jsx`, `CamadaInpe.test.jsx`.
 - **Testes:** pasta intelligence (66, 0 falhas, local); CI do PR.
+
+## 2026-11-12 · GH-107 · Visão de satélite (Esri World Imagery) opcional no mapa
+- **Status:** feito pela sessão principal (pedido do proprietário; chave criada por ele no ArcGIS Location Platform)
+- **O que foi feito:** fundo do mapa com três estados (nenhum/OpenStreetMap/satélite); proxy Nginx `/tiles/esri/{z}/{y}/{x}` com a chave só no servidor (capturas nomeadas, pois o `if` com regex sobrescreve `$1..$3`; `error_log crit` na rota); `/tiles/esri/status` habilita o botão; malha com contorno claro sobre o satélite; atribuição Esri. `dockerConfig.test.js` passou a aceitar só a referência à variável e ganhou teste de que nenhum valor de chave está no Nginx/Dockerfile.
+- **Arquivos principais:** `nginx/default.conf.template`, `MapaMT.jsx`, `InteligenciaAmbientalPage.jsx`, `Icon.jsx`, testes, README.
+- **Testes:** suíte completa 317/317, build ok; Docker com a chave real: status 204, tiles 200 image/jpeg, chave ausente de logs/HTML/bundle, navegador sem chamadas diretas à Esri.
