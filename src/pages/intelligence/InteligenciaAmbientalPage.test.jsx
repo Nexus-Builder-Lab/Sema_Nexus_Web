@@ -166,6 +166,59 @@ describe('Inteligência ambiental (mapa)', () => {
     expect(tip).toHaveTextContent('Cuiabá');
   });
 
+  it('visão de satélite fica desabilitada sem ESRI_API_KEY no servidor (Web#107)', async () => {
+    renderPagina();
+    await screen.findByText('4 demandas no mapa');
+    const sat = screen.getByRole('button', { name: /Visão de satélite indisponível/ });
+    expect(sat).toBeDisabled();
+    expect(sat).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('visão de satélite: desligada por padrão, liga pelo proxy /tiles/esri com atribuição Esri e alterna com o OpenStreetMap (Web#107)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) => {
+        if (String(url) === '/tiles/esri/status') return { ok: true, status: 204 };
+        const geo = String(url).includes('municipios')
+          ? { ...GEO_UF, properties: { id: 5103403, nome: 'Cuiabá' } }
+          : GEO_UF;
+        return { ok: true, status: 200, json: async () => geo };
+      }),
+    );
+    const user = userEvent.setup();
+    const { container } = renderPagina();
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+    const sat = await screen.findByRole('button', { name: 'Visão de satélite (requer internet)' });
+    await waitFor(() => expect(sat).toBeEnabled());
+    expect(sat).toHaveAttribute('aria-pressed', 'false');
+    expect(container.querySelector('.leaflet-tile-pane img')).toBeNull();
+
+    await user.click(sat);
+    expect(sat).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() =>
+      expect(container.querySelector('.leaflet-tile-pane img')?.getAttribute('src')).toMatch(
+        /^\/tiles\/esri\/\d+\/\d+\/\d+$/,
+      ),
+    );
+    expect(container.querySelector('.leaflet-control-attribution')).toHaveTextContent(
+      /Powered by Esri/,
+    );
+    expect(marcadores(container)).toHaveLength(4);
+
+    // OpenStreetMap substitui o satélite (opções exclusivas).
+    const osm = screen.getByRole('button', { name: /Mapa de fundo OpenStreetMap/ });
+    await user.click(osm);
+    expect(sat).toHaveAttribute('aria-pressed', 'false');
+    expect(osm).toHaveAttribute('aria-pressed', 'true');
+    await waitFor(() =>
+      expect(
+        [...container.querySelectorAll('.leaflet-tile-pane img')].every((i) =>
+          i.getAttribute('src').includes('openstreetmap'),
+        ),
+      ).toBe(true),
+    );
+  });
+
   it('envia os filtros à API e atualiza os marcadores; Limpar restaura', async () => {
     const user = userEvent.setup();
     const consultas = [];

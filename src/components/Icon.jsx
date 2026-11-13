@@ -27,6 +27,7 @@ import {
   FolderOpen,
   GitCompare,
   Globe,
+  Satellite,
   Home,
   Maximize2,
   Inbox,
@@ -58,6 +59,7 @@ import {
 const ICONS = {
   home: Home,
   globe: Globe,
+  satellite: Satellite,
   expand: Maximize2,
   dashboard: LayoutDashboard,
   map: MapIcon,
