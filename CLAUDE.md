@@ -13,10 +13,20 @@ React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Ro
 - `src/api` (httpClient `baseURL=/api`), `src/mocks`, `src/auth`, `src/layout`, `src/components`, `src/pages/{core,intelligence,flux,docia}`, `src/styles/theme.scss`, `public/geo` (malha IBGE, mapa offline).
 - API sempre por `/api` relativo; nunca acessar banco. Regras de negócio e autorização ficam na API (esconder botão não é autorização). Divergência de contrato → Issue na API.
 - Token JWT em memória + `sessionStorage`; nada de dados de negócio em LocalStorage; nada secreto em `VITE_*`.
-- Interface: tokens do tema, responsivo (375/768/1366 px), estados de carregamento/vazio/erro/sucesso, acessibilidade básica, confirmação em ações destrutivas. Busca documental é textual; IA demonstrativa sempre identificada.
+- Interface: tokens do tema, responsivo (375/768/1366 px), estados de carregamento/vazio/erro/sucesso, acessibilidade básica, confirmação em ações destrutivas. Busca documental é textual; a origem de toda resposta de IA (local, Claude ou demonstrativa) sempre identificada.
 
-- **Skills** (`.claude/skills/`, carregadas pela descrição): `revisao-visual-mapa`, `paridade-prototipo`, `verificar-seguranca`, `integrar-camada-externa` (lista completa em `Sema_Nexus_API/docs/AGENTES.md`). Não autorizam nada além deste arquivo.
 - **Paridade visual:** Issues `paridade-prototipo` seguem `docs/PARIDADE_PROTOTIPO.md` (protótipo em `C:\SEMANEXUS\referencia\prototipo_SEMA_NEXUS`, capturas em `C:\SEMANEXUS\referencia\capturas`). `lucide-react` aprovado para os ícones.
+
+## Agentes de IA na interface (detalhes: `Sema_Nexus_API/docs/AGENTES_IA.md`)
+- A IA roda **na API** (Ollama local por padrão, `qwen3:4b-instruct`, sem custo); o Web só chama endpoints por `/api` (`src/api/agentesApi.js`). Nunca chamar modelo, Ollama ou Anthropic do navegador; nenhuma chave em `VITE_*`.
+- **Agente de Triagem:** `src/pages/flux/AgenteTriagemCard.jsx` dentro do `TriagemModal` ("Sugerir com o agente"); "Aplicar sugestão" **só preenche o formulário** — a pessoa revisa e confirma. Rótulos do modo em `agenteTriagem.js` (`rotuloModo`).
+- **Assistente DocIA:** o banner reflete `GET /api/agentes/status` (selo "IA local · modelo" ou demonstrativo) e mostra os passos/ferramentas usados; citações vêm conferidas pela API.
+- **Painel do sistema** (`/sistema/painel`, só ADMIN): aba "Agentes de IA" com motor, fluxo e métricas. Nome do sistema em `src/config/sistema.js`.
+- Sempre mostrar o modo (IA local / Claude / demonstrativo) e estados de carregamento: a 1ª chamada após subir a API leva 30–50 s.
+
+## Skills do Claude Code (`.claude/skills/`, carregadas pela descrição ou por `/<nome>`)
+- `revisao-visual-mapa` (mudanças no mapa do Intelligence: roteiro no Chrome e regra dos panes) · `paridade-prototipo` (comparar telas com o protótipo) · `verificar-seguranca` (antes de PR/merge/tag) · `integrar-camada-externa` (nova camada/serviço externo no padrão Esri/INPE). As da API (`preparar-demo`, `nova-issue-sema`, `preparar-tag`, `dados-ficticios`) estão em `Sema_Nexus_API/CLAUDE.md`; tabela completa em `Sema_Nexus_API/docs/AGENTES.md`.
+- Skills registram procedimentos; **não autorizam** nada além deste arquivo.
 
 ## Segurança (inegociável)
 - Sem segredos no código, Dockerfile, imagem ou `nginx.conf`.
