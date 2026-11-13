@@ -244,8 +244,15 @@ body {
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  display: inline-grid;
-  place-items: center;
+  font-variant-numeric: tabular-nums;
+  // Centraliza pelo desenho dos algarismos (altura das maiúsculas até a linha de base), não pela caixa
+  // de linha da fonte, que deixava o número acima do centro (Web#113). Sem suporte a text-box, fica o
+  // line-height: 1.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 
 .nx-nav-link {
