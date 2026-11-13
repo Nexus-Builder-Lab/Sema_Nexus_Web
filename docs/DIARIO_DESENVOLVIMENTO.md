@@ -398,3 +398,8 @@
 - **O que foi feito:** panes fixos abaixo do `overlayPane` (400): fundo UF 350, malha 360, concentração 370, áreas INPE 380 (`PANE_INPE_AREAS` em `mapaConfig.js`). Handler MSW `HEAD /tiles/esri/status` (404) para os testes/dev.
 - **Arquivos principais:** `MapaMT.jsx`, `SatelliteLayer.jsx`, `mapaConfig.js`, `mocks/handlers.js`, `InteligenciaAmbientalPage.test.jsx`.
 - **Testes:** 318/318; Docker + Chrome: com INPE ligado e satélite on/off, nenhum marcador coberto por malha/INPE/concentração; clique real abriu o popup da demanda.
+
+## 2026-11-12 · GH-111 · Fontes de volta ao tamanho original
+- **Status:** feito pela sessão principal (pedido do proprietário: o aumento da #92 foi pedido com o navegador em zoom 60%)
+- **O que foi feito:** revert das mudanças de fonte da #92 (`theme.scss`, `IndicatorChart.jsx`, `print.css`) e remoção do `font-size` mínimo do selo `.nx-demo-seal` (#99); rótulos curtos dos núcleos (#99) mantidos.
+- **Testes:** suíte completa e build; CI do PR.
