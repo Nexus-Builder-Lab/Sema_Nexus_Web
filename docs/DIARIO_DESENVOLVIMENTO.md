@@ -391,3 +391,10 @@
 - **O que foi feito:** fundo do mapa com três estados (nenhum/OpenStreetMap/satélite); proxy Nginx `/tiles/esri/{z}/{y}/{x}` com a chave só no servidor (capturas nomeadas, pois o `if` com regex sobrescreve `$1..$3`; `error_log crit` na rota); `/tiles/esri/status` habilita o botão; malha com contorno claro sobre o satélite; atribuição Esri. `dockerConfig.test.js` passou a aceitar só a referência à variável e ganhou teste de que nenhum valor de chave está no Nginx/Dockerfile.
 - **Arquivos principais:** `nginx/default.conf.template`, `MapaMT.jsx`, `InteligenciaAmbientalPage.jsx`, `Icon.jsx`, testes, README.
 - **Testes:** suíte completa 317/317, build ok; Docker com a chave real: status 204, tiles 200 image/jpeg, chave ausente de logs/HTML/bundle, navegador sem chamadas diretas à Esri.
+
+## 2026-11-12 · GH-109 · Marcadores não clicáveis após ligar a visão de satélite
+- **Status:** corrigido pela sessão principal (bug relatado pelo proprietário)
+- **Causa:** a malha municipal (interativa desde a #105) é recriada ao trocar o fundo (#107) e entrava por último no `overlayPane`, acima dos marcadores, capturando os cliques. O coroplético agregado do INPE também cobria os marcadores de demanda.
+- **O que foi feito:** panes fixos abaixo do `overlayPane` (400): fundo UF 350, malha 360, concentração 370, áreas INPE 380 (`PANE_INPE_AREAS` em `mapaConfig.js`). Handler MSW `HEAD /tiles/esri/status` (404) para os testes/dev.
+- **Arquivos principais:** `MapaMT.jsx`, `SatelliteLayer.jsx`, `mapaConfig.js`, `mocks/handlers.js`, `InteligenciaAmbientalPage.test.jsx`.
+- **Testes:** 318/318; Docker + Chrome: com INPE ligado e satélite on/off, nenhum marcador coberto por malha/INPE/concentração; clique real abriu o popup da demanda.

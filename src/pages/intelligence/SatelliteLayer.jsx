@@ -7,6 +7,7 @@ import {
   Popup,
   useMapEvents,
 } from 'react-leaflet';
+import { PANE_INPE_AREAS } from './mapaConfig.js';
 import {
   COR_DETER,
   COR_FOCO,
@@ -66,6 +67,7 @@ function Coropletico({ itens, fonte }) {
     <GeoJSON
       key={`coropletico-${itens.map((i) => `${i.municipioId}:${i.total}`).join()}`}
       data={malha}
+      pane={PANE_INPE_AREAS}
       style={(feature) => ({
         color: '#8a5a44',
         weight: 0.5,

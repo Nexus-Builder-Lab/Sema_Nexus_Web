@@ -12,6 +12,7 @@ import {
 import { Link } from 'react-router-dom';
 import {
   CENTRO_MT,
+  PANE_INPE_AREAS,
   ROTULOS_STATUS,
   ZOOM_MT,
   corDaCategoria,
@@ -22,6 +23,8 @@ import { COR_CONTORNO_UF } from './concentracao.js';
 import useGeoJson from './useGeoJson.js';
 
 export const PANE_FUNDO_UF = 'nx-fundo-uf';
+export const PANE_MALHA = 'nx-malha';
+export const PANE_CONCENTRACAO = 'nx-concentracao';
 const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
 const ESTILO_MUNICIPIO = {
   color: '#94A3B8',
@@ -123,24 +126,33 @@ export default function MapaMT({
           opacity={0.55}
         />
       )}
-      {malha && (
-        // Interativa só fora do modo concentração (lá o ConcentracaoLayer, por cima, tem o próprio tooltip).
-        <GeoJSON
-          key={`malha-${modo === 'concentracao'}-${fundo === 'satelite'}`}
-          data={malha}
-          style={estiloMalha}
-          interactive={modo !== 'concentracao'}
-          onEachFeature={modo === 'concentracao' ? undefined : nomeAoPassarOMouse(estiloMalha)}
-        />
-      )}
-      {malha && modo === 'concentracao' && (
-        <ConcentracaoLayer
-          malha={malha}
-          itens={concentracao}
-          municipios={municipios}
-          onSelecionar={onSelecionarMunicipio}
-        />
-      )}
+      {/* Malha e coroplético são recriados (key) quando o fundo/os dados mudam. Em panes próprios abaixo do
+          overlayPane (400) eles nunca ficam por cima dos marcadores de demanda e do INPE, que seguem
+          clicáveis (Web#109). */}
+      <Pane name={PANE_MALHA} style={{ zIndex: 360 }}>
+        {malha && (
+          // Interativa só fora do modo concentração (lá o ConcentracaoLayer, por cima, tem o próprio tooltip).
+          <GeoJSON
+            key={`malha-${modo === 'concentracao'}-${fundo === 'satelite'}`}
+            data={malha}
+            style={estiloMalha}
+            interactive={modo !== 'concentracao'}
+            onEachFeature={modo === 'concentracao' ? undefined : nomeAoPassarOMouse(estiloMalha)}
+          />
+        )}
+      </Pane>
+      {/* Áreas do INPE (coroplético agregado) entram neste pane pela prop `pane` (SatelliteLayer). */}
+      <Pane name={PANE_INPE_AREAS} style={{ zIndex: 380 }} />
+      <Pane name={PANE_CONCENTRACAO} style={{ zIndex: 370 }}>
+        {malha && modo === 'concentracao' && (
+          <ConcentracaoLayer
+            malha={malha}
+            itens={concentracao}
+            municipios={municipios}
+            onSelecionar={onSelecionarMunicipio}
+          />
+        )}
+      </Pane>
       {uf && <GeoJSON data={uf} style={ESTILO_CONTORNO} interactive={false} />}
       <LayersControl position="topright">
         <LayersControl.Overlay checked name="Demandas (fictícias)">
