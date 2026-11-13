@@ -206,8 +206,16 @@ body {
 
 .nx-sidebar nav {
   flex: 1;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 12px 10px 20px;
+  // Rola com roda do mouse, toque e teclado, mas sem barra visível (pedido do proprietário, Web#119).
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .nx-nav-group + .nx-nav-group {

@@ -415,3 +415,8 @@
 - **O que foi feito:** skills `revisao-visual-mapa` (roteiro no Chrome + regra dos panes), `paridade-prototipo`, `verificar-seguranca` (frontend/Nginx/imagem) e `integrar-camada-externa` (padrão Esri/INPE) em `.claude/skills/`; referência no `CLAUDE.md`. As skills da API e a tabela geral estão em `Sema_Nexus_API/docs/AGENTES.md` (API#104).
 - **Apoio:** `verificar-seguranca/verificar-diff.mjs` (mesmo script da API; compara com os segredos do `.env` da API sem exibi-los).
 - **Testes:** `verificar-diff.mjs` neste branch e contra `v0.1.0-demo` (0 achados); CI do PR.
+
+## 2026-11-13 · GH-119 · Barra de rolagem do menu lateral escondida
+- **Status:** corrigido pela sessão principal (pedido do proprietário)
+- **O que foi feito:** `.nx-sidebar nav` com `scrollbar-width: none` e `::-webkit-scrollbar { display: none }`, mantendo a rolagem (roda do mouse, toque, teclado) quando os itens não cabem; `overflow-x: hidden`.
+- **Testes:** lint, suíte e build; conferido no Chrome.
