@@ -13,6 +13,7 @@ import AuthenticatedLayout from './layout/AuthenticatedLayout.jsx';
 import HomePage from './pages/core/HomePage.jsx';
 import LoginPage from './pages/core/LoginPage.jsx';
 import AdminPage from './pages/core/admin/AdminPage.jsx';
+import PainelSistemaPage from './pages/core/painel/PainelSistemaPage.jsx';
 import NotFoundPage from './pages/core/NotFoundPage.jsx';
 import IntelligenceDashboardPage from './pages/intelligence/IntelligenceDashboardPage.jsx';
 import InteligenciaAmbientalPage from './pages/intelligence/InteligenciaAmbientalPage.jsx';
@@ -75,6 +76,7 @@ export default function App() {
                 <Route path="/admin/estrutura" element={<AdminPage aba="estrutura" />} />
                 <Route path="/admin/perfis" element={<AdminPage aba="perfis" />} />
                 <Route path="/admin/auditoria" element={<AdminPage aba="auditoria" />} />
+                <Route path="/sistema/painel" element={<PainelSistemaPage />} />
               </Route>
               <Route path="*" element={<NotFoundPage />} />
             </Route>

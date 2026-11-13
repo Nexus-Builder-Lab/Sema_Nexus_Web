@@ -1,3 +1,4 @@
+import { painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
 import { handlersAdmin } from './fixtures/admin.js';
 import { handlersNotificacoes } from './fixtures/notificacoes.js';
@@ -373,6 +374,11 @@ export const handlers = [
         })
       : naoAutenticado('/api/agentes/status'),
   ),
+  // Painel do sistema (API#114): somente ADMIN.
+  http.get('/api/sistema/painel', ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/sistema/painel');
+    return HttpResponse.json(painelSistemaMock());
+  }),
   ...auth,
   ...handlersAdmin,
   ...handlersNotificacoes,
