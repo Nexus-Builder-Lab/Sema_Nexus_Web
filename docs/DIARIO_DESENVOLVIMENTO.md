@@ -366,3 +366,9 @@
 - Aplicado em "Demandas ativas por setor" (Início) e nos gráficos por setor de Produtividade. Indicadores e Relatórios não têm gráfico com nome de setor (filtro apenas); tabelas mantêm o nome completo.
 - `.nx-demo-seal` com 13 px (>= 12,5 px).
 - Testes: `rotulos.test.js` + afetados de core/flux (116 ok); lint 0 erros. Suíte completa, build e verificação visual a confirmar pelo validador.
+
+## 2026-11-12 · GH-101 · README: acessar por 127.0.0.1
+- **Status:** mesclado pela sessão principal (pedido do proprietário)
+- **O que foi feito:** instruções trocam `localhost` por `127.0.0.1` (no Windows do proprietário `localhost` resolve para IPv6 e cai em outro serviço).
+- **Arquivos principais:** `README.md`, `vite.config.js` (`server.host` e proxy em 127.0.0.1), `.env.example`.
+- **Testes:** CI do PR.

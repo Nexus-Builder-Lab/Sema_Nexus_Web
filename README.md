@@ -38,10 +38,12 @@ Requisitos: Node.js 20.19+ (o CI usa Node 22).
 
 ```bash
 npm ci
-npm run dev                         # http://localhost:5173 — /api vai para VITE_API_PROXY_TARGET
+npm run dev                         # http://127.0.0.1:5173 — /api vai para VITE_API_PROXY_TARGET
 ```
 
-O proxy `/api` do Vite usa `VITE_API_PROXY_TARGET` (padrão `http://localhost:8080`). Para mudar, copie `.env.example` para `.env.local` e ajuste — por exemplo, `VITE_API_PROXY_TARGET=http://localhost:18080` quando a porta 8080 da máquina estiver ocupada. O frontend sempre chama a API por `/api` relativo.
+O proxy `/api` do Vite usa `VITE_API_PROXY_TARGET` (padrão `http://127.0.0.1:8080`). Para mudar, copie `.env.example` para `.env.local` e ajuste — por exemplo, `VITE_API_PROXY_TARGET=http://127.0.0.1:18080` quando a porta 8080 da máquina estiver ocupada. O frontend sempre chama a API por `/api` relativo.
+
+> **Use `127.0.0.1`, não `localhost`.** Em alguns Windows, `localhost` resolve para IPv6 (`::1`) e cai em outro serviço que usa as mesmas portas. O servidor do Vite escuta em `127.0.0.1` (`vite.config.js`).
 
 Sem a API rodando, use os mocks (MSW) gerados do contrato OpenAPI (**Implementado**, Issue #4):
 ```bash
@@ -97,7 +99,7 @@ cp .env.example .env              # Windows: Copy-Item .env.example .env
 docker compose up -d --build
 ```
 
-Acesse http://localhost:3000. Login de teste (**somente demonstração**): `admin@admin.com` / `12345678`.
+Acesse http://127.0.0.1:3000 (porta `WEB_PORT` do `.env` da API; não use `localhost`). Login de teste (**somente demonstração**): `admin@admin.com` / `12345678`.
 O Nginx da imagem serve o build e faz proxy de `/api` para o serviço `api`. Detalhes: [Sema_Nexus_API/docs/DOCKER.md](https://github.com/Nexus-Builder-Lab/Sema_Nexus_API/blob/main/docs/DOCKER.md).
 
 ## Interface e componentes
