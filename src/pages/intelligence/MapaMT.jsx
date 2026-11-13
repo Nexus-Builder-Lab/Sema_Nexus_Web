@@ -5,6 +5,7 @@ import {
   LayerGroup,
   LayersControl,
   MapContainer,
+  Pane,
   Popup,
   TileLayer,
 } from 'react-leaflet';
@@ -20,7 +21,8 @@ import ConcentracaoLayer from './ConcentracaoLayer.jsx';
 import { COR_CONTORNO_UF } from './concentracao.js';
 import useGeoJson from './useGeoJson.js';
 
-const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
+export const PANE_FUNDO_UF = 'nx-fundo-uf';
+const ESTILO_UF ={ color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
 const ESTILO_MUNICIPIO = { color: '#94A3B8', weight: 0.6, fillColor: '#FFFFFF', fillOpacity: 0.55 };
 const ESTILO_CONTORNO = { color: COR_CONTORNO_UF, weight: 2.2, fill: false };
 
@@ -58,14 +60,19 @@ export default function MapaMT({
 
   return (
     <MapContainer center={CENTRO_MT} zoom={ZOOM_MT} minZoom={5} scrollWheelZoom className="nx-map">
-      {uf && (
-        <GeoJSON
-          key={`uf-${fundoOnline}`}
-          data={uf}
-          style={{ ...ESTILO_UF, fillOpacity: fundoOnline ? 0 : 1 }}
-          interactive={false}
-        />
-      )}
+      {/* Pane próprio, abaixo do overlayPane (400) e acima dos tiles (200): o preenchimento da UF é
+          recriado ao ligar/desligar o fundo online e, no overlayPane, entraria por cima das demais
+          camadas (Web#103). */}
+      <Pane name={PANE_FUNDO_UF} style={{ zIndex: 350 }}>
+        {uf && (
+          <GeoJSON
+            key={`uf-${fundoOnline}`}
+            data={uf}
+            style={{ ...ESTILO_UF, fillOpacity: fundoOnline ? 0 : 1 }}
+            interactive={false}
+          />
+        )}
+      </Pane>
       {fundoOnline && (
         <TileLayer
           attribution="&copy; colaboradores do OpenStreetMap"

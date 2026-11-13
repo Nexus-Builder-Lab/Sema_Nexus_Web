@@ -122,6 +122,29 @@ describe('Inteligência ambiental (mapa)', () => {
     await waitFor(() => expect(container.querySelector('.leaflet-tile-pane img')).toBeTruthy());
   });
 
+  it('desligar o fundo OpenStreetMap não deixa o preenchimento da UF por cima das camadas (Web#103)', async () => {
+    const user = userEvent.setup();
+    const { container } = renderPagina();
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+    const paneFundo = () => container.querySelector('.leaflet-nx-fundo-uf-pane');
+    await waitFor(() => expect(paneFundo()?.querySelector('path')).toBeTruthy());
+    expect(paneFundo().style.zIndex).toBe('350');
+
+    const fundo = screen.getByRole('button', { name: /Mapa de fundo OpenStreetMap/ });
+    await user.click(fundo); // liga
+    await user.click(fundo); // desliga: o preenchimento opaco é recriado
+    expect(fundo).toHaveAttribute('aria-pressed', 'false');
+
+    await waitFor(() => expect(paneFundo().querySelectorAll('path')).toHaveLength(1));
+    const overlay = container.querySelector('.leaflet-overlay-pane');
+    // Nenhum polígono opaco da UF no overlayPane (onde ficaria acima de municípios e pontos).
+    const opacos = [...overlay.querySelectorAll('path')].filter(
+      (p) => p.getAttribute('fill-opacity') === '1',
+    );
+    expect(opacos).toHaveLength(0);
+    expect(marcadores(container)).toHaveLength(4);
+  });
+
   it('envia os filtros à API e atualiza os marcadores; Limpar restaura', async () => {
     const user = userEvent.setup();
     const consultas = [];
