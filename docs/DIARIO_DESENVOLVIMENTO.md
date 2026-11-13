@@ -360,3 +360,9 @@
 - `theme.scss`: `$font-size-base` 14 -> 16 px; cada `font-size` em px/rem somado de 2 px, com piso de 12,5 px (hierarquia preservada; títulos e KPIs sobem igualmente). `print.css` (telas de impressão em rem) ajustado; regras em `pt` mantidas.
 - `IndicatorChart`: fonte 16 px em ticks, legenda, tooltip e títulos de eixo. Leaflet: popup/tooltip 14 px e atribuição 12,5 px.
 - Testes: lint e testes afetados rodados localmente; suíte completa, build e verificação visual em 375/768/1366 px a confirmar pelo validador.
+
+## GH-99 — Rótulos curtos de setor nos gráficos e selo demonstrativo (12/11/2026)
+- `utils/rotulos.js` (`rotuloCurtoSetor`): "Núcleo Regional de Fiscalização — Sinop (fictício)" -> "NR Sinop". `IndicatorChart` ganhou `rotulosCompletos` (nome completo no tooltip e na tabela acessível; eixo sem rotação).
+- Aplicado em "Demandas ativas por setor" (Início) e nos gráficos por setor de Produtividade. Indicadores e Relatórios não têm gráfico com nome de setor (filtro apenas); tabelas mantêm o nome completo.
+- `.nx-demo-seal` com 13 px (>= 12,5 px).
+- Testes: `rotulos.test.js` + afetados de core/flux (116 ok); lint 0 erros. Suíte completa, build e verificação visual a confirmar pelo validador.

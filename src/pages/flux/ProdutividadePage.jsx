@@ -13,6 +13,7 @@ import Loading from '../../components/Loading.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { hojeISO } from '../../utils/datas.js';
+import { rotuloCurtoSetor } from '../../utils/rotulos.js';
 
 const PERIODOS = [
   { value: 3, label: 'Últimos 3 meses' },
@@ -104,7 +105,8 @@ export default function ProdutividadePage() {
     const ps = data.porSetorSituacao;
     const tempos = new Map(data.tempoMedioPorSetor.map((t) => [t.setorId, t.tempoMedioDias]));
     return {
-      setores: ps.map((s) => s.setor),
+      setores: ps.map((s) => rotuloCurtoSetor(s.setor)),
+      setoresCompletos: ps.map((s) => s.setor),
       situacao: [
         { label: 'Concluídas', color: '#16a34a', data: ps.map((s) => s.concluidas) },
         { label: 'Ativas no prazo', color: '#1d4ed8', data: ps.map((s) => s.ativas - s.atrasadas) },
@@ -226,6 +228,7 @@ export default function ProdutividadePage() {
                 <IndicatorChart
                   stacked
                   labels={graficos.setores}
+                  rotulosCompletos={graficos.setoresCompletos}
                   datasets={graficos.situacao}
                   ariaLabel="Demandas por setor e situação"
                 />
@@ -240,6 +243,7 @@ export default function ProdutividadePage() {
                 <IndicatorChart
                   horizontal
                   labels={graficos.setores}
+                  rotulosCompletos={graficos.setoresCompletos}
                   datasets={graficos.tempo}
                   ariaLabel="Tempo médio de conclusão por setor, em dias"
                 />

@@ -25,7 +25,7 @@ ChartJS.register(
 
 const FONTE = { size: 16 };
 
-function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito }) {
+function opcoesBase({ rotulosCompletos, rotulosCurtos, tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito }) {
   const base = {
     responsive: true,
     maintainAspectRatio: false,
@@ -35,7 +35,13 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
         position: tipo === 'doughnut' ? 'right' : 'bottom',
         labels: { color: COR_TEXTO, font: FONTE, boxWidth: 14 },
       },
-      tooltip: { titleFont: FONTE, bodyFont: FONTE },
+      tooltip: {
+        titleFont: FONTE,
+        bodyFont: FONTE,
+        ...(rotulosCompletos
+          ? { callbacks: { title: (itens) => rotulosCompletos[itens[0]?.dataIndex] ?? itens[0]?.label } }
+          : {}),
+      },
     },
   };
   if (tipo === 'doughnut') return base;
@@ -50,7 +56,7 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
   };
   const eixoCategoria = {
     stacked,
-    ticks: { color: COR_TEXTO, font: FONTE },
+    ticks: { color: COR_TEXTO, font: FONTE, ...(rotulosCurtos ? { maxRotation: 0, autoSkip: false } : {}) },
     grid: { display: false },
   };
   return {
@@ -77,6 +83,7 @@ function opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixo
  * Gráfico Chart.js com tabela equivalente para leitores de tela.
  * `tipo`: 'bar' | 'line' | 'doughnut'. `datasets`: `[{ label, data, color | colors, linha?, eixoDireito? }]`.
  * `linha: true` desenha a série como linha sobre as barras (eixo `y1` se `eixoDireito`).
+ * `rotulosCompletos` (opcional): nomes completos exibidos no tooltip quando `labels` traz rótulos curtos.
  * `chartRef` expõe a instância Chart.js (ex.: exportar PNG). `stacked` empilha as barras; `tituloEixo`/`tituloEixoDireito` nomeiam os eixos.
  */
 export default function IndicatorChart({
@@ -90,6 +97,7 @@ export default function IndicatorChart({
   tituloEixo,
   tituloEixoDireito,
   chartRef,
+  rotulosCompletos,
 }) {
   const legenda = tipo === 'doughnut' || datasets.length > 1;
   const dados = {
@@ -108,7 +116,7 @@ export default function IndicatorChart({
         : {}),
     })),
   };
-  const opcoes = opcoesBase({ tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito });
+  const opcoes = opcoesBase({ rotulosCompletos, rotulosCurtos: Boolean(rotulosCompletos), tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito });
   const Componente = tipo === 'line' ? Line : tipo === 'doughnut' ? Doughnut : Bar;
 
   return (
@@ -137,7 +145,7 @@ export default function IndicatorChart({
         <tbody>
           {labels.map((rotulo, i) => (
             <tr key={`${rotulo}-${i}`}>
-              <th scope="row">{rotulo}</th>
+              <th scope="row">{rotulosCompletos?.[i] ?? rotulo}</th>
               {datasets.map((d) => (
                 <td key={d.label}>{d.data[i]}</td>
               ))}

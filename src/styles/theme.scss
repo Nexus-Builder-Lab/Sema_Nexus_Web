@@ -1169,6 +1169,7 @@ figure.nx-chart-figure {
 
 // ---------- Dashboards (Issue #8) ----------
 .nx-demo-seal {
+  font-size: 0.8125rem; // >= 12,5 px (Web #92)
   background: $nx-amber-100;
   color: #92400e;
   border: 1px solid $nx-amber-600;
