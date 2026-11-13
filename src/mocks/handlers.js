@@ -363,6 +363,16 @@ const fluxo = [
 export const handlers = [
   // Visão de satélite (Web#107): sem ESRI_API_KEY nos mocks, o Nginx responderia 404.
   http.head('/tiles/esri/status', () => new HttpResponse(null, { status: 404 })),
+  // Agentes de IA (API#106): nos mocks não há IA, os agentes ficam no modo demonstrativo.
+  http.get('/api/agentes/status', ({ request }) =>
+    temToken(request)
+      ? HttpResponse.json({
+          modo: 'DEMONSTRATIVO',
+          descricao: 'Modo demonstrativo — sugestões por regras locais, sem IA generativa.',
+          agentes: [],
+        })
+      : naoAutenticado('/api/agentes/status'),
+  ),
   ...auth,
   ...handlersAdmin,
   ...handlersNotificacoes,

@@ -425,3 +425,9 @@
 - **Status:** feito pela sessão principal (MVP de agentes aprovado pelo proprietário; API#107)
 - **O que foi feito:** `AgenteTriagemCard` no `TriagemModal`: botão "Sugerir com o agente", estado de carregamento ("consultando a demanda, demandas semelhantes e os dados do INPE"), card com decisão, categoria, prioridade, núcleo, justificativa, possíveis duplicatas (links), avisos e "Como o agente chegou à sugestão" (evidências); selo do motor sempre visível (IA local · modelo / Claude · modelo / Regras locais); "Aplicar sugestão" só preenche o formulário (a pessoa revisa e confirma); decisão divergente → aviso e só a justificativa. `sugerirTriagem` com timeout de 120 s; MSW `POST /api/demandas/:id/triagem/sugestao`.
 - **Testes:** `AgenteTriagem.test.jsx` (4); suíte 322/322; lint e build.
+
+## 2026-11-13 · GH-118 · Assistente DocIA mostra o agente, o modelo e os passos
+- **Status:** feito pela sessão principal (MVP de agentes aprovado pelo proprietário; API#108)
+- **O que foi feito:** página do Assistente consulta `GET /api/agentes/status`: com IA, aviso "Agente DocIA com IA local (modelo) — busca e lê os documentos… sem custo e sem enviar dados para fora do servidor"; sem IA, o aviso de modo demonstração de antes. Cada resposta do agente traz o selo "IA local · modelo" e "Como o agente chegou à resposta" (passos); carregamento "O agente está buscando e lendo os documentos…"; `perguntar` com timeout de 120 s; MSW `GET /api/agentes/status` (demonstrativo).
+- **Observação:** `src/mocks/openapi.json` está desatualizado desde a Web#4 (faltam 22 endpoints); não atualizado aqui para não mudar o comportamento dos mocks fora do escopo.
+- **Testes:** `Assistente.test.jsx` (6); suíte, lint e build.

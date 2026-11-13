@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { statusAgentes } from '../../api/agentesApi.js';
 import { perguntar } from '../../api/assistenteApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { useAuth } from '../../auth/useAuth.js';
@@ -24,14 +25,20 @@ function Avatar() {
 
 function Resposta({ item }) {
   const semInfo = SEM_INFORMACAO.test(item.resposta ?? '');
+  const comAgente = item.agente === 'LOCAL' || item.agente === 'CLAUDE';
   return (
     <div className="nx-ai-row" data-testid="resposta">
       <Avatar />
       <div className="nx-ai-bubble">
         <div className="nx-ai-mode" data-testid="modo-resposta">
-          <Icon name="flask" size={12} />
+          <Icon name={comAgente ? 'sparkles' : 'flask'} size={12} />
           {item.modo || 'Modo não informado'}
         </div>
+        {comAgente && (
+          <span className="badge nx-agente-selo mb-2" data-testid="agente-resposta">
+            {item.agente === 'CLAUDE' ? 'Claude' : 'IA local'} · {item.modelo}
+          </span>
+        )}
         <p className={`mb-2 ${semInfo ? 'text-body-secondary fst-italic' : ''}`}>{item.resposta}</p>
         {item.referencias?.length > 0 && (
           <>
@@ -48,6 +55,16 @@ function Resposta({ item }) {
             </ul>
           </>
         )}
+        {comAgente && item.passos?.length > 0 && (
+          <details className="small mt-2">
+            <summary>Como o agente chegou à resposta</summary>
+            <ul className="mb-0 mt-1">
+              {item.passos.map((p, i) => (
+                <li key={i}>{p}</li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
     </div>
   );
@@ -61,7 +78,20 @@ export default function AssistentePage() {
   const [historico, setHistorico] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState(null);
+  const [agentes, setAgentes] = useState(null);
   const fim = useRef(null);
+
+  useEffect(() => {
+    let ativo = true;
+    statusAgentes()
+      .then((s) => ativo && setAgentes(s))
+      .catch(() => ativo && setAgentes(null));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+  const docia = agentes?.agentes?.find((a) => a.id === 'docia');
+  const comIa = agentes && agentes.modo !== 'DEMONSTRATIVO' && docia;
   const primeiroNome = (usuario?.nome ?? '').trim().split(/\s+/)[0];
 
   useEffect(() => {
@@ -107,10 +137,23 @@ export default function AssistentePage() {
         }
       />
       <div className="nx-ai-banner" role="note">
-        <strong>Modo demonstração</strong> — sem modelo de IA conectado. As respostas são extraídas
-        dos documentos cadastrados (dados fictícios), respeitando as permissões do seu perfil. O
-        assistente não inventa legislação, normas ou procedimentos oficiais. A identificação do modo
-        aparece em cada resposta.
+        {comIa ? (
+          <>
+            <strong>Agente DocIA com IA {agentes.modo === 'CLAUDE' ? 'Claude' : 'local'}</strong> (
+            {docia.modelo}) — o agente busca e lê os documentos cadastrados (dados fictícios) e
+            responde com citações conferidas pelo sistema
+            {agentes.modo === 'LOCAL' && ', sem custo e sem enviar dados para fora do servidor'}.
+            Não orienta sobre legislação, normas ou procedimentos oficiais. A identificação do modo
+            aparece em cada resposta.
+          </>
+        ) : (
+          <>
+            <strong>Modo demonstração</strong> — sem modelo de IA conectado. As respostas são
+            extraídas dos documentos cadastrados (dados fictícios), respeitando as permissões do seu
+            perfil. O assistente não inventa legislação, normas ou procedimentos oficiais. A
+            identificação do modo aparece em cada resposta.
+          </>
+        )}
       </div>
 
       <div className="nx-ai-layout">
@@ -135,7 +178,13 @@ export default function AssistentePage() {
                 <Resposta key={i} item={item} />
               ),
             )}
-            {enviando && <p className="text-body-secondary small">Consultando documentos…</p>}
+            {enviando && (
+              <p className="text-body-secondary small" role="status">
+                {comIa
+                  ? 'O agente está buscando e lendo os documentos…'
+                  : 'Consultando documentos…'}
+              </p>
+            )}
             {erro && (
               <div className="alert alert-danger" role="alert">
                 {erro}
