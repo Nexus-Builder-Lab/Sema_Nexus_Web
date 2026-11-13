@@ -46,7 +46,8 @@ const GEO = {
 const camadas = (container) => container.querySelector('.leaflet-control-layers');
 const entrada = (container, nome) =>
   within(camadas(container)).getByText(nome).closest('label').querySelector('input');
-const marcadores = (container) => container.querySelectorAll('path.leaflet-interactive');
+const marcadores = (container) =>
+  container.querySelectorAll('path.leaflet-interactive:not(.nx-malha-municipio)');
 
 function renderPagina() {
   return render(

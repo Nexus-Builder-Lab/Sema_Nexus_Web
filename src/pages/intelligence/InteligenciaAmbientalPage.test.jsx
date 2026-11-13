@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
@@ -47,7 +47,8 @@ function renderPagina() {
   );
 }
 
-const marcadores = (container) => container.querySelectorAll('path.leaflet-interactive');
+const marcadores = (container) =>
+  container.querySelectorAll('path.leaflet-interactive:not(.nx-malha-municipio)');
 
 describe('Inteligência ambiental (mapa)', () => {
   let chamadasGeo;
@@ -60,7 +61,10 @@ describe('Inteligência ambiental (mapa)', () => {
       'fetch',
       vi.fn(async (url) => {
         chamadasGeo.push(String(url));
-        return { ok: true, json: async () => GEO_UF };
+        const geo = String(url).includes('municipios')
+          ? { ...GEO_UF, properties: { id: 5103403, nome: 'Cuiabá' } }
+          : GEO_UF;
+        return { ok: true, json: async () => geo };
       }),
     );
   });
@@ -143,6 +147,23 @@ describe('Inteligência ambiental (mapa)', () => {
     );
     expect(opacos).toHaveLength(0);
     expect(marcadores(container)).toHaveLength(4);
+  });
+
+  it('mostra o nome do município ao passar o mouse no modo Ocorrências (Web#105)', async () => {
+    const { container } = renderPagina();
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+    const malha = await waitFor(() => {
+      const el = container.querySelector('path.nx-malha-municipio.leaflet-interactive');
+      expect(el).toBeTruthy();
+      return el;
+    });
+    fireEvent.mouseOver(malha);
+    const tip = await waitFor(() => {
+      const el = container.querySelector('.leaflet-tooltip.mun-tip');
+      expect(el).toBeTruthy();
+      return el;
+    });
+    expect(tip).toHaveTextContent('Cuiabá');
   });
 
   it('envia os filtros à API e atualiza os marcadores; Limpar restaura', async () => {

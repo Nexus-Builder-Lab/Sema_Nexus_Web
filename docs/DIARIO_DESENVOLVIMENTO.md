@@ -379,3 +379,9 @@
 - **O que foi feito:** preenchimento da UF num `Pane` próprio (`nx-fundo-uf`, z-index 350: acima dos tiles, abaixo do overlayPane).
 - **Arquivos principais:** `MapaMT.jsx`, `InteligenciaAmbientalPage.test.jsx` (teste de regressão).
 - **Testes:** testes do mapa (23, 0 falhas, local); CI do PR.
+
+## 2026-11-12 · GH-105 · Nome do município ao passar o mouse no mapa
+- **Status:** feito pela sessão principal (pedido do proprietário)
+- **O que foi feito:** no modo Ocorrências a malha municipal ficou interativa, com tooltip `sticky` com o nome (estilo `.mun-tip`) e destaque do contorno; o modo Concentração mantém o tooltip próprio (nome, total, bioma). Classe `nx-malha-municipio` separa a malha dos marcadores.
+- **Arquivos principais:** `MapaMT.jsx`, `InteligenciaAmbientalPage.test.jsx`, `CamadaInpe.test.jsx`.
+- **Testes:** pasta intelligence (66, 0 falhas, local); CI do PR.

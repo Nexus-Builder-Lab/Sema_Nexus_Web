@@ -23,8 +23,29 @@ import useGeoJson from './useGeoJson.js';
 
 export const PANE_FUNDO_UF = 'nx-fundo-uf';
 const ESTILO_UF = { color: '#14532d', weight: 2, fillColor: '#e9f2ec', fillOpacity: 1 };
-const ESTILO_MUNICIPIO = { color: '#94A3B8', weight: 0.6, fillColor: '#FFFFFF', fillOpacity: 0.55 };
+const ESTILO_MUNICIPIO = {
+  color: '#94A3B8',
+  weight: 0.6,
+  fillColor: '#FFFFFF',
+  fillOpacity: 0.55,
+  className: 'nx-malha-municipio',
+};
 const ESTILO_CONTORNO = { color: COR_CONTORNO_UF, weight: 2.2, fill: false };
+
+const ENTIDADES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+const escHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ENTIDADES[c]);
+
+/** Tooltip com o nome do município e destaque do contorno ao passar o mouse (Web#105). */
+function nomeAoPassarOMouse(feature, layer) {
+  layer.bindTooltip(`<strong>${escHtml(feature.properties?.nome ?? '')}</strong>`, {
+    sticky: true,
+    className: 'mun-tip',
+  });
+  layer.on({
+    mouseover: () => layer.setStyle({ weight: 2, color: '#374151' }),
+    mouseout: () => layer.setStyle(ESTILO_MUNICIPIO),
+  });
+}
 
 function PopupDemanda({ ponto }) {
   return (
@@ -80,7 +101,16 @@ export default function MapaMT({
           opacity={0.55}
         />
       )}
-      {malha && <GeoJSON data={malha} style={ESTILO_MUNICIPIO} interactive={false} />}
+      {malha && (
+        // Interativa só fora do modo concentração (lá o ConcentracaoLayer, por cima, tem o próprio tooltip).
+        <GeoJSON
+          key={`malha-${modo === 'concentracao'}`}
+          data={malha}
+          style={ESTILO_MUNICIPIO}
+          interactive={modo !== 'concentracao'}
+          onEachFeature={modo === 'concentracao' ? undefined : nomeAoPassarOMouse}
+        />
+      )}
       {malha && modo === 'concentracao' && (
         <ConcentracaoLayer
           malha={malha}
