@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { decidirTriagem } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import Modal from '../../components/Modal.jsx';
+import AgenteTriagemCard from './AgenteTriagemCard.jsx';
 
 const TEXTOS = {
   CLASSIFICAR: {
@@ -64,6 +65,14 @@ export default function TriagemModal({ demanda, decisao, catalogos, onClose, onS
     }
   }
 
+  // Sugestão do Agente de Triagem (Issue API#107): só preenche o formulário; a pessoa revisa e confirma.
+  function aplicarSugestao({ categoria: c, prioridade: p, justificativa: j }) {
+    if (classificar && c) setCategoria(c);
+    if (classificar && p) setPrioridade(p);
+    if (j) setJustificativa(j.slice(0, 2000));
+    setErros({});
+  }
+
   const campoErro = (campo) =>
     erros[campo] && <div className="invalid-feedback">{erros[campo]}</div>;
   const classe = (campo, base = 'form-control') => `${base}${erros[campo] ? ' is-invalid' : ''}`;
@@ -73,6 +82,12 @@ export default function TriagemModal({ demanda, decisao, catalogos, onClose, onS
       <form noValidate onSubmit={enviar} aria-label={textos.titulo}>
         <div className="modal-body">
           <p className="text-body-secondary">{textos.ajuda}</p>
+          <AgenteTriagemCard
+            demandaId={demanda.id}
+            decisao={decisao}
+            catalogos={catalogos}
+            onAplicar={aplicarSugestao}
+          />
           {erroGeral && (
             <div className="alert alert-danger" role="alert">
               {erroGeral}

@@ -296,6 +296,36 @@ const fluxo = [
     '/api/demandas/:id/triagem/iniciar',
     acaoDeFluxo('PENDENTE', (demanda) => iniciarTriagemMock(demanda)),
   ),
+  // Agente de Triagem (Issue API#107): sugestão sem gravar nada; 409 fora de Pendente/Em triagem.
+  http.post('/api/demandas/:id/triagem/sugestao', ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    if (!['PENDENTE', 'EM_TRIAGEM'].includes(demanda.status)) {
+      return conflito(
+        params.id,
+        'A sugestão de triagem só se aplica a demandas Pendentes ou Em triagem.',
+      );
+    }
+    return HttpResponse.json({
+      modo: 'LOCAL',
+      modelo: 'qwen3:4b-instruct',
+      decisao: 'CLASSIFICAR',
+      categoria: 'QUEIMADA_INCENDIO',
+      prioridade: 'ALTA',
+      nucleo: { sigla: 'NR-CBA', nome: 'Núcleo Regional de Cuiabá' },
+      justificativa:
+        'Relato de queimada em vegetação nativa. Há muitos focos de calor do INPE no município.',
+      duplicatas: [],
+      evidencias: [
+        `Leu a demanda ${demanda.numero}.`,
+        'Buscou demandas semelhantes: 0 encontrada(s).',
+        'Consultou o INPE no município: 42 foco(s) de calor e 3 alerta(s) de desmatamento.',
+      ],
+      avisos: [],
+    });
+  }),
   http.post(
     '/api/demandas/:id/triagem',
     acaoDeFluxo('EM_TRIAGEM', decidirTriagemMock, validarTriagemMock),

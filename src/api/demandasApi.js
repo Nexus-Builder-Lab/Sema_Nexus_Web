@@ -86,3 +86,15 @@ export async function devolverDemanda(id, corpo) {
   const { data } = await httpClient.post(`/demandas/${id}/devolucao`, corpo);
   return data;
 }
+
+/**
+ * POST /api/demandas/{id}/triagem/sugestao — Agente de Triagem (Issue API#107). Não grava nada:
+ * devolve decisão, categoria, prioridade, núcleo, justificativa, duplicatas, evidências e avisos.
+ * O agente pode levar alguns segundos (IA local); na primeira chamada, até ~1 minuto.
+ */
+export async function sugerirTriagem(id) {
+  const { data } = await httpClient.post(`/demandas/${id}/triagem/sugestao`, null, {
+    timeout: 120_000,
+  });
+  return data;
+}

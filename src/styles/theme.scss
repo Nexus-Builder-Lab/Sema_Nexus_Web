@@ -1915,3 +1915,33 @@ figure.nx-chart-figure {
   font-size: 0.78rem;
   margin-bottom: 0.4rem;
 }
+
+// Agente de Triagem (Issue API#107): card de sugestão de IA dentro do modal de triagem.
+.nx-agente-card {
+  border: 1px solid rgba($nx-green-500, 0.35);
+  background: rgba($nx-green-500, 0.06);
+  border-radius: $border-radius;
+  padding: 12px 14px;
+}
+
+.nx-agente-selo {
+  background: $nx-green-950;
+  color: #fff;
+  font-weight: 600;
+}
+
+.nx-agente-dados {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 2px 12px;
+  font-size: 0.875rem;
+
+  dt {
+    font-weight: 600;
+    color: var(--bs-secondary-color);
+  }
+
+  dd {
+    margin: 0;
+  }
+}

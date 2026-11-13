@@ -420,3 +420,8 @@
 - **Status:** corrigido pela sessão principal (pedido do proprietário)
 - **O que foi feito:** `.nx-sidebar nav` com `scrollbar-width: none` e `::-webkit-scrollbar { display: none }`, mantendo a rolagem (roda do mouse, toque, teclado) quando os itens não cabem; `overflow-x: hidden`.
 - **Testes:** lint, suíte e build; conferido no Chrome.
+
+## 2026-11-13 · GH-117 · Agente de Triagem no modal de triagem
+- **Status:** feito pela sessão principal (MVP de agentes aprovado pelo proprietário; API#107)
+- **O que foi feito:** `AgenteTriagemCard` no `TriagemModal`: botão "Sugerir com o agente", estado de carregamento ("consultando a demanda, demandas semelhantes e os dados do INPE"), card com decisão, categoria, prioridade, núcleo, justificativa, possíveis duplicatas (links), avisos e "Como o agente chegou à sugestão" (evidências); selo do motor sempre visível (IA local · modelo / Claude · modelo / Regras locais); "Aplicar sugestão" só preenche o formulário (a pessoa revisa e confirma); decisão divergente → aviso e só a justificativa. `sugerirTriagem` com timeout de 120 s; MSW `POST /api/demandas/:id/triagem/sugestao`.
+- **Testes:** `AgenteTriagem.test.jsx` (4); suíte 322/322; lint e build.
