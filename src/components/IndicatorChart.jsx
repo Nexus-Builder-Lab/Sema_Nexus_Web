@@ -23,9 +23,18 @@ ChartJS.register(
   Tooltip,
 );
 
-const FONTE = { size: 16 };
+const FONTE = { size: 14 };
 
-function opcoesBase({ rotulosCompletos, rotulosCurtos, tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito }) {
+function opcoesBase({
+  rotulosCompletos,
+  rotulosCurtos,
+  tipo,
+  horizontal,
+  legenda,
+  stacked,
+  tituloEixo,
+  tituloEixoDireito,
+}) {
   const base = {
     responsive: true,
     maintainAspectRatio: false,
@@ -39,7 +48,11 @@ function opcoesBase({ rotulosCompletos, rotulosCurtos, tipo, horizontal, legenda
         titleFont: FONTE,
         bodyFont: FONTE,
         ...(rotulosCompletos
-          ? { callbacks: { title: (itens) => rotulosCompletos[itens[0]?.dataIndex] ?? itens[0]?.label } }
+          ? {
+              callbacks: {
+                title: (itens) => rotulosCompletos[itens[0]?.dataIndex] ?? itens[0]?.label,
+              },
+            }
           : {}),
       },
     },
@@ -48,15 +61,17 @@ function opcoesBase({ rotulosCompletos, rotulosCurtos, tipo, horizontal, legenda
   const eixoValor = {
     beginAtZero: true,
     stacked,
-    title: tituloEixo
-      ? { display: true, text: tituloEixo, color: COR_TEXTO, font: FONTE }
-      : undefined,
+    title: tituloEixo ? { display: true, text: tituloEixo, color: COR_TEXTO } : undefined,
     ticks: { color: COR_TEXTO, font: FONTE, precision: 0 },
     grid: { color: COR_GRADE },
   };
   const eixoCategoria = {
     stacked,
-    ticks: { color: COR_TEXTO, font: FONTE, ...(rotulosCurtos ? { maxRotation: 0, autoSkip: false } : {}) },
+    ticks: {
+      color: COR_TEXTO,
+      font: FONTE,
+      ...(rotulosCurtos ? { maxRotation: 0, autoSkip: false } : {}),
+    },
     grid: { display: false },
   };
   return {
@@ -71,7 +86,7 @@ function opcoesBase({ rotulosCompletos, rotulosCurtos, tipo, horizontal, legenda
               beginAtZero: true,
               grid: { display: false },
               ticks: { color: COR_TEXTO, font: FONTE, precision: 0 },
-              title: { display: true, text: tituloEixoDireito, color: COR_TEXTO, font: FONTE },
+              title: { display: true, text: tituloEixoDireito, color: COR_TEXTO },
             },
           }
         : {}),
@@ -116,7 +131,16 @@ export default function IndicatorChart({
         : {}),
     })),
   };
-  const opcoes = opcoesBase({ rotulosCompletos, rotulosCurtos: Boolean(rotulosCompletos), tipo, horizontal, legenda, stacked, tituloEixo, tituloEixoDireito });
+  const opcoes = opcoesBase({
+    rotulosCompletos,
+    rotulosCurtos: Boolean(rotulosCompletos),
+    tipo,
+    horizontal,
+    legenda,
+    stacked,
+    tituloEixo,
+    tituloEixoDireito,
+  });
   const Componente = tipo === 'line' ? Line : tipo === 'doughnut' ? Doughnut : Bar;
 
   return (
