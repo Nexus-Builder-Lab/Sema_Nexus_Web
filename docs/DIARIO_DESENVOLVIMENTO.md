@@ -372,3 +372,10 @@
 - **O que foi feito:** instruções trocam `localhost` por `127.0.0.1` (no Windows do proprietário `localhost` resolve para IPv6 e cai em outro serviço).
 - **Arquivos principais:** `README.md`, `vite.config.js` (`server.host` e proxy em 127.0.0.1), `.env.example`.
 - **Testes:** CI do PR.
+
+## 2026-11-12 · GH-103 · Mapa branco ao desligar o fundo OpenStreetMap
+- **Status:** corrigido pela sessão principal (bug relatado pelo proprietário)
+- **Causa:** o preenchimento da UF é recriado (key por `fundoOnline`) e, no `overlayPane`, entrava por último, acima de municípios, demandas e focos INPE.
+- **O que foi feito:** preenchimento da UF num `Pane` próprio (`nx-fundo-uf`, z-index 350: acima dos tiles, abaixo do overlayPane).
+- **Arquivos principais:** `MapaMT.jsx`, `InteligenciaAmbientalPage.test.jsx` (teste de regressão).
+- **Testes:** testes do mapa (23, 0 falhas, local); CI do PR.
