@@ -60,3 +60,7 @@ export const NOME_CAMADA_DETER = 'Alertas de desmatamento — DETER (dados públ
 
 const ROTULOS_BIOMA = { AMAZONIA: 'Amazônia', CERRADO: 'Cerrado', PANTANAL: 'Pantanal' };
 export const rotuloDoBioma = (codigo) => (codigo ? (ROTULOS_BIOMA[codigo] ?? codigo) : 'Sem bioma');
+
+// Panes do mapa (z-index): tiles 200 · fundo da UF 350 · malha 360 · concentração 370 · áreas do INPE 380 ·
+// overlayPane 400 (marcadores de demanda, focos INPE, contorno). Camadas recriadas nunca cobrem os marcadores (Web#109).
+export const PANE_INPE_AREAS = 'nx-inpe-areas';

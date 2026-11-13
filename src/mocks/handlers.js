@@ -331,6 +331,8 @@ const fluxo = [
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
+  // Visão de satélite (Web#107): sem ESRI_API_KEY nos mocks, o Nginx responderia 404.
+  http.head('/tiles/esri/status', () => new HttpResponse(null, { status: 404 })),
   ...auth,
   ...handlersAdmin,
   ...handlersNotificacoes,

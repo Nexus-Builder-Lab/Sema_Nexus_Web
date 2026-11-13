@@ -219,6 +219,38 @@ describe('Inteligência ambiental (mapa)', () => {
     );
   });
 
+  it('após ligar/desligar o satélite os marcadores continuam acima da malha e clicáveis (Web#109)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url) => {
+        if (String(url) === '/tiles/esri/status') return { ok: true, status: 204 };
+        const geo = String(url).includes('municipios')
+          ? { ...GEO_UF, properties: { id: 5103403, nome: 'Cuiabá' } }
+          : GEO_UF;
+        return { ok: true, status: 200, json: async () => geo };
+      }),
+    );
+    const user = userEvent.setup();
+    const { container } = renderPagina();
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+    const sat = await screen.findByRole('button', { name: 'Visão de satélite (requer internet)' });
+    await waitFor(() => expect(sat).toBeEnabled());
+    await user.click(sat); // liga: a malha é recriada com o estilo do satélite
+    await user.click(sat); // desliga: recriada de novo
+
+    const paneMalha = container.querySelector('.leaflet-nx-malha-pane');
+    await waitFor(() => expect(paneMalha.querySelector('path.nx-malha-municipio')).toBeTruthy());
+    expect(Number(paneMalha.style.zIndex)).toBeLessThan(400);
+    const overlay = container.querySelector('.leaflet-overlay-pane');
+    expect(overlay.querySelector('path.nx-malha-municipio')).toBeNull();
+    expect(overlay.querySelectorAll('path.leaflet-interactive')).toHaveLength(4);
+
+    await user.click(marcadores(container)[0]);
+    expect(
+      await screen.findByRole('link', { name: /Abrir demanda DEM-2026\/0010/ }),
+    ).toBeInTheDocument();
+  });
+
   it('envia os filtros à API e atualiza os marcadores; Limpar restaura', async () => {
     const user = userEvent.setup();
     const consultas = [];
