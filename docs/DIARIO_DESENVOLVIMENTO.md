@@ -409,3 +409,9 @@
 - **Causa:** o grid centralizava a caixa de linha (line-height 1,5 + margens da fonte), não os algarismos, que ficavam acima do centro.
 - **O que foi feito:** `.nx-nav-badge` com `inline-flex`, `line-height: 1`, `text-box: trim-both cap alphabetic` e algarismos tabulares.
 - **Testes:** suíte 318/318 e build; comparação ampliada no Chrome (antes acima do centro, depois centralizado).
+
+## 2026-11-13 · GH-115 · Skills do Claude Code (Web)
+- **Status:** feito pela sessão principal (pedido do proprietário)
+- **O que foi feito:** skills `revisao-visual-mapa` (roteiro no Chrome + regra dos panes), `paridade-prototipo`, `verificar-seguranca` (frontend/Nginx/imagem) e `integrar-camada-externa` (padrão Esri/INPE) em `.claude/skills/`; referência no `CLAUDE.md`. As skills da API e a tabela geral estão em `Sema_Nexus_API/docs/AGENTES.md` (API#104).
+- **Apoio:** `verificar-seguranca/verificar-diff.mjs` (mesmo script da API; compara com os segredos do `.env` da API sem exibi-los).
+- **Testes:** `verificar-diff.mjs` neste branch e contra `v0.1.0-demo` (0 achados); CI do PR.
