@@ -22,6 +22,7 @@ import PriorityBadge from '../../components/PriorityBadge.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { formatarData } from '../../utils/datas.js';
 import { CORES_STATUS } from '../../utils/paleta.js';
+import { rotuloCurtoSetor } from '../../utils/rotulos.js';
 
 const TIPO_ATIVIDADE = {
   CADASTRO: 'Cadastro',
@@ -474,7 +475,8 @@ export default function HomePage() {
                 <IndicatorChart
                   horizontal
                   stacked
-                  labels={setores.map((s) => s.setor)}
+                  labels={setores.map((s) => rotuloCurtoSetor(s.setor))}
+                  rotulosCompletos={setores.map((s) => s.setor)}
                   datasets={[
                     {
                       label: 'No prazo',
