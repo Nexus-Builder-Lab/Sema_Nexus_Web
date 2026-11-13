@@ -1945,3 +1945,376 @@ figure.nx-chart-figure {
     margin: 0;
   }
 }
+
+// Painel do sistema (Web#123): saúde ao vivo, arquitetura interativa, agentes e integrações.
+.nx-painel-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: $nx-gray-100;
+  color: $nx-gray-700;
+  &.ok {
+    background: $nx-green-100;
+    color: $nx-green-800;
+  }
+  &.atencao {
+    background: $nx-amber-100;
+    color: #92400e;
+  }
+  &.erro {
+    background: $nx-red-100;
+    color: #991b1b;
+  }
+}
+
+.nx-painel-bolinha {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: $nx-gray-400;
+  .ok > &,
+  &.ok {
+    background: $nx-green-600;
+  }
+  .atencao > &,
+  &.atencao {
+    background: $nx-amber-600;
+  }
+  .erro > &,
+  &.erro {
+    background: $nx-red-600;
+  }
+}
+
+.nx-painel-tracejado {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+  border: 1.5px dashed $nx-gray-500;
+  border-radius: 3px;
+}
+
+.nx-painel-pulso {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $nx-green-600;
+  &.ativo {
+    animation: nx-pulso 1s ease-in-out infinite;
+  }
+}
+
+@keyframes nx-pulso {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.6);
+  }
+}
+
+.nx-painel-hero {
+  background: linear-gradient(120deg, rgba($nx-green-500, 0.12), rgba($nx-blue-100, 0.5));
+}
+
+.nx-painel-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: $border-radius;
+  background: $nx-green-500;
+  color: $nx-green-950;
+  display: grid;
+  place-items: center;
+}
+
+.nx-painel-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.nx-painel-saude {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.nx-painel-saude-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  border: 1px solid var(--bs-border-color);
+  border-radius: $border-radius;
+  background: var(--bs-body-bg);
+  padding: 0.75rem;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+  &:hover,
+  &:focus-visible {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+}
+
+.nx-painel-arq {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+  gap: 1rem;
+  align-items: start;
+  @media (max-width: 991.98px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nx-painel-svg {
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+.nx-painel-zona {
+  fill: rgba($nx-green-500, 0.05);
+  stroke: rgba($nx-green-600, 0.35);
+  stroke-dasharray: 6 4;
+}
+.nx-painel-zona-txt {
+  font-size: 11px;
+  fill: $nx-gray-500;
+}
+.nx-painel-seta {
+  fill: $nx-gray-400;
+}
+.nx-painel-rotulo {
+  font-size: 10px;
+  fill: $nx-gray-500;
+}
+
+.nx-painel-linha {
+  stroke: $nx-gray-300;
+  stroke-width: 2;
+  &.ativa {
+    stroke: $nx-green-600;
+    stroke-dasharray: 6 5;
+    animation: nx-fluxo 1.2s linear infinite;
+  }
+}
+
+@keyframes nx-fluxo {
+  to {
+    stroke-dashoffset: -22;
+  }
+}
+
+.nx-painel-no {
+  cursor: pointer;
+  outline: none;
+  rect {
+    fill: #fff;
+    stroke: $nx-gray-300;
+    stroke-width: 1.5;
+    transition: stroke-width 0.15s ease;
+  }
+  &.externo rect {
+    stroke-dasharray: 5 3;
+  }
+  .nx-painel-ponto {
+    fill: $nx-gray-400;
+  }
+  &.ok .nx-painel-ponto {
+    fill: $nx-green-600;
+  }
+  &.ok rect {
+    stroke: $nx-green-600;
+  }
+  &.atencao .nx-painel-ponto {
+    fill: $nx-amber-600;
+  }
+  &.atencao rect {
+    stroke: $nx-amber-600;
+  }
+  &.erro .nx-painel-ponto {
+    fill: $nx-red-600;
+  }
+  &.erro rect {
+    stroke: $nx-red-600;
+  }
+  &:hover rect,
+  &:focus-visible rect {
+    stroke-width: 3;
+  }
+  &.selecionado rect {
+    fill: $nx-green-50;
+    stroke-width: 3;
+  }
+}
+
+.nx-painel-nome {
+  font-size: 13px;
+  font-weight: 600;
+  fill: $nx-gray-900;
+}
+.nx-painel-tipo {
+  font-size: 10.5px;
+  fill: $nx-gray-500;
+}
+
+.nx-painel-dl {
+  display: grid;
+  gap: 0.15rem;
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: 1px dashed var(--bs-border-color);
+  }
+  dt {
+    font-weight: 500;
+    color: var(--bs-secondary-color);
+  }
+  dd {
+    margin: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+
+.nx-painel-modulos,
+.nx-painel-integracoes,
+.nx-painel-dev {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.nx-painel-modulo {
+  border-top: 3px solid $nx-gray-300;
+  &.green {
+    border-top-color: $nx-green-600;
+  }
+  &.blue {
+    border-top-color: $nx-blue-700;
+  }
+  &.amber {
+    border-top-color: $nx-amber-600;
+  }
+  &.violet {
+    border-top-color: $nx-violet-600;
+  }
+}
+
+.nx-painel-modulo-cab {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0;
+  .girado {
+    transform: rotate(180deg);
+  }
+}
+
+.nx-painel-modulo-icone {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: $border-radius;
+  background: $nx-green-50;
+  color: $nx-green-800;
+  display: grid;
+  place-items: center;
+}
+
+.nx-painel-permissoes li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: $border-radius;
+  margin-bottom: 0.25rem;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
+  &.pode {
+    background: $nx-green-50;
+    color: $nx-green-900;
+  }
+  &.nao-pode {
+    opacity: 0.55;
+    text-decoration: line-through;
+  }
+}
+
+.nx-painel-fluxo {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.5rem;
+  @media (max-width: 767.98px) {
+    grid-template-columns: 1fr;
+  }
+  li {
+    position: relative;
+    border: 1px solid var(--bs-border-color);
+    border-radius: $border-radius;
+    padding: 0.5rem 0.6rem 0.5rem 2.1rem;
+    background: var(--bs-body-bg);
+    &.destaque {
+      border-color: $nx-green-600;
+      background: $nx-green-50;
+    }
+  }
+}
+
+.nx-painel-fluxo-n {
+  position: absolute;
+  left: 0.55rem;
+  top: 0.5rem;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: $nx-green-800;
+  color: #fff;
+  font-size: 0.72rem;
+  display: grid;
+  place-items: center;
+}
+
+.nx-painel-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.5rem;
+  > div {
+    background: $nx-gray-50;
+    border-radius: $border-radius;
+    padding: 0.4rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+  }
+  span {
+    font-size: 0.75rem;
+    color: var(--bs-secondary-color);
+  }
+  strong {
+    font-size: 1.1rem;
+  }
+}
+
+.nx-painel-camada {
+  min-width: 120px;
+}

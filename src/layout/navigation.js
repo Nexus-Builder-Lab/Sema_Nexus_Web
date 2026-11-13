@@ -49,6 +49,7 @@ export const NAVIGATION = [
     group: 'Administração',
     items: [
       { to: '/admin', label: 'Área administrativa', icon: 'audit', roles: ['ADMIN'] },
+      { to: '/sistema/painel', label: 'Painel do sistema', icon: 'activity', roles: ['ADMIN'] },
     ],
   },
 ];
