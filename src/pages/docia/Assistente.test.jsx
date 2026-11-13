@@ -96,4 +96,47 @@ describe('Assistente DocIA', () => {
     expect(screen.queryByText('Resposta X.')).not.toBeInTheDocument();
     expect(screen.getByText('Nenhuma pergunta nesta sessão.')).toBeInTheDocument();
   });
+
+  it('com o Agente DocIA, identifica a IA local, o modelo e os passos do agente', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get('/api/agentes/status', () =>
+        HttpResponse.json({
+          modo: 'LOCAL',
+          descricao: 'Agentes com IA local',
+          agentes: [{ id: 'docia', nome: 'Assistente DocIA', modelo: 'qwen3:4b-instruct' }],
+        }),
+      ),
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'O parecer conclui pela recomposição da vegetação.',
+          modo: 'Agente DocIA — IA local',
+          referencias: [{ documentoId: 7, titulo: 'Parecer fictício', trecho: 'Trecho real.' }],
+          agente: 'LOCAL',
+          modelo: 'qwen3:4b-instruct',
+          passos: ['Buscou "parecer": 1 documento(s).', 'Leu "Parecer fictício".'],
+        }),
+      ),
+    );
+    abrir();
+
+    expect(await screen.findByText(/Agente DocIA com IA local/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/sem custo e sem enviar dados para fora do servidor/),
+    ).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'O que o parecer concluiu?');
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByTestId('agente-resposta')).toHaveTextContent(
+      'IA local · qwen3:4b-instruct',
+    );
+    expect(screen.getByText('Como o agente chegou à resposta')).toBeInTheDocument();
+    expect(screen.getByText('Leu "Parecer fictício".')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Parecer fictício' })).toBeInTheDocument();
+  });
+
+  it('sem IA disponível mantém o aviso de modo demonstração', async () => {
+    abrir();
+    expect(await screen.findByText('Modo demonstração')).toBeInTheDocument();
+  });
 });
