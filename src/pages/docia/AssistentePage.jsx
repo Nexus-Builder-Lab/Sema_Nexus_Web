@@ -129,7 +129,7 @@ export default function AssistentePage() {
       <PageHeader
         module="DocIA"
         title="Assistente DocIA"
-        description="Assistente para consultas sobre os documentos cadastrados no SEMA NEXUS."
+        description="Assistente para consultas sobre os documentos cadastrados no SEMA ALERTA."
         actions={
           <button type="button" className="btn btn-outline-secondary btn-sm" onClick={limpar}>
             <Icon name="trash" size={14} /> Limpar conversa

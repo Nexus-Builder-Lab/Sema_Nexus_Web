@@ -1,6 +1,6 @@
 ---
 name: verificar-seguranca
-description: Checagem de segurança do frontend do SEMA NEXUS (código React, bundle, variáveis VITE_*, nginx, Dockerfile e imagem web) antes de abrir PR, mesclar ou preparar tag. Use ao revisar um diff, antes de qualquer PR/tag, ou quando o assunto for segredo, chave Esri, token, credencial de teste, dados pessoais ou proxy do Nginx.
+description: Checagem de segurança do frontend do SEMA ALERTA (código React, bundle, variáveis VITE_*, nginx, Dockerfile e imagem web) antes de abrir PR, mesclar ou preparar tag. Use ao revisar um diff, antes de qualquer PR/tag, ou quando o assunto for segredo, chave Esri, token, credencial de teste, dados pessoais ou proxy do Nginx.
 ---
 
 # Verificar segurança — Sema_Nexus_Web

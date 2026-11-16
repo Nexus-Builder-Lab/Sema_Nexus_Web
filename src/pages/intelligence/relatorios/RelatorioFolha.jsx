@@ -64,7 +64,7 @@ export default function RelatorioFolha({
             <div>
               <h2 className="h5 mb-0">{titulo}</h2>
               <div className="small text-body-secondary">
-                SEMA NEXUS · Relatório gerencial — ambiente demonstrativo
+                SEMA ALERTA · Relatório gerencial — ambiente demonstrativo
               </div>
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function RelatorioFolha({
         {children}
 
         <footer className="nx-report-foot small text-body-secondary">
-          {DEMO_SEAL_TEXT}. Documento gerado automaticamente pelo SEMA NEXUS com dados fictícios;
+          {DEMO_SEAL_TEXT}. Documento gerado automaticamente pelo SEMA ALERTA com dados fictícios;
           não possui valor oficial. Municípios e biomas seguem o IBGE.
         </footer>
       </div>

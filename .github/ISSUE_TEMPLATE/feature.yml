@@ -1,5 +1,5 @@
 name: Feature
-description: Nova funcionalidade do SEMA NEXUS (uma Issue por repositório)
+description: Nova funcionalidade do SEMA ALERTA (uma Issue por repositório)
 title: "[SEMA_NEXUS_WEB][MÓDULO] "
 labels: ["type:feature"]
 body:

@@ -1,6 +1,6 @@
 ---
 name: paridade-prototipo
-description: Compara e aproxima uma tela do SEMA NEXUS do protótipo publicado (https://semanexus.vercel.app), usando o código e as capturas locais de referência. Use em Issues com a label paridade-prototipo ou quando o proprietário pedir que uma tela fique "igual/parecida com o protótipo".
+description: Compara e aproxima uma tela do SEMA ALERTA do protótipo publicado (https://semanexus.vercel.app), usando o código e as capturas locais de referência. Use em Issues com a label paridade-prototipo ou quando o proprietário pedir que uma tela fique "igual/parecida com o protótipo".
 ---
 
 # Paridade visual com o protótipo
@@ -30,7 +30,7 @@ Use `Grep` para achar só o trecho da tela; não leia o protótipo inteiro.
 
 ## Não copiar
 
-- Textos que pareçam oficiais: "SEMA/MT · Governo de Mato Grosso", "credenciais institucionais", a Secretaria como emissora de relatório. Usar **"SEMA NEXUS · Ambiente demonstrativo"** e manter **"AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS"**.
+- Textos que pareçam oficiais: "SEMA/MT · Governo de Mato Grosso", "credenciais institucionais", a Secretaria como emissora de relatório. Usar **"SEMA ALERTA · Ambiente demonstrativo"** e manter **"AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS"**.
 - Funcionalidades fora do escopo (registrar ocorrência, unidades organizacionais, Configurações, backup, página de apresentação); "NEXUS AI" vira "Assistente DocIA".
 - Senhas no frontend (o modo demonstração do login usa o endpoint da API, só no profile `demo`).
 

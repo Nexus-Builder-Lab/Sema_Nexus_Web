@@ -56,7 +56,7 @@ export const NAVIGATION = [
 
 /** Módulo (eyebrow do cabeçalho de página) → rótulo e ícone, como no protótipo. */
 export const MODULES = {
-  core: { label: 'SEMA NEXUS', icon: 'leaf' },
+  core: { label: 'SEMA ALERTA', icon: 'leaf' },
   intelligence: { label: 'SEMA Intelligence', icon: 'layers' },
   flux: { label: 'SEMA Flux', icon: 'clipboard' },
   docia: { label: 'SEMA DocIA', icon: 'folder' },

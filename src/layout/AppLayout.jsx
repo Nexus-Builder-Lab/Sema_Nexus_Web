@@ -77,7 +77,7 @@ export default function AppLayout({ user, onLogout }) {
           <Outlet />
         </main>
         <footer className="nx-footer">
-          SEMA NEXUS · plataforma demonstrativa com dados fictícios, sem integração com sistemas
+          SEMA ALERTA · plataforma demonstrativa com dados fictícios, sem integração com sistemas
           institucionais.
         </footer>
       </div>

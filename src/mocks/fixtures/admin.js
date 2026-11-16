@@ -31,7 +31,7 @@ export function resetAdminMock() {
     {
       id: 2,
       nome: 'Gestor Demonstrativo',
-      email: 'gestor@demo.semanexus.local',
+      email: 'gestor@demo.semaalerta.local',
       perfil: 'GESTOR',
       setorId: 2,
       ativo: true,

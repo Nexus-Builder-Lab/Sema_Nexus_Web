@@ -64,7 +64,7 @@ function Grupo({ Icone, titulo, itens }) {
 
 function exportar(doc, ex, resumo, ver) {
   const linhas = [
-    'ANÁLISE DOCUMENTAL AUTOMATIZADA (POR REGRAS — SEM IA) — SEMA NEXUS · Ambiente demonstrativo',
+    'ANÁLISE DOCUMENTAL AUTOMATIZADA (POR REGRAS — SEM IA) — SEMA ALERTA · Ambiente demonstrativo',
     `Documento: ${doc.titulo}`,
     '',
     'RESUMO EXTRATIVO',

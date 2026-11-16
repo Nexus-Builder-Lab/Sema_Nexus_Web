@@ -1,4 +1,4 @@
-# CLAUDE.md — SEMA NEXUS · Sema_Nexus_Web
+# CLAUDE.md — SEMA ALERTA · Sema_Nexus_Web
 
 Regras permanentes. Detalhes (arquitetura, API, Docker, autopilot, agentes, Definition of Done) em `Sema_Nexus_API/docs/` — leia só o que a tarefa exigir.
 
