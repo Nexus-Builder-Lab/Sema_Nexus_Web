@@ -41,6 +41,8 @@ export function painelSistemaMock() {
           provedorConfigurado: 'OLLAMA',
           modo: 'LOCAL',
           latenciaMs: 2,
+          manterCarregado: '4h',
+          aquecimento: { estado: 'PRONTO', duracaoMs: 9400, em: '2026-11-16T15:00:00Z' },
           instalados: [
             {
               nome: 'qwen3:4b-instruct',

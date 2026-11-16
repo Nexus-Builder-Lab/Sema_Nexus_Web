@@ -210,7 +210,7 @@ export const INTEGRACOES = [
     nome: 'Ollama (IA local)',
     tipo: 'Serviço interno',
     comportamento:
-      'Responde aos agentes pela rede interna do Docker. Primeira chamada após ligar leva 30–50 s (carrega o modelo na GPU); depois, poucos segundos. Se parar, os agentes usam as regras locais.',
+      'Responde aos agentes pela rede interna do Docker. A API carrega o modelo na GPU ao iniciar e ele fica 4 h na memória; Assistente DocIA ~3 s por pergunta e triagem ~7 s. Se parar, os agentes usam as regras locais.',
     custo: 'Zero',
     dados: 'Não saem da máquina',
   },
