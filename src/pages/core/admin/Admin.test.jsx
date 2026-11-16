@@ -80,7 +80,7 @@ describe('Usuários', () => {
     await user.click(screen.getByRole('button', { name: 'Novo usuário' }));
     const dialogo = screen.getByRole('dialog');
     await user.type(within(dialogo).getByLabelText(/^Nome/), 'Novo Fiscal');
-    await user.type(within(dialogo).getByLabelText(/^E-mail/), 'novo@demo.semanexus.local');
+    await user.type(within(dialogo).getByLabelText(/^E-mail/), 'novo@demo.semaalerta.local');
     await user.selectOptions(within(dialogo).getByLabelText(/^Perfil/), 'FISCAL');
     await user.type(within(dialogo).getByLabelText(/^Senha/), '1234567');
     await user.click(within(dialogo).getByRole('button', { name: 'Salvar' }));
@@ -99,7 +99,7 @@ describe('Usuários', () => {
     await user.click(screen.getByRole('button', { name: 'Novo usuário' }));
     const dialogo = screen.getByRole('dialog');
     await user.type(within(dialogo).getByLabelText(/^Nome/), 'Novo Fiscal');
-    await user.type(within(dialogo).getByLabelText(/^E-mail/), 'novo@demo.semanexus.local');
+    await user.type(within(dialogo).getByLabelText(/^E-mail/), 'novo@demo.semaalerta.local');
     await user.type(within(dialogo).getByLabelText(/^Senha/), '12345678');
     await user.selectOptions(within(dialogo).getByLabelText(/^Perfil/), 'FISCAL');
     await user.selectOptions(within(dialogo).getByLabelText('Equipe'), '2');

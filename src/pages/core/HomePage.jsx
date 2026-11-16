@@ -522,7 +522,7 @@ export default function HomePage() {
       </div>
 
       <p className="text-body-secondary small mb-0">
-        SEMA NEXUS · Ambiente demonstrativo. Sem integração com sistemas institucionais; todos os
+        SEMA ALERTA · Ambiente demonstrativo. Sem integração com sistemas institucionais; todos os
         dados exibidos são fictícios.
       </p>
     </>

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SEMA NEXUS — varre as linhas ADICIONADAS do diff em busca de segredos e dados proibidos.
+// SEMA ALERTA — varre as linhas ADICIONADAS do diff em busca de segredos e dados proibidos.
 // Uso (na raiz do repositório): node .claude/skills/verificar-seguranca/verificar-diff.mjs [base]
 //   base padrão: origin/main. Considera commits do branch + alterações não commitadas + arquivos novos não rastreados.
 // Nunca imprime o valor de um segredo: só arquivo, linha e o tipo do achado.

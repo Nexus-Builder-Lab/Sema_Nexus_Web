@@ -1,6 +1,6 @@
 # Paridade visual com o protótipo
 
-> Pedido do proprietário em 12/11/2026: deixar o SEMA NEXUS **visualmente o mais parecido possível** com o protótipo publicado em https://semanexus.vercel.app — primeiro **Login** e **SEMA Intelligence (mapas)**, depois todos os módulos. Issues com a label `paridade-prototipo`.
+> Pedido do proprietário em 12/11/2026: deixar o SEMA ALERTA **visualmente o mais parecido possível** com o protótipo publicado em https://semanexus.vercel.app — primeiro **Login** e **SEMA Intelligence (mapas)**, depois todos os módulos. Issues com a label `paridade-prototipo`.
 
 ## Referências (somente leitura)
 
@@ -26,9 +26,9 @@ Leia **só** o arquivo e o trecho relacionados à tela da sua Issue (Grep antes 
   - Modo **Concentração por município** (coroplético), igual a `intel-painel.js` (linhas ~207–223): escala `['#FFF7ED','#FED7AA','#FDBA74','#FB923C','#EA580C','#9A3412']`, classe `min(5, ceil(n/max*5))`, sem cor quando 0; contorno `#9CA3AF` 0,6; `fillOpacity` 0,85; **tooltip ao passar o mouse** `<strong>Município</strong><br>N demanda(s) · Bioma` (sticky); **clique filtra pelo município**; legenda "Ocorrências por município" com "até X" em 5 faixas e "Clique em um município para filtrar".
   - Dados: `GET /api/intelligence/por-municipio` (todos os municípios com `municipioId` IBGE, nome, bioma, total) com os mesmos filtros do painel.
 
-## Mapeamento de domínio (protótipo → SEMA NEXUS)
+## Mapeamento de domínio (protótipo → SEMA ALERTA)
 
-| Protótipo | SEMA NEXUS (manter o nosso) |
+| Protótipo | SEMA ALERTA (manter o nosso) |
 |---|---|
 | "Ocorrências ambientais" simuladas | Demandas de fiscalização **fictícias** por categoria; camada separada de **dados públicos do INPE** (Web #22) |
 | 6 status (Aberta, Em análise, Em andamento, Pendente, Concluída, Cancelada) | **7 status** da especificação; reaproveite as cores por semelhança |
@@ -39,7 +39,7 @@ Leia **só** o arquivo e o trecho relacionados à tela da sua Issue (Grep antes 
 
 ## Não copiar
 
-- Textos que pareçam oficiais: "SEMA/MT · Governo de Mato Grosso", "credenciais institucionais", "Secretaria de Estado de Meio Ambiente de Mato Grosso" como emissor de relatório. Use **"SEMA NEXUS · Ambiente demonstrativo"** e mantenha a faixa **"AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS"**.
+- Textos que pareçam oficiais: "SEMA/MT · Governo de Mato Grosso", "credenciais institucionais", "Secretaria de Estado de Meio Ambiente de Mato Grosso" como emissor de relatório. Use **"SEMA ALERTA · Ambiente demonstrativo"** e mantenha a faixa **"AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS"**.
 - Fora do escopo: registrar ocorrência, unidades organizacionais, Configurações, Dados e backup, página de apresentação, "NEXUS AI" com nome de produto (use "Assistente DocIA").
 - Senhas no frontend: os cartões de "Modo demonstração" do login usam o endpoint de login demonstrativo da API (só no profile `demo`) — nunca embutir senha no código.
 

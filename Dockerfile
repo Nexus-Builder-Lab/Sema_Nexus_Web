@@ -1,4 +1,4 @@
-# SEMA NEXUS Web — imagem de produção (AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS)
+# SEMA ALERTA Web — imagem de produção (AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS)
 # Nenhum segredo nesta imagem: variáveis VITE_* são públicas no bundle.
 
 # ---------- Stage 1: build ----------

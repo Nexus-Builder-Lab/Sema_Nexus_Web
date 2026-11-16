@@ -1,8 +1,8 @@
 /**
- * Identidade do sistema em um único lugar (Web#123). O proprietário pode trocar o nome depois:
- * alterar aqui atualiza o Painel do sistema. (Logo, título e textos antigos ainda usam o nome atual.)
+ * Identidade do sistema em um único lugar (Web#123). Nome definido pelo proprietário em 16/11/2026
+ * (antes SEMA NEXUS; Web#127). Usado pela logo e pelo Painel do sistema.
  */
-export const NOME_SISTEMA = 'SEMA NEXUS';
+export const NOME_SISTEMA = 'SEMA ALERTA';
 
 export const DESCRICAO_SISTEMA =
   'Plataforma demonstrativa de inteligência ambiental, gestão de demandas de fiscalização e gestão ' +

@@ -129,7 +129,7 @@ describe('RelatoriosPage', () => {
     renderPagina();
     await screen.findByText('DEM-2026/0025');
     expect(
-      screen.getByText('SEMA NEXUS · Relatório gerencial — ambiente demonstrativo'),
+      screen.getByText('SEMA ALERTA · Relatório gerencial — ambiente demonstrativo'),
     ).toBeInTheDocument();
     expect(screen.getByText('Demandas recebidas')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Distribuição por tipo' })).toBeInTheDocument();

@@ -2,7 +2,7 @@
   "name": "sema-nexus-web",
   "private": true,
   "version": "0.1.0",
-  "description": "SEMA NEXUS — frontend demonstrativo (dados fictícios)",
+  "description": "SEMA ALERTA — frontend demonstrativo (dados fictícios)",
   "type": "module",
   "engines": {
     "node": ">=20.19"

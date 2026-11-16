@@ -81,7 +81,7 @@ export const EQUIPES = [
 const membro = (id, nome) => ({
   id,
   nome,
-  email: `fiscal${id - 2}@demo.semanexus.local`,
+  email: `fiscal${id - 2}@demo.semaalerta.local`,
   perfil: 'FISCAL',
   ativo: true,
 });

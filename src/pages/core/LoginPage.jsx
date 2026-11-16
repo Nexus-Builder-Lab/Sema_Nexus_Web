@@ -120,7 +120,7 @@ export default function LoginPage() {
     <div className="nx-login">
       <DemoBanner />
       <div className="nx-login-grid">
-        <section className="nx-login-hero" aria-label="Apresentação do SEMA NEXUS">
+        <section className="nx-login-hero" aria-label="Apresentação do SEMA ALERTA">
           <ContornoMT />
           <div className="nx-login-hero-body">
             <Logo subtitulo="Gestão ambiental · Mato Grosso" />

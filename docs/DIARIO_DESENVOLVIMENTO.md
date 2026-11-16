@@ -442,3 +442,8 @@
 - **Status:** feito pela sessão principal (pedido do proprietário)
 - **O que foi feito:** seções "Agentes de IA na interface" (IA só pela API, Triagem no `TriagemModal` com "Aplicar sugestão" que só preenche o formulário, banner do Assistente DocIA, aba do Painel do sistema, modo sempre identificado, aquecimento do modelo) e "Skills do Claude Code" (as 4 skills deste repositório, ponteiro para as da API); a regra "IA demonstrativa sempre identificada" passou a cobrir IA local, Claude e demonstrativa.
 - **Testes:** só documentação; arquivos, rotas e textos citados conferidos no código.
+
+## 2026-11-16 · GH-127 · O sistema passa a se chamar SEMA ALERTA
+- **Status:** feito pela sessão principal (decisão do proprietário: renomear tudo o que é visível e os e-mails demonstrativos)
+- **O que foi feito:** "SEMA NEXUS" → "SEMA ALERTA" na logo (agora lida de `NOME_SISTEMA`), título e descrição da aba, login, rodapé, menu, Início, relatório gerencial, análise documental, Assistente DocIA, Painel do sistema, README, `CLAUDE.md`, skills/agentes do Claude Code e docs; mocks e testes com `@demo.semaalerta.local`. Mantidos: "Assistente DocIA" (já sem NEXUS), nome do pacote npm, classes CSS `nx-*`, imagem `sema-nexus-web`, URL do protótipo de referência e o histórico deste diário.
+- **Testes:** lint, suíte completa e build; Docker contra a API real.

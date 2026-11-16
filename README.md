@@ -1,6 +1,6 @@
-# SEMA NEXUS — Web
+# SEMA ALERTA — Web
 
-Frontend do **SEMA NEXUS**, plataforma **demonstrativa** de inteligência ambiental, gestão de demandas de fiscalização e gestão documental no contexto de **Mato Grosso**.
+Frontend do **SEMA ALERTA**, plataforma **demonstrativa** de inteligência ambiental, gestão de demandas de fiscalização e gestão documental no contexto de **Mato Grosso**.
 
 > ⚠️ **AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS.** Sem integração com sistemas da SEMA-MT ou outros sistemas institucionais.
 
@@ -26,7 +26,7 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 | DocIA: biblioteca (busca textual e filtros), upload com progresso, detalhes/download e vínculo à demanda (Issue #10) | **Implementado** com mocks MSW; validação contra a API real (API#15/#16) pendente |
 | Integração final, testes | **Planejado** — Sprint 3 |
 
-Acompanhamento: [GitHub Project — SEMA NEXUS — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)
+Acompanhamento: [GitHub Project — SEMA ALERTA — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)
 
 ## Tecnologias
 

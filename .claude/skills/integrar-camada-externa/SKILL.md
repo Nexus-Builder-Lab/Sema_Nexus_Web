@@ -1,6 +1,6 @@
 ---
 name: integrar-camada-externa
-description: Padrão do SEMA NEXUS para integrar um serviço ou camada externa ao mapa (como a visão de satélite Esri e os dados públicos do INPE) — chave só no servidor via proxy do Nginx, variável no .env/compose, camada separada e identificada, atribuição, testes de configuração e licença. Use ao adicionar mapa de fundo, tiles, API de terceiros, dados públicos ou qualquer recurso que exija chave.
+description: Padrão do SEMA ALERTA para integrar um serviço ou camada externa ao mapa (como a visão de satélite Esri e os dados públicos do INPE) — chave só no servidor via proxy do Nginx, variável no .env/compose, camada separada e identificada, atribuição, testes de configuração e licença. Use ao adicionar mapa de fundo, tiles, API de terceiros, dados públicos ou qualquer recurso que exija chave.
 ---
 
 # Integrar camada ou serviço externo
