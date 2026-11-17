@@ -71,6 +71,10 @@ describe('Painel do sistema', () => {
     iniciarSessao();
     abrir('/sistema/painel?aba=agentes');
     expect(await screen.findByText('100% na GPU · 3900 MB de vídeo')).toBeInTheDocument();
+    const aquecimento = screen.getByTestId('painel-aquecimento');
+    expect(aquecimento).toHaveTextContent('Pronto');
+    expect(aquecimento).toHaveTextContent('em 9,4 s');
+    expect(aquecimento).toHaveTextContent('fica na memória por 4h após o último uso');
     const triagem = screen.getByRole('region', { name: 'Agente de Triagem' });
     expect(within(triagem).getByText(/obter_demanda/)).toBeInTheDocument();
     expect(within(triagem).getByText('90%')).toBeInTheDocument(); // 9 de 10

@@ -447,3 +447,8 @@
 - **Status:** feito pela sessão principal (decisão do proprietário: renomear tudo o que é visível e os e-mails demonstrativos)
 - **O que foi feito:** "SEMA NEXUS" → "SEMA ALERTA" na logo (agora lida de `NOME_SISTEMA`), título e descrição da aba, login, rodapé, menu, Início, relatório gerencial, análise documental, Assistente DocIA, Painel do sistema, README, `CLAUDE.md`, skills/agentes do Claude Code e docs; mocks e testes com `@demo.semaalerta.local`. Mantidos: "Assistente DocIA" (já sem NEXUS), nome do pacote npm, classes CSS `nx-*`, imagem `sema-nexus-web`, URL do protótipo de referência e o histórico deste diário.
 - **Testes:** lint, suíte completa e build; Docker contra a API real.
+
+## 2026-11-16 · GH-129 · Painel do sistema mostra o aquecimento do modelo
+- **Status:** feito pela sessão principal (pedido do proprietário: toda mudança nos agentes aparece no Painel do administrador e na documentação)
+- **O que foi feito:** aba "Agentes de IA": linha "Aquecimento ao iniciar" (Pronto/Carregando/Falhou, hora e duração) e tempo de permanência do modelo na memória (`manterCarregado`, vindo da API#120); texto "fica 30 min" trocado; etapa "Validação" do fluxo diz que a API monta as citações. Aba "Integrações": cartão do Ollama com o aquecimento e os tempos medidos (DocIA ~3 s, triagem ~7 s). Fixture MSW e teste atualizados.
+- **Testes:** lint; `PainelSistema.test.jsx` com o aquecimento; suíte completa. Dados conferidos em `/api/sistema/painel` no Docker (aquecimento PRONTO, 4h). Conferência visual no navegador não foi possível nesta sessão (o Chrome conectado não alcançava 127.0.0.1).

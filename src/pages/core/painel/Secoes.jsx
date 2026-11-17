@@ -242,12 +242,54 @@ export function PerfisInterativos() {
 
 // ------------------------------------------------------------------------------------------ Agentes
 
+const ROTULO_AQUECIMENTO = {
+  PRONTO: 'Pronto',
+  AQUECENDO: 'Carregando o modelo…',
+  FALHOU: 'Falhou (os agentes usam as regras locais até o Ollama responder)',
+  INDISPONIVEL: 'Ollama indisponível ou modelo não baixado',
+  NAO_INICIADO: 'Não iniciado',
+};
+
+/** Aquecimento automático do modelo ao iniciar a API (API#120) e tempo de permanência na memória de vídeo. */
+function Aquecimento({ aquecimento, manterCarregado }) {
+  if (!aquecimento && !manterCarregado) return null;
+  const a = aquecimento ?? {};
+  const hora = a.em
+    ? new Date(a.em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : null;
+  return (
+    <div className="mt-2" data-testid="painel-aquecimento">
+      <span className="text-body-secondary">Aquecimento ao iniciar: </span>
+      <span className="fw-semibold">{ROTULO_AQUECIMENTO[a.estado] ?? a.estado ?? '—'}</span>
+      {a.estado === 'PRONTO' && hora && (
+        <span className="text-body-secondary">
+          {' '}
+          · às {hora} em{' '}
+          {(a.duracaoMs / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} s
+        </span>
+      )}
+      {manterCarregado && (
+        <span className="text-body-secondary">
+          {' '}
+          · fica na memória por {manterCarregado === '-1'
+            ? 'tempo indeterminado'
+            : manterCarregado}{' '}
+          após o último uso
+        </span>
+      )}
+    </div>
+  );
+}
+
 function Fluxo({ ferramentas, modelo }) {
   const etapas = [
     { titulo: 'Pedido', texto: 'O usuário pede uma sugestão na tela' },
     { titulo: 'Ferramentas', texto: ferramentas.join(' · '), destaque: true },
     { titulo: 'Modelo', texto: modelo },
-    { titulo: 'Validação', texto: 'A API confere a resposta (citações, enums, duplicatas)' },
+    {
+      titulo: 'Validação',
+      texto: 'A API confere a resposta e monta as citações (enums, duplicatas, trechos reais)',
+    },
     { titulo: 'Pessoa decide', texto: 'Sugestão revisada; nada é gravado pelo agente' },
   ];
   return (
@@ -285,7 +327,10 @@ export function AgentesIa({ painel, verificacoes }) {
             <div className="col-md-8">
               <div className="text-body-secondary mb-1">Modelos carregados na memória</div>
               {(d.carregados ?? []).length === 0 && (
-                <div>Nenhum agora (o modelo carrega na primeira pergunta e fica 30 min).</div>
+                <div>
+                  Nenhum agora (a API carrega o modelo ao iniciar e ele fica{' '}
+                  {d.manterCarregado ?? '4h'} na memória após o último uso).
+                </div>
               )}
               {(d.carregados ?? []).map((m) => (
                 <div key={m.nome} className="mb-1">
@@ -303,6 +348,7 @@ export function AgentesIa({ painel, verificacoes }) {
                   </div>
                 </div>
               ))}
+              <Aquecimento aquecimento={d.aquecimento} manterCarregado={d.manterCarregado} />
               {(d.instalados ?? []).length > 0 && (
                 <div className="text-body-secondary mt-1">
                   Instalados:{' '}
