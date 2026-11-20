@@ -42,6 +42,47 @@ describe('Assistente DocIA', () => {
       '/docia/documentos/7',
     );
     expect(screen.getByText('Trecho citado.')).toBeInTheDocument();
+    // Sem aderência informada (ex.: provider externo), nem selo nem explicação.
+    expect(screen.queryByTestId('aderencia-textual')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('explicacao-aderencia')).not.toBeInTheDocument();
+  });
+
+  it('rotula a aderência textual e explica que não é probabilidade de acerto', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'O laudo registra 210 hectares.',
+          modo: MODO,
+          referencias: [
+            {
+              documentoId: 7,
+              titulo: 'Laudo fictício',
+              trecho: 'Área de 210 hectares.',
+              aderenciaTextual: 'alta',
+            },
+            {
+              documentoId: 8,
+              titulo: 'Relatório fictício',
+              trecho: 'Outra área.',
+              aderenciaTextual: 'média',
+            },
+          ],
+        }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Qual a área?');
+    await user.click(screen.getByRole('button', { name: 'Perguntar' }));
+    const selos = await screen.findAllByTestId('aderencia-textual');
+    expect(selos.map((s) => s.textContent)).toEqual([
+      'Aderência textual: alta',
+      'Aderência textual: média',
+    ]);
+    const explicacao = screen.getByTestId('explicacao-aderencia');
+    expect(explicacao).toHaveTextContent(/não é a probabilidade de a resposta estar correta/i);
+    // Leitores de tela associam o selo à explicação.
+    expect(selos[0]).toHaveAttribute('aria-describedby', explicacao.id);
   });
 
   it('exibe "não há informação suficiente" sem referências', async () => {
