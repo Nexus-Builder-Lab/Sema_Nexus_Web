@@ -452,3 +452,10 @@
 - **Status:** feito pela sessão principal (pedido do proprietário: toda mudança nos agentes aparece no Painel do administrador e na documentação)
 - **O que foi feito:** aba "Agentes de IA": linha "Aquecimento ao iniciar" (Pronto/Carregando/Falhou, hora e duração) e tempo de permanência do modelo na memória (`manterCarregado`, vindo da API#120); texto "fica 30 min" trocado; etapa "Validação" do fluxo diz que a API monta as citações. Aba "Integrações": cartão do Ollama com o aquecimento e os tempos medidos (DocIA ~3 s, triagem ~7 s). Fixture MSW e teste atualizados.
 - **Testes:** lint; `PainelSistema.test.jsx` com o aquecimento; suíte completa. Dados conferidos em `/api/sistema/painel` no Docker (aquecimento PRONTO, 4h). Conferência visual no navegador não foi possível nesta sessão (o Chrome conectado não alcançava 127.0.0.1).
+
+## 2026-11-20 · GH-131 · Melhorias do relatório técnico: selo de aderência textual e contrato dos mocks
+- **Status:** commit local na branch `feature/GH-131` (sem push/PR; autorizado pelo proprietário). Depende de API#126.
+- **Executado por:** Claude Code, a pedido do proprietário (relatório técnico da Formação Claude Code, projeto 14).
+- **O que foi feito:** `AssistentePage` mostra "Aderência textual: alta/média/baixa" em cada citação, com a explicação "não é a probabilidade de a resposta estar correta" ligada por `aria-describedby`; `src/mocks/openapi.json` atualizado a partir do OpenAPI da API validada (a cópia anterior não tinha 23 dos 61 caminhos); matriz Implementado/Parcial/Planejado no README, validada contra a API real.
+- **Testes:** `npm test` → 47 arquivos, 331 testes (eram 330); `npm run lint` e `npm run build` aprovados; `format:check` aponta 8 arquivos que já estavam fora do padrão em `03494762` (nenhum alterado aqui).
+- **Docker:** validado contra a API real com mocks desligados (0 service workers): selo e explicação na DocIA, 401 encerra a sessão, CONSULTA sem botões de ação e 403 da API ao forçar a sugestão. Evidências em `Sema_Nexus_API/docs/VALIDACAO_INTEGRADA.md`.

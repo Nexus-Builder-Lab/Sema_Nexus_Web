@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { statusAgentes } from '../../api/agentesApi.js';
 import { perguntar } from '../../api/assistenteApi.js';
@@ -15,6 +15,13 @@ const SUGESTOES = [
 const LIMITE = 500;
 const SEM_INFORMACAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
 
+/**
+ * A aderência textual (alta/média/baixa) vem da busca textual da API e é relativa ao documento com mais
+ * termos da pergunta: não é a probabilidade de a resposta estar correta (relatório técnico, P2).
+ */
+export const EXPLICACAO_ADERENCIA =
+  'Aderência textual: quanto o documento contém os termos da pergunta, em comparação com o documento ' +
+  'mais aderente desta busca. Não é a probabilidade de a resposta estar correta — confira o trecho citado.';
 function Avatar() {
   return (
     <span className="nx-ai-avatar" aria-hidden="true">
@@ -26,6 +33,7 @@ function Avatar() {
 function Resposta({ item }) {
   const semInfo = SEM_INFORMACAO.test(item.resposta ?? '');
   const comAgente = item.agente === 'LOCAL' || item.agente === 'CLAUDE';
+  const idExplicacao = useId();
   return (
     <div className="nx-ai-row" data-testid="resposta">
       <Avatar />
@@ -47,12 +55,31 @@ function Resposta({ item }) {
               {item.referencias.map((r, i) => (
                 <li key={`${r.documentoId}-${i}`} className="mb-2">
                   <Link to={`/docia/documentos/${r.documentoId}`}>{r.titulo}</Link>
+                  {r.aderenciaTextual && (
+                    <span
+                      className="badge text-bg-light border ms-2 fw-normal"
+                      data-testid="aderencia-textual"
+                      title={EXPLICACAO_ADERENCIA}
+                      aria-describedby={idExplicacao}
+                    >
+                      Aderência textual: {r.aderenciaTextual}
+                    </span>
+                  )}
                   <blockquote className="small text-body-secondary border-start ps-2 mb-0">
                     {r.trecho}
                   </blockquote>
                 </li>
               ))}
             </ul>
+            {item.referencias.some((r) => r.aderenciaTextual) && (
+              <p
+                className="small text-body-secondary mb-0"
+                id={idExplicacao}
+                data-testid="explicacao-aderencia"
+              >
+                {EXPLICACAO_ADERENCIA}
+              </p>
+            )}
           </>
         )}
         {comAgente && item.passos?.length > 0 && (

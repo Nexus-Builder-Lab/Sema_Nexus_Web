@@ -20,7 +20,7 @@ React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Ro
 ## Agentes de IA na interface (detalhes: `Sema_Nexus_API/docs/AGENTES_IA.md`)
 - A IA roda **na API** (Ollama local por padrão, `qwen3:4b-instruct`, sem custo); o Web só chama endpoints por `/api` (`src/api/agentesApi.js`). Nunca chamar modelo, Ollama ou Anthropic do navegador; nenhuma chave em `VITE_*`.
 - **Agente de Triagem:** `src/pages/flux/AgenteTriagemCard.jsx` dentro do `TriagemModal` ("Sugerir com o agente"); "Aplicar sugestão" **só preenche o formulário** — a pessoa revisa e confirma. Rótulos do modo em `agenteTriagem.js` (`rotuloModo`).
-- **Assistente DocIA:** o banner reflete `GET /api/agentes/status` (selo "IA local · modelo" ou demonstrativo) e mostra os passos/ferramentas usados; citações vêm conferidas pela API.
+- **Assistente DocIA:** o banner reflete `GET /api/agentes/status` (selo "IA local · modelo" ou demonstrativo) e mostra os passos/ferramentas usados; citações vêm conferidas pela API, com o selo "Aderência textual" (relativa ao documento mais aderente; a tela explica que não é probabilidade de acerto).
 - **Painel do sistema** (`/sistema/painel`, só ADMIN): aba "Agentes de IA" com motor, fluxo e métricas. Nome do sistema em `src/config/sistema.js`.
 - Sempre mostrar o modo (IA local / Claude / demonstrativo) e estados de carregamento: a 1ª chamada após subir a API leva 30–50 s.
 

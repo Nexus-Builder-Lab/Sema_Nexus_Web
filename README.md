@@ -8,23 +8,23 @@ Backend, Docker Compose e documentação geral: [Sema_Nexus_API](https://github.
 
 ## Situação
 
-| Item | Status |
+Matriz conferida contra o código e **validada em execução contra a API real** (Docker Compose, mocks desligados) no
+par Web `03494762` + API `caa0da6` (mais o diff local das melhorias do relatório técnico, ainda sem commit) em
+20/11/2026 — evidências em [Sema_Nexus_API/docs/VALIDACAO_INTEGRADA.md](https://github.com/Nexus-Builder-Lab/Sema_Nexus_API/blob/main/docs/VALIDACAO_INTEGRADA.md).
+As marcações antigas "com mocks / aguarda API" deixaram de valer: todas as telas abaixo usam a API real; os mocks MSW
+ficam só para desenvolvimento sem API e para os testes.
+
+| Capacidade | Status |
 |---|---|
-| CI, templates, CLAUDE.md | **Implementado** (10/11/2026) |
-| Esqueleto Vite + React, ESLint, Prettier, Vitest (Issue #1) | **Implementado** (10/11/2026) |
-| Dockerfile multi-stage + Nginx (proxy `/api`, fallback SPA) (Issue #2) | **Implementado** (10/11/2026) |
-| Tema visual, layout (sidebar, topbar, trilha, faixa demonstrativa) e componentes reutilizáveis (Issue #3) | **Implementado** (10/11/2026) |
-| Paridade visual: sidebar com subtítulos, ícones Lucide e badge de atrasadas; topbar com pesquisa, avatar e menu do usuário; `PageHeader` e `KpiCard` do protótipo (Issue #54) | **Implementado** (12/11/2026); validação em Docker pendente |
-| Painel Inteligência ambiental com paridade visual: KPIs, mapa com modo Concentração por município (coroplético), ranking, gráficos, tabela por município e Exportar CSV (Issue #55) | **Implementado** (12/11/2026); validação em Docker pendente |
-| Cliente Axios, mocks MSW do contrato OpenAPI, login, `ProtectedRoute` e `RequireRole` (Issue #4) | **Implementado** (10/11/2026) |
-| Home e dashboard ambiental (Intelligence) contra mocks MSW (Issue #8) | **Implementado** (11/11/2026) com mocks; **Em desenvolvimento**: validação contra a API real e subida via Docker aguardam Sema_Nexus_API#17 |
-| Flux: listagem (filtros na URL, paginação e ordenação no servidor) e cadastro/edição de demanda (Issue #5) | **Implementado** — validado contra a API real via Docker Compose (API#11) |
-| Flux: detalhes, triagem, distribuição (Issue #6) | **Implementado** |
-| Flux: execução, atividades, registro de fiscalização, conclusão e devolução (Issue #7) | **Implementado** |
-| Aba Inteligência ambiental: mapa de MT (Leaflet, offline), filtros e legenda (Issue #9) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/mapa` (API#17) |
-| Camada de satélite INPE no mapa (focos de calor, DETER opcional, modo agregado, painel lateral; Issue #22) | **Em desenvolvimento** — pronto contra mocks; aguarda `/api/intelligence/referencia/*` (API#34) e validação via Docker |
-| DocIA: biblioteca (busca textual e filtros), upload com progresso, detalhes/download e vínculo à demanda (Issue #10) | **Implementado** com mocks MSW; validação contra a API real (API#15/#16) pendente |
-| Integração final, testes | **Planejado** — Sprint 3 |
+| Base: Vite + React, tema e layout (sidebar, topbar, trilha, faixa "AMBIENTE DEMONSTRATIVO"), componentes, Dockerfile + Nginx (proxy `/api`, fallback SPA), CI | **Implementado** |
+| Sessão e acesso: cliente Axios, JWT em memória + `sessionStorage`, login e cartões de demonstração, `ProtectedRoute`/`RequireRole`, 401 encerra a sessão | **Implementado** — 401 e 403 validados no navegador contra a API real |
+| Flux: listagem/filtros/paginação, cadastro e edição, detalhes e linha do tempo, triagem com o Agente de Triagem ("Aplicar sugestão" só preenche), distribuição, execução, fiscalização, conclusão/devolução, Fluxo de atividades (kanban), Controle de prazos, Produtividade, Painel de fiscalização | **Implementado** |
+| Intelligence: Início, Dashboard ambiental, Inteligência ambiental (mapa de MT offline, concentração por município, camada INPE identificada, satélite Esri opcional), Análise de indicadores, Relatórios | **Implementado** |
+| DocIA: biblioteca (busca textual e filtros), upload com progresso, detalhes/download, vínculo à demanda, análise documental e comparação (regras, sem IA), Assistente DocIA com modo, passos, citações e **selo de aderência textual explicado** | **Implementado** |
+| Painel do sistema (`/sistema/painel`, só ADMIN) e administração de usuários, setores e equipes | **Implementado** |
+| Contrato dos mocks (`src/mocks/openapi.json`) igual ao OpenAPI real | **Implementado** — atualizado em 20/11/2026 (a cópia anterior não tinha 23 dos 61 caminhos); conferido pela skill `validar-integracao-sema` da API |
+| Teste ponta a ponta no navegador contra a API real | **Parcial** — roteiro Playwright executado localmente (ver evidências); não roda no CI |
+| Busca semântica ou híbrida | **Planejado** — só após comparar com a busca textual |
 
 Acompanhamento: [GitHub Project — SEMA ALERTA — Desenvolvimento](https://github.com/orgs/Nexus-Builder-Lab/projects/1)
 
