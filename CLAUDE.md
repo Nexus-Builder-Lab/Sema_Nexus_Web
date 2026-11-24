@@ -50,3 +50,8 @@ React 18 em **JavaScript** (sem TypeScript) · Vite · Bootstrap 5.3 · React Ro
 - Leia só o necessário: `Grep`/`Glob` antes de `Read`; `Read` com offset/limit; não releia; não liste diretórios inteiros.
 - Testes: durante o desenvolvimento só os afetados (`npx vitest run <arquivos>`); suíte completa e build uma vez, no validador.
 - Relatórios de agentes curtos (sem colar logs).
+
+## Hooks do Claude Code (`.claude/hooks/`, PreToolUse em `.claude/settings.json`)
+- `guard.mjs` (Node, lê o JSON do hook na stdin; exit 2 + mensagem em português bloqueia) impede, em Bash/PowerShell/Read/Grep: `docker compose down -v|--volumes`, `docker volume rm|prune`, `docker system prune` e a leitura/impressão de `.env`, `.env.local` etc. (`.env.example` é liberado). Funciona em PowerShell e Git Bash; reforça (não substitui) o `deny` do settings.
+- Prova: `npm run test:hooks` (28 casos: 1 bloqueado + 1 permitido por regra, mais globs, aspas, Grep glob, `docker rm -v` e stdin `null`). Rode ao alterar o hook.
+- **Limites conhecidos:** o hook vê só o texto do comando/argumentos (variáveis, `eval`, scripts que montam o caminho em tempo de execução escapam); falha aberta (JSON inválido, `null` ou erro interno → exit 0); `Glob` só lista nomes e é permitido. As regras `deny` do `.claude/settings.json` são a segunda camada.

@@ -84,5 +84,18 @@
       "PowerShell(gh release create*)",
       "PowerShell(git push origin main*)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard.mjs\""
+          }
+        ]
+      }
+    ]
   }
 }
