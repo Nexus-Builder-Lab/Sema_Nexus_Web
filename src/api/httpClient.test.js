@@ -1,7 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { saveSession } from '../auth/sessionStore.js';
 import { server } from '../mocks/server.js';
-import httpClient, { mensagemDeErro, setUnauthorizedHandler } from './httpClient.js';
+import httpClient, {
+  mensagemDeErro,
+  mensagemDeLimite,
+  segundosDeEspera,
+  setUnauthorizedHandler,
+} from './httpClient.js';
 
 describe('httpClient', () => {
   it('usa baseURL relativa /api', () => {
@@ -89,5 +94,71 @@ describe('mensagemDeErro', () => {
 
   it('informa falha de conexão quando não há resposta', () => {
     expect(mensagemDeErro(new Error('Network Error'))).toMatch(/conectar ao servidor/);
+  });
+});
+
+describe('limite de requisições (429)', () => {
+  it('lê os segundos do corpo problem+json (retryAfterSegundos) antes do cabeçalho', async () => {
+    server.use(
+      http.post('/api/ia/teste', () =>
+        HttpResponse.json(
+          { status: 429, retryAfterSegundos: 42, categoria: 'IA' },
+          { status: 429, headers: { 'Retry-After': '99', 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    const erro = await httpClient.post('/ia/teste', {}).catch((e) => e);
+    expect(segundosDeEspera(erro)).toBe(42);
+    expect(mensagemDeErro(erro)).toBe('Muitas solicitações. Tente novamente em 42 s.');
+  });
+
+  it('usa o cabeçalho Retry-After quando o corpo não traz o valor', async () => {
+    server.use(
+      http.get('/api/ping', () => HttpResponse.json({}, { status: 429, headers: { 'Retry-After': '7' } })),
+    );
+    const erro = await httpClient.get('/ping').catch((e) => e);
+    expect(segundosDeEspera(erro)).toBe(7);
+  });
+
+  it('sem valor algum, a mensagem não traz número', async () => {
+    server.use(http.get('/api/ping', () => HttpResponse.json({}, { status: 429 })));
+    const erro = await httpClient.get('/ping').catch((e) => e);
+    expect(segundosDeEspera(erro)).toBeNull();
+    expect(mensagemDeErro(erro)).toBe(mensagemDeLimite(null));
+    expect(mensagemDeLimite(null)).toBe('Muitas solicitações. Tente novamente em instantes.');
+  });
+
+  it('não devolve espera para outros status nem para erros sem resposta', () => {
+    expect(segundosDeEspera({ response: { status: 500, data: { retryAfterSegundos: 5 } } })).toBeNull();
+    expect(segundosDeEspera(new Error('Network Error'))).toBeNull();
+  });
+
+  it('429 nunca encerra a sessão (só o 401 chama o tratador)', async () => {
+    const aoExpirar = vi.fn();
+    const remover = setUnauthorizedHandler(aoExpirar);
+    server.use(
+      http.post('/api/auth/login', () => HttpResponse.json({ retryAfterSegundos: 30 }, { status: 429 })),
+    );
+    saveSession({ token: 'valido', usuario: {} });
+    await expect(httpClient.post('/auth/login', {})).rejects.toMatchObject({
+      response: { status: 429 },
+    });
+    expect(aoExpirar).not.toHaveBeenCalled();
+    remover();
+  });
+});
+
+describe('429 em rota protegida', () => {
+  it('não chama o tratador de sessão expirada', async () => {
+    const aoExpirar = vi.fn();
+    const remover = setUnauthorizedHandler(aoExpirar);
+    server.use(
+      http.get('/api/demandas', () => HttpResponse.json({ retryAfterSegundos: 9 }, { status: 429 })),
+    );
+    saveSession({ token: 'valido', usuario: {} });
+    const erro = await httpClient.get('/demandas').catch((e) => e);
+    expect(segundosDeEspera(erro)).toBe(9);
+    expect(aoExpirar).not.toHaveBeenCalled();
+    remover();
   });
 });
