@@ -142,4 +142,35 @@ describe('Agente de Distribuição no modal de distribuição', () => {
     expect(await within(novo).findByRole('button', { name: 'Sugerir com o agente' })).toBeEnabled();
     expect(within(novo).queryByRole('alert')).not.toBeInTheDocument();
   });
+
+  it('limpa o fiscal sugerido ausente da equipe e avisa', async () => {
+    server.use(
+      http.post('/api/demandas/:id/distribuicao/sugestao', () =>
+        HttpResponse.json({
+          modo: 'DEMONSTRATIVO',
+          modelo: null,
+          equipe: { id: 2, nome: 'Equipe Bravo (demonstração)', setorSigla: null },
+          fiscal: {
+            id: 3,
+            nome: 'Fora da equipe',
+            ativas: 0,
+            atrasadas: 0,
+            proximasDoVencimento: 0,
+          },
+          prazo: '2099-01-10',
+          justificativa: 'x',
+          passos: [],
+          avisos: [],
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    const modal = await abrirModal(user);
+    await user.click(await within(modal).findByRole('button', { name: 'Sugerir com o agente' }));
+    await user.click(await within(modal).findByRole('button', { name: 'Aplicar sugestão' }));
+    expect(
+      await within(modal).findByText(/fiscal sugerido não está disponível nesta equipe/),
+    ).toBeInTheDocument();
+    expect(within(modal).getByLabelText(/^Fiscal/)).toHaveValue('');
+  });
 });

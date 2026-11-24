@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listarEquipes, listarMembros } from '../../api/catalogosApi.js';
 import { distribuirDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
@@ -28,21 +28,44 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
   const hoje = hojeISO();
 
   const carregarMembros = useCallback(
-    () => (equipeId ? listarMembros(equipeId) : Promise.resolve([])),
+    () =>
+      equipeId
+        ? listarMembros(equipeId).then((lista) => ({ equipeId, lista }))
+        : Promise.resolve({ equipeId, lista: [] }),
     [equipeId],
   );
   const membros = useCarregar(carregarMembros);
-  const fiscais = (membros.data ?? []).filter((m) => m.perfil === 'FISCAL' && m.ativo !== false);
+  const fiscais = (membros.data?.lista ?? []).filter(
+    (m) => m.perfil === 'FISCAL' && m.ativo !== false,
+  );
+
+  // Fiscal sugerido pelo agente, conferido quando a lista da equipe terminar de carregar.
+  const [fiscalSugerido, setFiscalSugerido] = useState(null);
+  const [avisoFiscal, setAvisoFiscal] = useState(false);
+  useEffect(() => {
+    if (!fiscalSugerido || membros.loading || !membros.data) return;
+    if (String(membros.data.equipeId) !== String(equipeId)) return;
+    if (!fiscais.some((f) => String(f.id) === String(fiscalSugerido))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFiscalId('');
+      setAvisoFiscal(true);
+    }
+    setFiscalSugerido(null);
+  }, [fiscalSugerido, membros.loading, membros.data, equipeId, fiscais]);
 
   function escolherEquipe(valor) {
     setEquipeId(valor);
     setFiscalId('');
+    setFiscalSugerido(null);
+    setAvisoFiscal(false);
   }
 
   // Só preenche o formulário; a confirmação (e a validação) continuam no envio.
   function aplicarSugestao({ equipeId: eq, fiscalId: fi, prazo: pz }) {
     if (eq) setEquipeId(eq);
     if (fi) setFiscalId(fi);
+    setFiscalSugerido(fi || null);
+    setAvisoFiscal(false);
     if (pz) setPrazo(pz);
     setErros({});
   }
@@ -160,6 +183,11 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
               ))}
             </select>
             {campoErro('fiscalId')}
+            {avisoFiscal && (
+              <div className="text-warning-emphasis small mt-1" role="alert">
+                O fiscal sugerido não está disponível nesta equipe; escolha um fiscal.
+              </div>
+            )}
             {membros.error && (
               <div className="text-danger small mt-1" role="alert">
                 {mensagemDeErro(membros.error, 'Não foi possível carregar os fiscais.')}
