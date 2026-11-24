@@ -81,7 +81,7 @@ export default function ExplicarImpacto({ aId, bId }) {
           Explicar impacto das diferenças
         </button>
       </div>
-      <div className="card-body">
+      <div className="card-body" aria-live="polite">
         {fase === 'ocioso' && (
           <p className="text-body-secondary small mb-0">
             Lista as grandezas que mudaram (áreas, vazões, valores, datas, prazos e percentuais) e
