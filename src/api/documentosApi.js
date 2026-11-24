@@ -74,3 +74,17 @@ export async function baixarEGuardar(documento) {
   ancora.remove();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * POST /api/documentos/pre-analise (multipart `arquivo`) → PreAnaliseDocumento
+ * `{ titulo, municipioId, municipioNome, dataDocumento, palavrasChave, vinculosDemanda, textoExtraido, avisos }`.
+ * Só sugere; nada é gravado (API#140). Perfis de upload (CONSULTA recebe 403).
+ */
+export async function preAnalisarDocumento(arquivo) {
+  const corpo = new FormData();
+  corpo.append('arquivo', arquivo);
+  const { data } = await httpClient.post('/documentos/pre-analise', corpo, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}

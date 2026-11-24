@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { enviarDocumento } from '../../api/documentosApi.js';
+import { enviarDocumento, preAnalisarDocumento } from '../../api/documentosApi.js';
 import { listarMunicipios } from '../../api/catalogosApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import ErrorState from '../../components/ErrorState.jsx';
@@ -18,6 +18,9 @@ import {
   validarDocumento,
   VALORES_INICIAIS,
 } from './validarDocumento.js';
+
+const semCampo = (obj, campo) =>
+  Object.fromEntries(Object.entries(obj).filter(([k]) => k !== campo));
 
 function Campo({ id, label, obrigatorio, erro, ajuda, className = 'col-12 col-md-6', children }) {
   const descricoes = [erro && `${id}-erro`, ajuda && `${id}-ajuda`].filter(Boolean).join(' ');
@@ -64,8 +67,86 @@ function Formulario({ municipios, demandaId }) {
   const [progresso, setProgresso] = useState(0);
   const [tentativas, setTentativas] = useState(0);
   const [erroEnvio, setErroEnvio] = useState(null);
+  const [analisando, setAnalisando] = useState(false);
+  const [preAnalise, setPreAnalise] = useState(null); // { avisos, vinculos } da última pré-análise
+  const [erroPreAnalise, setErroPreAnalise] = useState(null);
+  // campo -> valor anterior à sugestão (para desfazer); some quando a pessoa edita o campo.
+  const [sugeridos, setSugeridos] = useState({});
+  const tocados = useRef(new Set());
+  const sequencia = useRef(0);
   const hoje = hojeISO();
-  const definir = (campo) => (e) => setValores((atual) => ({ ...atual, [campo]: e.target.value }));
+  const definir = (campo) => (e) => {
+    const valor = e.target.value;
+    tocados.current.add(campo);
+    setSugeridos((atual) => semCampo(atual, campo));
+    setValores((atual) => ({ ...atual, [campo]: valor }));
+  };
+
+  async function selecionarArquivo(e) {
+    const escolhido = e.target.files?.[0] ?? null;
+    setArquivo(escolhido);
+    setPreAnalise(null);
+    setErroPreAnalise(null);
+    const minha = ++sequencia.current;
+    const ext = escolhido?.name.split('.').pop().toLowerCase();
+    if (!escolhido || !EXTENSOES_PERMITIDAS.includes(ext)) {
+      setAnalisando(false);
+      return;
+    }
+    setAnalisando(true);
+    try {
+      const r = await preAnalisarDocumento(escolhido);
+      if (minha !== sequencia.current) return;
+      setPreAnalise({ avisos: r.avisos ?? [], vinculos: r.vinculosDemanda ?? [] });
+      const vazio = (v) => !String(v ?? '').trim();
+      const sugestoes = {
+        titulo: [r.titulo?.trim(), vazio],
+        municipioId: [r.municipioId, vazio],
+        dataDocumento: [r.dataDocumento, (v) => !v || v === hoje],
+        palavrasChave: [(r.palavrasChave ?? []).join(', '), vazio],
+      };
+      setValores((atual) => {
+        const proximo = { ...atual };
+        const anteriores = {};
+        for (const [campo, [valor, livre]] of Object.entries(sugestoes)) {
+          if (valor == null || valor === '' || tocados.current.has(campo) || !livre(atual[campo]))
+            continue;
+          anteriores[campo] = atual[campo];
+          proximo[campo] = String(valor);
+        }
+        setSugeridos(anteriores);
+        return proximo;
+      });
+    } catch (erro) {
+      if (minha !== sequencia.current) return;
+      setErroPreAnalise(mensagemDeUpload(erro, 'Não foi possível sugerir os dados do documento.'));
+    } finally {
+      if (minha === sequencia.current) setAnalisando(false);
+    }
+  }
+
+  function desfazer(campo) {
+    tocados.current.delete(campo);
+    setValores((atual) => ({ ...atual, [campo]: sugeridos[campo] }));
+    setSugeridos((atual) => semCampo(atual, campo));
+  }
+
+  const comSugestao = (campo, base) =>
+    campo in sugeridos ? (
+      <>
+        {base && <>{base} </>}
+        <span className="badge text-bg-info me-1">sugerido pela pré-análise</span>
+        <button
+          type="button"
+          className="btn btn-link btn-sm p-0 align-baseline"
+          onClick={() => desfazer(campo)}
+        >
+          Desfazer
+        </button>
+      </>
+    ) : (
+      base
+    );
 
   useEffect(() => {
     if (tentativas > 0) formRef.current?.querySelector('[aria-invalid="true"]')?.focus();
@@ -138,7 +219,7 @@ function Formulario({ municipios, demandaId }) {
                 {...props}
                 type="file"
                 accept={EXTENSOES_PERMITIDAS.map((e) => `.${e}`).join(',')}
-                onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
+                onChange={selecionarArquivo}
               />
             )}
           </Campo>
@@ -147,13 +228,46 @@ function Formulario({ municipios, demandaId }) {
               Selecionado: {arquivo.name} ({formatarTamanho(arquivo.size)})
             </p>
           )}
+          {(analisando || erroPreAnalise || preAnalise) && (
+            <div className="col-12" aria-live="polite">
+              {analisando && (
+                <div className="small text-body-secondary" role="status">
+                  <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
+                  Analisando o arquivo para sugerir os dados…
+                </div>
+              )}
+              {erroPreAnalise && (
+                <div className="alert alert-warning py-2 mb-0" role="status">
+                  {erroPreAnalise} Preencha os campos manualmente.
+                </div>
+              )}
+              {preAnalise && (
+                <div className="small">
+                  {preAnalise.avisos.map((aviso) => (
+                    <div key={aviso} className="alert alert-info py-2 mb-2" role="status">
+                      {aviso}
+                    </div>
+                  ))}
+                  {preAnalise.vinculos.length > 0 && (
+                    <p className="mb-0">
+                      Demandas citadas no conteúdo:{' '}
+                      <strong>{preAnalise.vinculos.join(', ')}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <Campo
             id="titulo"
             label="Título"
             obrigatorio
             erro={erros.titulo}
             className="col-12"
-            ajuda={`${LIMITES.titulo.min} a ${LIMITES.titulo.max} caracteres.`}
+            ajuda={comSugestao(
+              'titulo',
+              `${LIMITES.titulo.min} a ${LIMITES.titulo.max} caracteres.`,
+            )}
           >
             {(props) => (
               <input {...props} type="text" value={valores.titulo} onChange={definir('titulo')} />
@@ -196,6 +310,7 @@ function Formulario({ municipios, demandaId }) {
             label="Data do documento"
             obrigatorio
             erro={erros.dataDocumento}
+            ajuda={comSugestao('dataDocumento')}
           >
             {(props) => (
               <input
@@ -207,7 +322,7 @@ function Formulario({ municipios, demandaId }) {
               />
             )}
           </Campo>
-          <Campo id="municipioId" label="Município (opcional)">
+          <Campo id="municipioId" label="Município (opcional)" ajuda={comSugestao('municipioId')}>
             {(props) => (
               <select
                 {...props}
@@ -229,7 +344,7 @@ function Formulario({ municipios, demandaId }) {
             label="Palavras-chave"
             erro={erros.palavrasChave}
             className="col-12"
-            ajuda="Separe por vírgula (até 20)."
+            ajuda={comSugestao('palavrasChave', 'Separe por vírgula (até 20).')}
           >
             {(props) => (
               <input

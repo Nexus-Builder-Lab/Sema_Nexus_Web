@@ -25,10 +25,11 @@ async function abrir(path = '/docia/documentos/novo') {
 const pdf = () => new File(['%PDF-1.4'], 'laudo.pdf', { type: 'application/pdf' });
 
 async function preencher(user, arquivo = pdf()) {
-  await user.upload(screen.getByLabelText(/^Arquivo/), arquivo);
   await user.type(screen.getByLabelText(/^Título/), 'Laudo de vistoria fictício');
   await user.type(screen.getByLabelText(/^Categoria/), 'Relatório técnico');
   await user.type(screen.getByLabelText(/^Tipo/), 'Laudo');
+  await user.upload(screen.getByLabelText(/^Arquivo/), arquivo);
+  await screen.findByText(/Demandas citadas/);
 }
 
 const enviar = () => screen.getByRole('button', { name: 'Enviar documento' });
@@ -86,6 +87,7 @@ describe('Cadastro de documento', () => {
     );
     await abrir();
     await preencher(user);
+    await user.clear(screen.getByLabelText(/^Palavras-chave/));
     await user.type(screen.getByLabelText(/^Palavras-chave/), 'vistoria, mt');
     await user.click(enviar());
 
@@ -136,5 +138,82 @@ describe('Cadastro de documento', () => {
     await user.click(enviar());
     await waitFor(() => expect(screen.getByTestId('local')).toHaveTextContent('/flux/demandas/3'));
     expect(demandaId).toBe('3');
+  });
+});
+
+describe('Pré-análise do arquivo (PE-09A)', () => {
+  beforeEach(() => iniciarSessao());
+  const sel = (user) => user.upload(screen.getByLabelText(/^Arquivo/), pdf());
+
+  it('sugere título, município, data e palavras-chave, mostra avisos e vínculos', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    await abrir();
+    await sel(user);
+    await waitFor(() =>
+      expect(screen.getByLabelText(/^Título/)).toHaveValue('Laudo de vistoria — Sinop'),
+    );
+    expect(screen.getByLabelText(/^Data do documento/)).toHaveValue('2026-10-15');
+    expect(screen.getByLabelText(/^Município/)).toHaveValue('5107909');
+    expect(screen.getByLabelText(/^Palavras-chave/)).toHaveValue('vistoria, desmatamento, sinop');
+    expect(screen.getAllByText('sugerido pela pré-análise')).toHaveLength(4);
+    expect(screen.getByText(/Modo demonstrativo: sugestões/)).toBeInTheDocument();
+    expect(screen.getByText('DEM-2026/0010')).toBeInTheDocument();
+  });
+
+  it('não sobrescreve o que a pessoa já digitou e permite desfazer', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    await abrir();
+    await user.type(screen.getByLabelText(/^Título/), 'Meu título');
+    await sel(user);
+    await waitFor(() =>
+      expect(screen.getByLabelText(/^Palavras-chave/)).toHaveValue('vistoria, desmatamento, sinop'),
+    );
+    expect(screen.getByLabelText(/^Título/)).toHaveValue('Meu título');
+    expect(screen.getAllByText('sugerido pela pré-análise')).toHaveLength(3);
+    await user.click(screen.getAllByRole('button', { name: 'Desfazer' })[0]);
+    expect(screen.getAllByText('sugerido pela pré-análise')).toHaveLength(2);
+    await user.type(screen.getByLabelText(/^Palavras-chave/), ', extra');
+    expect(screen.getByLabelText(/^Palavras-chave/)).toHaveValue(
+      'vistoria, desmatamento, sinop, extra',
+    );
+    expect(screen.getAllByText('sugerido pela pré-análise')).toHaveLength(1);
+  });
+
+  it('tolera falha e 429 da pré-análise: o formulário segue funcionando', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    server.use(
+      http.post('/api/documentos/pre-analise', () =>
+        HttpResponse.json(
+          { status: 429, title: 'Muitas solicitações', retryAfterSegundos: 30 },
+          { status: 429, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    await abrir();
+    await sel(user);
+    expect(await screen.findByText(/Muitas solicitações/)).toBeInTheDocument();
+    expect(screen.getByText(/Preencha os campos manualmente/)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Título/), 'Digitado à mão');
+    expect(screen.getByLabelText(/^Título/)).toHaveValue('Digitado à mão');
+    expect(enviar()).toBeEnabled();
+  });
+
+  it('mostra o aviso de OCR indisponível devolvido pela API', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    server.use(
+      http.post('/api/documentos/pre-analise', () =>
+        HttpResponse.json({
+          titulo: '',
+          palavrasChave: [],
+          vinculosDemanda: [],
+          textoExtraido: false,
+          avisos: ['OCR indisponível neste ambiente.'],
+        }),
+      ),
+    );
+    await abrir();
+    await sel(user);
+    expect(await screen.findByText('OCR indisponível neste ambiente.')).toBeInTheDocument();
+    expect(screen.queryByText('sugerido pela pré-análise')).not.toBeInTheDocument();
   });
 });
