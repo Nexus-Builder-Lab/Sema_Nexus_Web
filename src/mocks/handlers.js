@@ -320,7 +320,45 @@ const fluxo = [
       nucleo: { sigla: 'NR-CBA', nome: 'Núcleo Regional de Cuiabá' },
       justificativa:
         'Relato de queimada em vegetação nativa. Há muitos focos de calor do INPE no município.',
-      duplicatas: [],
+      duplicatas: [
+        {
+          id: 3,
+          numero: 'DEM-2026/0003',
+          titulo: 'Fumaça na MT-251',
+          status: 'PENDENTE',
+          dataRecebimento: '2026-11-10',
+          distanciaKm: 2.4,
+        },
+      ],
+      espacial: {
+        referencia: 'COORDENADA',
+        latitude: -15.6,
+        longitude: -56.1,
+        raioKm: 10,
+        inpe: {
+          focosNoRaio: 7,
+          focoMaisProximoKm: 1.3,
+          alertasDeterNoRaio: 2,
+          dentroDePoligonoDeter: true,
+          menorDistanciaDeterKm: 0,
+          focosMunicipio: 42,
+          alertasDeterMunicipio: 3,
+          periodoDias: 30,
+          truncado: false,
+        },
+        demandasProximas: [
+          {
+            id: 3,
+            numero: 'DEM-2026/0003',
+            titulo: 'Fumaça na MT-251',
+            status: 'PENDENTE',
+            categoria: 'QUEIMADA_INCENDIO',
+            municipio: 'Cuiabá',
+            distanciaKm: 2.4,
+          },
+        ],
+        documentos: [{ id: 7, titulo: 'Laudo de queimada 2025', motivo: 'Mesmo município' }],
+      },
       evidencias: [
         `Leu a demanda ${demanda.numero}.`,
         'Buscou demandas semelhantes: 0 encontrada(s).',
