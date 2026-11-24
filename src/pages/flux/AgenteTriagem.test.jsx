@@ -40,7 +40,7 @@ describe('Agente de Triagem no modal de triagem', () => {
     );
     expect(within(modal).getByText(/NR-CBA — Núcleo Regional de Cuiabá/)).toBeInTheDocument();
     expect(within(modal).getByText('Como o agente chegou à sugestão')).toBeInTheDocument();
-    expect(within(modal).getByText(/42 foco\(s\) de calor/)).toBeInTheDocument();
+    expect(within(modal).getByText(/Consultou o INPE no município: 42 foco/)).toBeInTheDocument();
     expect(
       within(modal).getByText('Sugestão de IA — revise antes de confirmar.'),
     ).toBeInTheDocument();
