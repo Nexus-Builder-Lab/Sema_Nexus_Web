@@ -1,3 +1,4 @@
+import { explicacaoComparacaoMock } from './fixtures/comparacao.js';
 import { painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
 import { handlersAdmin } from './fixtures/admin.js';
@@ -362,6 +363,16 @@ const fluxo = [
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
+  // Explicar impacto das diferenças (API#142): grandezas determinísticas + resumo (demonstrativo nos mocks).
+  http.post('/api/docia/comparacao/explicar', async ({ request }) => {
+    const caminho = '/api/docia/comparacao/explicar';
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const { aId, bId } = await request.json();
+    if (aId === bId) {
+      return problema(400, 'Requisição inválida', 'Selecione dois documentos diferentes.', caminho);
+    }
+    return HttpResponse.json(explicacaoComparacaoMock(aId, bId));
+  }),
   // Visão de satélite (Web#107): sem ESRI_API_KEY nos mocks, o Nginx responderia 404.
   http.head('/tiles/esri/status', () => new HttpResponse(null, { status: 404 })),
   // Agentes de IA (API#106): nos mocks não há IA, os agentes ficam no modo demonstrativo.

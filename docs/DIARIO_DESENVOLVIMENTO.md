@@ -474,3 +474,9 @@
 - **O que foi feito:** `.claude/hooks/guard.mjs` registrado em `hooks.PreToolUse` do `.claude/settings.json` (permissões existentes intactas). Bloqueia, com exit 2 e mensagem em português: `docker compose down -v/--volumes`, `docker volume rm/prune`, `docker system prune` e leitura de `.env*` (cat/type/Get-Content/Read etc.), liberando `.env.example`. `.claude/hooks/test-hooks.mjs` + `npm run test:hooks` provam cada regra. Documentado no `CLAUDE.md`.
 - **Decisões técnicas:** Node puro (sem dependências), igual em PowerShell e Git Bash; sem regra de migration (o Web não tem Flyway).
 - **Testes:** `npm run test:hooks` → 28/28 casos ok (alinhado ao hook da API#152: globs `.e*`, aspas, Grep com glob, `compose rm -v`, leitores .NET/node) (ver resultados de lint/vitest/build no PR).
+
+## 2026-11-24 · GH-146 · Explicar impacto das diferenças na comparação documental
+- **Status:** PR solicitado. Depende de API#142 (PR #153, main dd73e8f).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** botão "Explicar impacto das diferenças" em `ComparacaoPage` (`ExplicarImpacto.jsx`) chamando `POST /api/docia/comparacao/explicar`: tabela de grandezas (caption, `th scope`, situação ALTERADO/REMOVIDO/ADICIONADO, antes/depois, variação absoluta e %, unidade), resumo e selo do modo (IA local · modelo / Claude · modelo / Demonstrativo). Carregamento (aviso de 30–50 s) e erro com mensagem da API (400/404) e "tentar novamente". `src/mocks/openapi.json` sincronizado com a main da API (caminho e schemas novos); handler e fixture MSW.
+- **Testes:** `Comparacao.test.jsx` (+4) e `src/mocks` → 14 passam; lint sem erros. Suíte completa, build e Docker: a confirmar pelo validador.
