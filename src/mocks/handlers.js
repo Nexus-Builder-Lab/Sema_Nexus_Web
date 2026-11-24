@@ -333,6 +333,41 @@ const fluxo = [
     '/api/demandas/:id/triagem',
     acaoDeFluxo('EM_TRIAGEM', decidirTriagemMock, validarTriagemMock),
   ),
+  // Agente de Distribuição (Issue API#130): sugestão sem gravar nada; 409 fora de Aguardando distribuição.
+  http.post('/api/demandas/:id/distribuicao/sugestao', ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    if (demanda.status !== 'AGUARDANDO_DISTRIBUICAO') {
+      return conflito(
+        params.id,
+        'A sugestão de distribuição só se aplica a demandas Aguardando distribuição.',
+      );
+    }
+    const prazo = new Date();
+    prazo.setDate(prazo.getDate() + 10);
+    return HttpResponse.json({
+      modo: 'LOCAL',
+      modelo: 'qwen3:4b-instruct',
+      equipe: { id: 1, nome: 'Equipe Alfa (demonstração)', setorSigla: 'DEMO-FISC' },
+      fiscal: {
+        id: 3,
+        nome: 'Fiscal Demonstrativo 1',
+        ativas: 1,
+        atrasadas: 0,
+        proximasDoVencimento: 0,
+      },
+      prazo: prazo.toISOString().slice(0, 10),
+      justificativa: 'Equipe com a menor carga no núcleo regional e fiscal sem demandas atrasadas.',
+      passos: [
+        'Consultou a carga de trabalho dos fiscais: 2 fiscal(is) em 1 equipe(s).',
+        'Consultou vistorias em campo no município: 0.',
+        'Consultou o tempo médio histórico da categoria: 10 dia(s).',
+      ],
+      avisos: [],
+    });
+  }),
   http.post(
     '/api/demandas/:id/distribuicao',
     acaoDeFluxo('AGUARDANDO_DISTRIBUICAO', distribuirMock, validarDistribuicaoMock),

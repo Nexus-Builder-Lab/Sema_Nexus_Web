@@ -2,17 +2,21 @@ import { useCallback, useState } from 'react';
 import { listarEquipes, listarMembros } from '../../api/catalogosApi.js';
 import { distribuirDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
+import { podeDistribuir } from '../../auth/perfis.js';
+import { useAuth } from '../../auth/useAuth.js';
 import ErrorState from '../../components/ErrorState.jsx';
 import Loading from '../../components/Loading.jsx';
 import Modal from '../../components/Modal.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { hojeISO } from '../../utils/datas.js';
+import AgenteDistribuicaoCard from './AgenteDistribuicaoCard.jsx';
 
 /**
  * Modal de distribuição: equipe → fiscais da equipe (apenas membros FISCAL ativos), prazo e
  * observações. Os fiscais só são carregados e listados depois de escolher a equipe.
  */
 export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
+  const { usuario } = useAuth();
   const equipes = useCarregar(listarEquipes);
   const [equipeId, setEquipeId] = useState('');
   const [fiscalId, setFiscalId] = useState('');
@@ -33,6 +37,14 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
   function escolherEquipe(valor) {
     setEquipeId(valor);
     setFiscalId('');
+  }
+
+  // Só preenche o formulário; a confirmação (e a validação) continuam no envio.
+  function aplicarSugestao({ equipeId: eq, fiscalId: fi, prazo: pz }) {
+    if (eq) setEquipeId(eq);
+    if (fi) setFiscalId(fi);
+    if (pz) setPrazo(pz);
+    setErros({});
   }
 
   async function enviar(event) {
@@ -102,6 +114,9 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
             <div className="alert alert-danger" role="alert">
               {erroGeral}
             </div>
+          )}
+          {podeDistribuir(usuario) && (
+            <AgenteDistribuicaoCard demandaId={demanda.id} onAplicar={aplicarSugestao} />
           )}
           <div className="mb-3">
             <label htmlFor="dist-equipe" className="form-label">
