@@ -157,6 +157,7 @@ describe('Pré-análise do arquivo (PE-09A)', () => {
     expect(screen.getByLabelText(/^Palavras-chave/)).toHaveValue('vistoria, desmatamento, sinop');
     expect(screen.getAllByText('sugerido pela pré-análise')).toHaveLength(4);
     expect(screen.getByText(/Modo demonstrativo: sugestões/)).toBeInTheDocument();
+    expect(screen.getByText('4 campo(s) sugerido(s) pela pré-análise.')).toBeInTheDocument();
     expect(screen.getByText('DEM-2026/0010')).toBeInTheDocument();
   });
 
@@ -215,5 +216,31 @@ describe('Pré-análise do arquivo (PE-09A)', () => {
     await sel(user);
     expect(await screen.findByText('OCR indisponível neste ambiente.')).toBeInTheDocument();
     expect(screen.queryByText('sugerido pela pré-análise')).not.toBeInTheDocument();
+  });
+  it('uma segunda pré-análise atualiza campos ainda sugeridos e mantém o Desfazer', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    await abrir();
+    await sel(user);
+    await waitFor(() =>
+      expect(screen.getByLabelText(/^Título/)).toHaveValue('Laudo de vistoria — Sinop'),
+    );
+    server.use(
+      http.post('/api/documentos/pre-analise', () =>
+        HttpResponse.json({
+          titulo: 'Segundo título',
+          palavrasChave: [],
+          vinculosDemanda: [],
+          avisos: [],
+        }),
+      ),
+    );
+    await user.type(screen.getByLabelText(/^Palavras-chave/), ', meu');
+    await sel(user);
+    await waitFor(() => expect(screen.getByLabelText(/^Título/)).toHaveValue('Segundo título'));
+    expect(screen.getByLabelText(/^Palavras-chave/)).toHaveValue(
+      'vistoria, desmatamento, sinop, meu',
+    );
+    await user.click(screen.getAllByRole('button', { name: 'Desfazer' })[0]);
+    expect(screen.getByLabelText(/^Título/)).toHaveValue('');
   });
 });

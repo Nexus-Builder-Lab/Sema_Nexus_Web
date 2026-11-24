@@ -73,6 +73,12 @@ function Formulario({ municipios, demandaId }) {
   // campo -> valor anterior à sugestão (para desfazer); some quando a pessoa edita o campo.
   const [sugeridos, setSugeridos] = useState({});
   const tocados = useRef(new Set());
+  const valoresRef = useRef(valores);
+  const sugeridosRef = useRef(sugeridos);
+  useEffect(() => {
+    valoresRef.current = valores;
+    sugeridosRef.current = sugeridos;
+  });
   const sequencia = useRef(0);
   const hoje = hojeISO();
   const definir = (campo) => (e) => {
@@ -105,18 +111,18 @@ function Formulario({ municipios, demandaId }) {
         dataDocumento: [r.dataDocumento, (v) => !v || v === hoje],
         palavrasChave: [(r.palavrasChave ?? []).join(', '), vazio],
       };
-      setValores((atual) => {
-        const proximo = { ...atual };
-        const anteriores = {};
-        for (const [campo, [valor, livre]] of Object.entries(sugestoes)) {
-          if (valor == null || valor === '' || tocados.current.has(campo) || !livre(atual[campo]))
-            continue;
-          anteriores[campo] = atual[campo];
-          proximo[campo] = String(valor);
-        }
-        setSugeridos(anteriores);
-        return proximo;
-      });
+      const atual = valoresRef.current;
+      const proximo = { ...atual };
+      const anteriores = { ...sugeridosRef.current };
+      for (const [campo, [valor, livre]] of Object.entries(sugestoes)) {
+        if (valor == null || valor === '' || tocados.current.has(campo)) continue;
+        const aindaSugerido = campo in anteriores; // preenchido por uma pré-análise anterior
+        if (!aindaSugerido && !livre(atual[campo])) continue;
+        if (!aindaSugerido) anteriores[campo] = atual[campo];
+        proximo[campo] = String(valor);
+      }
+      setValores(proximo);
+      setSugeridos(anteriores);
     } catch (erro) {
       if (minha !== sequencia.current) return;
       setErroPreAnalise(mensagemDeUpload(erro, 'Não foi possível sugerir os dados do documento.'));
@@ -228,36 +234,43 @@ function Formulario({ municipios, demandaId }) {
               Selecionado: {arquivo.name} ({formatarTamanho(arquivo.size)})
             </p>
           )}
-          {(analisando || erroPreAnalise || preAnalise) && (
-            <div className="col-12" aria-live="polite">
-              {analisando && (
-                <div className="small text-body-secondary" role="status">
-                  <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
-                  Analisando o arquivo para sugerir os dados…
-                </div>
-              )}
-              {erroPreAnalise && (
-                <div className="alert alert-warning py-2 mb-0" role="status">
-                  {erroPreAnalise} Preencha os campos manualmente.
-                </div>
-              )}
-              {preAnalise && (
-                <div className="small">
-                  {preAnalise.avisos.map((aviso) => (
-                    <div key={aviso} className="alert alert-info py-2 mb-2" role="status">
-                      {aviso}
-                    </div>
-                  ))}
-                  {preAnalise.vinculos.length > 0 && (
-                    <p className="mb-0">
-                      Demandas citadas no conteúdo:{' '}
-                      <strong>{preAnalise.vinculos.join(', ')}</strong>
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <div className="col-12" aria-live="polite" aria-atomic="false">
+            {(analisando || erroPreAnalise || preAnalise) && (
+              <>
+                {analisando && (
+                  <div className="small text-body-secondary">
+                    <span className="spinner-border spinner-border-sm me-2" aria-hidden="true" />
+                    Analisando o arquivo para sugerir os dados…
+                  </div>
+                )}
+                {erroPreAnalise && (
+                  <div className="alert alert-warning py-2 mb-0">
+                    {erroPreAnalise} Preencha os campos manualmente.
+                  </div>
+                )}
+                {preAnalise && (
+                  <div className="small">
+                    {Object.keys(sugeridos).length > 0 && (
+                      <p className="mb-2">
+                        {Object.keys(sugeridos).length} campo(s) sugerido(s) pela pré-análise.
+                      </p>
+                    )}
+                    {preAnalise.avisos.map((aviso, i) => (
+                      <div key={`${i}-${aviso}`} className="alert alert-info py-2 mb-2">
+                        {aviso}
+                      </div>
+                    ))}
+                    {preAnalise.vinculos.length > 0 && (
+                      <p className="mb-0">
+                        Demandas citadas no conteúdo:{' '}
+                        <strong>{preAnalise.vinculos.join(', ')}</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
           <Campo
             id="titulo"
             label="Título"
