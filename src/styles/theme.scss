@@ -2318,3 +2318,13 @@ figure.nx-chart-figure {
 .nx-painel-camada {
   min-width: 120px;
 }
+
+// Evidências espaciais da triagem (Web#136): evita estourar o modal em telas estreitas.
+.nx-evidencia-espacial {
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  ul {
+    padding-left: 1.1rem;
+  }
+}
