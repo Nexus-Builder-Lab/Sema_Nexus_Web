@@ -488,6 +488,12 @@
 - **Pendências:** sem contagem regressiva (opcional, não implementada). `/api/auth/demo/{perfil}` (usado por `authApi.js` e pelos mocks) não aparece no export do contrato nem na cópia anterior; não foi adicionado à mão.
 - **Testes:** `httpClient.test.js` (+5 casos de 429) e `Comparacao.test.jsx` (+1 caso de 429 no "Explicar impacto"). Lint sem erros; `npx vitest run --maxWorkers=3` → 48 arquivos, 347 testes passam; build aprovado; `verificar-diff` sem achados.
 
+## 2026-11-24 · GH-137 · Multi-turno no Assistente e painel DocIA na demanda
+- **Status:** PR solicitado. Depende de API#133 (PR #156, main 4bc26fd).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** `AssistentePage` envia os últimos 4 turnos como `historico` `[{pergunta, resposta}]`, mostra "Contexto ativo" e o botão "Nova conversa" limpa o contexto. Novo painel `PerguntarSobreDemanda.jsx` em `DemandaDetailPage` (envia `demandaId`; estado vazio sem documentos; 403/404/429 tratados; aviso de 30–50 s). `RespostaDocia.jsx` compartilha modo, citações e aderência textual. `src/mocks/openapi.json` sincronizado com a API (`PerguntaRequest.demandaId/historico`).
+- **Testes:** `Assistente.test.jsx` (+1) e `DemandaDetailPage.test.jsx` (+5). Contagens da suíte completa no PR.
+
 ## 2026-11-24 · GH-144 · Auto-preenchimento de metadados no upload (pré-análise)
 - **Status:** PR solicitado. Depende de API#140 (PR #154, main 6669524).
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.

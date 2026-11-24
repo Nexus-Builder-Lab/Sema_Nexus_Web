@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
@@ -133,7 +133,7 @@ describe('Assistente DocIA', () => {
     await user.click(screen.getByRole('button', { name: /Perguntar/ }));
     expect(await screen.findByText('Resposta X.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'teste?' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Limpar conversa/ }));
+    await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
     expect(screen.queryByText('Resposta X.')).not.toBeInTheDocument();
     expect(screen.getByText('Nenhuma pergunta nesta sessão.')).toBeInTheDocument();
   });
@@ -179,5 +179,86 @@ describe('Assistente DocIA', () => {
   it('sem IA disponível mantém o aviso de modo demonstração', async () => {
     abrir();
     expect(await screen.findByText('Modo demonstração')).toBeInTheDocument();
+  });
+});
+
+describe('Assistente DocIA — multi-turno', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('envia os últimos 4 turnos como historico, mostra o contexto e o limpa em Nova conversa', async () => {
+    const user = userEvent.setup();
+    const corpos = [];
+    server.use(
+      http.post('/api/docia/perguntas', async ({ request }) => {
+        const c = await request.json();
+        corpos.push(c);
+        return HttpResponse.json({
+          resposta: `R${corpos.length}`,
+          modo: MODO,
+          referencias: [],
+        });
+      }),
+    );
+    abrir();
+    const campo = await screen.findByLabelText('Sua pergunta');
+    expect(screen.queryByTestId('contexto-ativo')).not.toBeInTheDocument();
+    for (let i = 1; i <= 6; i += 1) {
+      await user.type(campo, `P${i}`);
+      await user.keyboard('{Enter}');
+      expect(await screen.findByText(`R${i}`)).toBeInTheDocument();
+    }
+    expect(corpos[0].historico).toBeUndefined();
+    expect(corpos[1].historico).toEqual([{ pergunta: 'P1', resposta: 'R1' }]);
+    expect(corpos[5].historico).toHaveLength(4);
+    expect(corpos[5].historico[0]).toEqual({ pergunta: 'P2', resposta: 'R2' });
+    expect(corpos[5].historico[3]).toEqual({ pergunta: 'P5', resposta: 'R5' });
+    expect(screen.getByTestId('contexto-ativo')).toHaveTextContent(/4 turnos anteriores/);
+
+    await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
+    expect(screen.queryByTestId('contexto-ativo')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText('Sua pergunta'), 'P7');
+    await user.keyboard('{Enter}');
+    await screen.findByText('R7');
+    expect(corpos[6].historico).toBeUndefined();
+  });
+});
+
+describe('Assistente DocIA — robustez do contexto', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('não envia turnos de abstenção e descarta resposta em voo após Nova conversa', async () => {
+    const user = userEvent.setup();
+    const corpos = [];
+    let liberar;
+    server.use(
+      http.post('/api/docia/perguntas', async ({ request }) => {
+        const c = await request.json();
+        corpos.push(c);
+        if (c.pergunta === 'P2') await new Promise((res) => (liberar = res));
+        return HttpResponse.json({
+          resposta:
+            c.pergunta === 'P1'
+              ? 'Não há informação suficiente nos documentos.'
+              : `R-${c.pergunta}`,
+          modo: MODO,
+          referencias: [],
+        });
+      }),
+    );
+    abrir();
+    const campo = await screen.findByLabelText('Sua pergunta');
+    await user.type(campo, 'P1');
+    await user.keyboard('{Enter}');
+    await screen.findByText(/Não há informação suficiente/);
+    await user.type(screen.getByLabelText('Sua pergunta'), 'P2');
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(corpos).toHaveLength(2));
+    expect(corpos[1].historico).toBeUndefined();
+    await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
+    liberar();
+    await user.type(screen.getByLabelText('Sua pergunta'), 'P3');
+    await user.keyboard('{Enter}');
+    await screen.findByText('R-P3');
+    expect(screen.queryByText('R-P2')).not.toBeInTheDocument();
   });
 });
