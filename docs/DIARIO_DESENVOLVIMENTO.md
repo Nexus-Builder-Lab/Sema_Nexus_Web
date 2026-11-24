@@ -501,6 +501,12 @@
 - **Decisões:** sem fallback client-side (`analiseEngine.js` não reutilizado, para não duplicar regra); vínculos DEM só informativos (o vínculo continua via `?demandaId=`).
 - **Testes:** `DocumentoFormPage.test.jsx` (+4: sugestões, não sobrescrever/desfazer, falha/429, aviso de OCR). Suíte completa e build: ver PR.
 
+## 2026-11-24 · GH-140 · Card do Agente de Distribuição no modal de distribuição
+- **Status:** PR solicitado. Depende de API#130 (PR #158, main ec09367).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** `AgenteDistribuicaoCard` no `DistribuicaoModal` (só ADMIN/GESTOR): "Sugerir com o agente" (`sugerirDistribuicao`, `POST /api/demandas/{id}/distribuicao/sugestao`, timeout 120 s), carregamento com aviso de 1ª chamada lenta, selo do modo (`rotuloModo`), equipe, fiscal (carga), prazo, justificativa, avisos e passos. "Aplicar sugestão" só preenche equipe, fiscal e prazo; a pessoa revisa e confirma "Distribuir". Erros 409/403/404/429 via `mensagemDeErro`; respostas antigas descartadas ao fechar/reabrir ou pedir de novo. `openapi.json` regenerado da main da API (ec09367); MSW com handler da sugestão.
+- **Testes:** `AgenteDistribuicao.test.jsx` (7). Suíte completa e build: ver PR.
+
 ## 2026-11-24 · GH-136 · Evidências espaciais no card e modal de triagem
 - **Status:** PR solicitado. Depende de API#132 (PR #157, main ec09367).
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.

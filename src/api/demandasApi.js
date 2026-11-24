@@ -98,3 +98,14 @@ export async function sugerirTriagem(id) {
   });
   return data;
 }
+
+/**
+ * Agente de Distribuição (Issue API#130): sugere equipe, fiscal e prazo sem gravar nada
+ * (ADMIN/GESTOR; 409 fora de Aguardando distribuição). Na primeira chamada pode levar ~1 minuto.
+ */
+export async function sugerirDistribuicao(id) {
+  const { data } = await httpClient.post(`/demandas/${id}/distribuicao/sugestao`, null, {
+    timeout: 120_000,
+  });
+  return data;
+}

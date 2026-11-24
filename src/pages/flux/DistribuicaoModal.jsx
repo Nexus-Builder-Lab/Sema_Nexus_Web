@@ -1,18 +1,22 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { listarEquipes, listarMembros } from '../../api/catalogosApi.js';
 import { distribuirDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
+import { podeDistribuir } from '../../auth/perfis.js';
+import { useAuth } from '../../auth/useAuth.js';
 import ErrorState from '../../components/ErrorState.jsx';
 import Loading from '../../components/Loading.jsx';
 import Modal from '../../components/Modal.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { hojeISO } from '../../utils/datas.js';
+import AgenteDistribuicaoCard from './AgenteDistribuicaoCard.jsx';
 
 /**
  * Modal de distribuição: equipe → fiscais da equipe (apenas membros FISCAL ativos), prazo e
  * observações. Os fiscais só são carregados e listados depois de escolher a equipe.
  */
 export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
+  const { usuario } = useAuth();
   const equipes = useCarregar(listarEquipes);
   const [equipeId, setEquipeId] = useState('');
   const [fiscalId, setFiscalId] = useState('');
@@ -24,15 +28,46 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
   const hoje = hojeISO();
 
   const carregarMembros = useCallback(
-    () => (equipeId ? listarMembros(equipeId) : Promise.resolve([])),
+    () =>
+      equipeId
+        ? listarMembros(equipeId).then((lista) => ({ equipeId, lista }))
+        : Promise.resolve({ equipeId, lista: [] }),
     [equipeId],
   );
   const membros = useCarregar(carregarMembros);
-  const fiscais = (membros.data ?? []).filter((m) => m.perfil === 'FISCAL' && m.ativo !== false);
+  const fiscais = (membros.data?.lista ?? []).filter(
+    (m) => m.perfil === 'FISCAL' && m.ativo !== false,
+  );
+
+  // Fiscal sugerido pelo agente, conferido quando a lista da equipe terminar de carregar.
+  const [fiscalSugerido, setFiscalSugerido] = useState(null);
+  const [avisoFiscal, setAvisoFiscal] = useState(false);
+  useEffect(() => {
+    if (!fiscalSugerido || membros.loading || !membros.data) return;
+    if (String(membros.data.equipeId) !== String(equipeId)) return;
+    if (!fiscais.some((f) => String(f.id) === String(fiscalSugerido))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFiscalId('');
+      setAvisoFiscal(true);
+    }
+    setFiscalSugerido(null);
+  }, [fiscalSugerido, membros.loading, membros.data, equipeId, fiscais]);
 
   function escolherEquipe(valor) {
     setEquipeId(valor);
     setFiscalId('');
+    setFiscalSugerido(null);
+    setAvisoFiscal(false);
+  }
+
+  // Só preenche o formulário; a confirmação (e a validação) continuam no envio.
+  function aplicarSugestao({ equipeId: eq, fiscalId: fi, prazo: pz }) {
+    if (eq) setEquipeId(eq);
+    if (fi) setFiscalId(fi);
+    setFiscalSugerido(fi || null);
+    setAvisoFiscal(false);
+    if (pz) setPrazo(pz);
+    setErros({});
   }
 
   async function enviar(event) {
@@ -103,6 +138,9 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
               {erroGeral}
             </div>
           )}
+          {podeDistribuir(usuario) && (
+            <AgenteDistribuicaoCard demandaId={demanda.id} onAplicar={aplicarSugestao} />
+          )}
           <div className="mb-3">
             <label htmlFor="dist-equipe" className="form-label">
               Equipe *
@@ -145,6 +183,11 @@ export default function DistribuicaoModal({ demanda, onClose, onSucesso }) {
               ))}
             </select>
             {campoErro('fiscalId')}
+            {avisoFiscal && (
+              <div className="text-warning-emphasis small mt-1" role="alert">
+                O fiscal sugerido não está disponível nesta equipe; escolha um fiscal.
+              </div>
+            )}
             {membros.error && (
               <div className="text-danger small mt-1" role="alert">
                 {mensagemDeErro(membros.error, 'Não foi possível carregar os fiscais.')}
