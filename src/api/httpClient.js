@@ -47,11 +47,32 @@ httpClient.interceptors.response.use(
   },
 );
 
+/**
+ * Segundos de espera de uma resposta 429 (limite de requisições da API): `retryAfterSegundos` do
+ * problem+json, ou o cabeçalho `Retry-After` como reserva. Devolve null se não for 429 ou não houver valor.
+ */
+export function segundosDeEspera(error) {
+  if (error?.response?.status !== 429) return null;
+  const corpo = Number(error.response.data?.retryAfterSegundos);
+  const cabecalho = Number(error.response.headers?.['retry-after']);
+  if (Number.isFinite(corpo) && corpo > 0) return Math.ceil(corpo);
+  if (Number.isFinite(cabecalho) && cabecalho > 0) return Math.ceil(cabecalho);
+  return null;
+}
+
+/** Mensagem amigável para o 429 (login, IA e upload). Não encerra a sessão: é só espera. */
+export function mensagemDeLimite(segundos) {
+  return segundos
+    ? `Muitas solicitações. Tente novamente em ${segundos} s.`
+    : 'Muitas solicitações. Tente novamente em instantes.';
+}
+
 /** Extrai uma mensagem amigável de um erro Axios (problem+json da API quando houver). */
 export function mensagemDeErro(error, padrao = 'Não foi possível concluir a operação.') {
   if (!error?.response) {
     return 'Não foi possível conectar ao servidor. Verifique a conexão e tente novamente.';
   }
+  if (error.response.status === 429) return mensagemDeLimite(segundosDeEspera(error));
   const dados = error.response.data;
   const primeiroCampo = dados?.errors?.[0]?.mensagem;
   return primeiroCampo || dados?.detail || dados?.title || padrao;

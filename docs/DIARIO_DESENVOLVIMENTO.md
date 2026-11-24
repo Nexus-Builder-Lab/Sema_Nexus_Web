@@ -480,3 +480,10 @@
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
 - **O que foi feito:** botão "Explicar impacto das diferenças" em `ComparacaoPage` (`ExplicarImpacto.jsx`) chamando `POST /api/docia/comparacao/explicar`: tabela de grandezas (caption, `th scope`, situação ALTERADO/REMOVIDO/ADICIONADO, antes/depois, variação absoluta e %, unidade), resumo e selo do modo (IA local · modelo / Claude · modelo / Demonstrativo). Carregamento (aviso de 30–50 s) e erro com mensagem da API (400/404) e "tentar novamente". `src/mocks/openapi.json` sincronizado com a main da API (caminho e schemas novos); handler e fixture MSW.
 - **Testes:** `Comparacao.test.jsx` (+4) e `src/mocks` → 14 passam; lint sem erros. Suíte completa, build e Docker: a confirmar pelo validador.
+
+## 2026-11-24 · GH-152 · Limite de requisições (429) no Web: mensagem amigável sem encerrar a sessão
+- **Status:** PR solicitado. Par da API#155 (main 6f8835a).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** `httpClient.js` lê o 429 (`retryAfterSegundos` do problem+json, cabeçalho `Retry-After` como reserva) em `segundosDeEspera`; `mensagemDeErro` devolve "Muitas solicitações. Tente novamente em N s." (ou "em instantes" sem valor). Login, DocIA (assistente e comparação "Explicar impacto"), Agente de Triagem e upload usam essa mensagem pelo caminho já existente. O 401 segue inalterado; o 429 nunca chama o tratador de sessão expirada. `src/mocks/openapi.json` regenerado a partir do `ContratoOpenApiTest` da main 6f8835a (apenas os 429 novos em 6 caminhos; sem caminhos removidos).
+- **Pendências:** sem contagem regressiva (opcional, não implementada). `/api/auth/demo/{perfil}` (usado por `authApi.js` e pelos mocks) não aparece no export do contrato nem na cópia anterior; não foi adicionado à mão.
+- **Testes:** `httpClient.test.js` (+5 casos de 429) e `Comparacao.test.jsx` (+1 caso de 429 no "Explicar impacto"). Lint sem erros; `npx vitest run --maxWorkers=3` → 48 arquivos, 347 testes passam; build aprovado; `verificar-diff` sem achados.

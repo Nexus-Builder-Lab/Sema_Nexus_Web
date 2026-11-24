@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../../App.jsx';
 import { server } from '../../mocks/server.js';
+import { SESSION_KEY } from '../../auth/sessionStore.js';
 import { iniciarSessao } from '../../test/auth.js';
 import { montarCampos } from './comparacaoCampos.js';
 
@@ -215,6 +216,26 @@ describe('Explicar impacto das diferenças', () => {
       'IA local · qwen3:4b-instruct',
     );
     expect(screen.getByText(/nenhuma grandeza mudou/i)).toBeInTheDocument();
+  });
+
+  it('mostra a espera do limite (429) e mantém a sessão', async () => {
+    const user = userEvent.setup();
+    server.use(
+      ...base(),
+      http.post('/api/docia/comparacao/explicar', () =>
+        HttpResponse.json(
+          { title: 'Limite de requisições excedido', retryAfterSegundos: 15, categoria: 'IA' },
+          { status: 429, headers: { 'Retry-After': '15' } },
+        ),
+      ),
+    );
+    abrir();
+    await screen.findByTestId('resultado');
+    await user.click(screen.getByRole('button', { name: /explicar impacto/i }));
+    expect(await screen.findByTestId('erro-explicacao')).toHaveTextContent(
+      'Muitas solicitações. Tente novamente em 15 s.',
+    );
+    expect(sessionStorage.getItem(SESSION_KEY)).not.toBeNull();
   });
 
   it.each([
