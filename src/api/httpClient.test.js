@@ -147,3 +147,18 @@ describe('limite de requisições (429)', () => {
     remover();
   });
 });
+
+describe('429 em rota protegida', () => {
+  it('não chama o tratador de sessão expirada', async () => {
+    const aoExpirar = vi.fn();
+    const remover = setUnauthorizedHandler(aoExpirar);
+    server.use(
+      http.get('/api/demandas', () => HttpResponse.json({ retryAfterSegundos: 9 }, { status: 429 })),
+    );
+    saveSession({ token: 'valido', usuario: {} });
+    const erro = await httpClient.get('/demandas').catch((e) => e);
+    expect(segundosDeEspera(erro)).toBe(9);
+    expect(aoExpirar).not.toHaveBeenCalled();
+    remover();
+  });
+});
