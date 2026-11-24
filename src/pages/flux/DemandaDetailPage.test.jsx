@@ -269,3 +269,36 @@ describe('Perguntar ao DocIA sobre a demanda', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/30/);
   });
 });
+
+describe('Painel DocIA — troca de demanda', () => {
+  it('não mostra resposta em voo da demanda anterior', async () => {
+    resetDemandasMock();
+    iniciarSessao();
+    const user = userEvent.setup();
+    let liberar;
+    server.use(
+      http.post('/api/docia/perguntas', async () => {
+        await new Promise((res) => (liberar = res));
+        return HttpResponse.json({
+          resposta: 'Resposta antiga.',
+          modo: 'Demonstrativo',
+          referencias: [],
+        });
+      }),
+    );
+    const { unmount } = abrir(1);
+    await user.type(await screen.findByLabelText('Pergunta sobre a demanda'), 'oi');
+    await user.click(
+      within(screen.getByRole('region', { name: /Perguntar ao DocIA/ })).getByRole('button', {
+        name: /Perguntar/,
+      }),
+    );
+    await waitFor(() => expect(liberar).toBeDefined());
+    unmount();
+    abrir(2);
+    await screen.findByRole('heading', { name: /DEM-2026\/0002/ });
+    liberar();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText('Resposta antiga.')).not.toBeInTheDocument();
+  });
+});

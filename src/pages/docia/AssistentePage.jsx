@@ -14,6 +14,7 @@ const SUGESTOES = [
 ];
 const LIMITE = 500;
 const MAX_TURNOS = 4;
+const ABSTENCAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
 
 /** Últimos turnos completos (pergunta + resposta) da conversa, no formato `historico` da API. */
 function turnosDoHistorico(conversa) {
@@ -21,7 +22,7 @@ function turnosDoHistorico(conversa) {
   let pergunta = null;
   for (const item of conversa) {
     if (item.tipo === 'pergunta') pergunta = item.texto;
-    else if (pergunta !== null && item.resposta) {
+    else if (pergunta !== null && item.resposta && !ABSTENCAO.test(item.resposta)) {
       turnos.push({ pergunta, resposta: item.resposta });
       pergunta = null;
     }
@@ -39,6 +40,7 @@ export default function AssistentePage() {
   const [erro, setErro] = useState(null);
   const [agentes, setAgentes] = useState(null);
   const fim = useRef(null);
+  const geracao = useRef(0);
 
   useEffect(() => {
     let ativo = true;
@@ -65,18 +67,23 @@ export default function AssistentePage() {
     setConversa((c) => [...c, { tipo: 'pergunta', texto: p }]);
     setHistorico((h) => [p, ...h.filter((x) => x !== p)].slice(0, 10));
     setTexto('');
+    const minha = geracao.current;
     try {
       const r = await perguntar(p, { historico: turnosDoHistorico(conversa) });
+      if (minha !== geracao.current) return;
       setConversa((c) => [...c, { tipo: 'resposta', ...r }]);
     } catch (e) {
+      if (minha !== geracao.current) return;
       setTexto((atual) => atual || p);
       setErro(mensagemDeErro(e, 'Não foi possível obter a resposta.'));
     } finally {
-      setEnviando(false);
+      if (minha === geracao.current) setEnviando(false);
     }
   }
 
   function limpar() {
+    geracao.current += 1;
+    setEnviando(false);
     setConversa([]);
     setHistorico([]);
     setErro(null);
@@ -119,14 +126,14 @@ export default function AssistentePage() {
 
       <div className="nx-ai-layout">
         <section className="card nx-ai-chat" aria-label="Conversa">
-          {contexto > 0 && (
-            <p className="nx-ai-contexto small mb-0 px-3 pt-2" data-testid="contexto-ativo">
-              <Icon name="history" size={12} /> Contexto ativo: considerando {contexto}{' '}
-              {contexto === 1 ? 'turno anterior' : 'turnos anteriores'} desta conversa. Use “Nova
-              conversa” para recomeçar sem contexto.
-            </p>
-          )}
           <div className="nx-ai-msgs" aria-live="polite">
+            {contexto > 0 && (
+              <p className="nx-ai-contexto small mb-0 mb-2" data-testid="contexto-ativo">
+                <Icon name="history" size={12} /> Contexto ativo: considerando {contexto}{' '}
+                {contexto === 1 ? 'turno anterior' : 'turnos anteriores'} desta conversa. Use “Nova
+                conversa” para recomeçar sem contexto.
+              </p>
+            )}
             <div className="nx-ai-row">
               <Avatar />
               <div className="nx-ai-bubble">

@@ -261,7 +261,7 @@ export default function DemandaDetailPage() {
         <p className="small text-body-secondary mb-0">{AVISO_FISCALIZACAO}</p>
       </section>
 
-      <PerguntarSobreDemanda demandaId={d.id} />
+      <PerguntarSobreDemanda key={d.id} demandaId={d.id} />
 
       <div className="row g-3">
         <section className="col-12 col-lg-5" aria-labelledby="docs-demanda">

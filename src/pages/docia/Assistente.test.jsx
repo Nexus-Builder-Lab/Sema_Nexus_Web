@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
@@ -220,5 +220,45 @@ describe('Assistente DocIA — multi-turno', () => {
     await user.keyboard('{Enter}');
     await screen.findByText('R7');
     expect(corpos[6].historico).toBeUndefined();
+  });
+});
+
+describe('Assistente DocIA — robustez do contexto', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('não envia turnos de abstenção e descarta resposta em voo após Nova conversa', async () => {
+    const user = userEvent.setup();
+    const corpos = [];
+    let liberar;
+    server.use(
+      http.post('/api/docia/perguntas', async ({ request }) => {
+        const c = await request.json();
+        corpos.push(c);
+        if (c.pergunta === 'P2') await new Promise((res) => (liberar = res));
+        return HttpResponse.json({
+          resposta:
+            c.pergunta === 'P1'
+              ? 'Não há informação suficiente nos documentos.'
+              : `R-${c.pergunta}`,
+          modo: MODO,
+          referencias: [],
+        });
+      }),
+    );
+    abrir();
+    const campo = await screen.findByLabelText('Sua pergunta');
+    await user.type(campo, 'P1');
+    await user.keyboard('{Enter}');
+    await screen.findByText(/Não há informação suficiente/);
+    await user.type(screen.getByLabelText('Sua pergunta'), 'P2');
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(corpos).toHaveLength(2));
+    expect(corpos[1].historico).toBeUndefined();
+    await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
+    liberar();
+    await user.type(screen.getByLabelText('Sua pergunta'), 'P3');
+    await user.keyboard('{Enter}');
+    await screen.findByText('R-P3');
+    expect(screen.queryByText('R-P2')).not.toBeInTheDocument();
   });
 });

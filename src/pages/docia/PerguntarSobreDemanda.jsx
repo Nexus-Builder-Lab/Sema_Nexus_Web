@@ -22,6 +22,10 @@ export default function PerguntarSobreDemanda({ demandaId }) {
   const [erro, setErro] = useState(null);
   const [semDocumentos, setSemDocumentos] = useState(false);
   const fim = useRef(null);
+  const atual = useRef(demandaId);
+  useEffect(() => {
+    atual.current = demandaId;
+  }, [demandaId]);
 
   useEffect(() => {
     let ativo = true;
@@ -45,12 +49,14 @@ export default function PerguntarSobreDemanda({ demandaId }) {
     setEnviando(true);
     try {
       const r = await perguntar(p, { demandaId: Number(demandaId) });
+      if (atual.current !== demandaId) return;
       setRespostas((rs) => [...rs, { pergunta: p, ...r }]);
       setTexto('');
     } catch (err) {
+      if (atual.current !== demandaId) return;
       setErro(mensagemDoErro(err));
     } finally {
-      setEnviando(false);
+      if (atual.current === demandaId) setEnviando(false);
     }
   }
 
