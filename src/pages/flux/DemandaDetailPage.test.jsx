@@ -181,3 +181,91 @@ describe('Modal de distribuição', () => {
     expect(within(modal).getByText('Informe o prazo.')).toBeInTheDocument();
   });
 });
+
+describe('Perguntar ao DocIA sobre a demanda', () => {
+  beforeEach(() => {
+    resetDemandasMock();
+    iniciarSessao();
+  });
+
+  async function perguntarAoPainel(user, texto = 'O que diz o laudo?') {
+    await user.type(await screen.findByLabelText('Pergunta sobre a demanda'), texto);
+    await user.click(
+      within(screen.getByRole('region', { name: /Perguntar ao DocIA/ })).getByRole('button', {
+        name: /Perguntar/,
+      }),
+    );
+  }
+
+  it('envia demandaId e mostra resposta com modo, citação e aderência', async () => {
+    const user = userEvent.setup();
+    let corpo;
+    server.use(
+      http.get('/api/demandas/1/documentos', () => HttpResponse.json([{ id: 7, titulo: 'Laudo' }])),
+      http.post('/api/docia/perguntas', async ({ request }) => {
+        corpo = await request.json();
+        return HttpResponse.json({
+          resposta: 'O laudo confirma a irregularidade.',
+          modo: 'Agente DocIA — IA local',
+          agente: 'LOCAL',
+          modelo: 'qwen3:4b-instruct',
+          referencias: [
+            {
+              documentoId: 7,
+              titulo: 'Laudo fictício',
+              trecho: 'Trecho.',
+              aderenciaTextual: 'alta',
+            },
+          ],
+        });
+      }),
+    );
+    abrir(1);
+    await perguntarAoPainel(user);
+    expect(await screen.findByText('O laudo confirma a irregularidade.')).toBeInTheDocument();
+    expect(corpo).toEqual({ pergunta: 'O que diz o laudo?', demandaId: 1 });
+    expect(screen.getByTestId('agente-resposta')).toHaveTextContent('IA local');
+    expect(screen.getByTestId('modo-resposta')).toHaveTextContent('Agente DocIA');
+    expect(screen.getByTestId('aderencia-textual')).toHaveTextContent('alta');
+    expect(screen.queryByTestId('docia-sem-documentos')).not.toBeInTheDocument();
+  });
+
+  it('avisa quando a demanda não tem documentos vinculados', async () => {
+    server.use(http.get('/api/demandas/1/documentos', () => HttpResponse.json([])));
+    abrir(1);
+    expect(await screen.findByTestId('docia-sem-documentos')).toBeInTheDocument();
+  });
+
+  it.each([
+    [403, 'Você não tem acesso a esta demanda.'],
+    [404, 'Demanda não encontrada.'],
+  ])('trata o erro %i', async (status, mensagem) => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json(
+          { title: 'x', status },
+          { status, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    abrir(1);
+    await perguntarAoPainel(user);
+    expect(await screen.findByRole('alert')).toHaveTextContent(mensagem);
+  });
+
+  it('mostra a mensagem amigável do 429', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json(
+          { title: 'Muitas requisições', status: 429, retryAfterSegundos: 30 },
+          { status: 429, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    abrir(1);
+    await perguntarAoPainel(user);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/30/);
+  });
+});

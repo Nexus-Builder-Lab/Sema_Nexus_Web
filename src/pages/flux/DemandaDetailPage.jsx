@@ -19,6 +19,7 @@ import Timeline from '../../components/Timeline.jsx';
 import { useToast } from '../../components/Toasts.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import DemandaDocumentos from '../docia/DemandaDocumentos.jsx';
+import PerguntarSobreDemanda from '../docia/PerguntarSobreDemanda.jsx';
 import { formatarData } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
 import AtividadeForm from './AtividadeForm.jsx';
@@ -259,6 +260,8 @@ export default function DemandaDetailPage() {
         )}
         <p className="small text-body-secondary mb-0">{AVISO_FISCALIZACAO}</p>
       </section>
+
+      <PerguntarSobreDemanda demandaId={d.id} />
 
       <div className="row g-3">
         <section className="col-12 col-lg-5" aria-labelledby="docs-demanda">

@@ -1,10 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { statusAgentes } from '../../api/agentesApi.js';
 import { perguntar } from '../../api/assistenteApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { useAuth } from '../../auth/useAuth.js';
 import Icon from '../../components/Icon.jsx';
+import RespostaDocia, { Avatar } from '../../components/RespostaDocia.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 
 const SUGESTOES = [
@@ -13,88 +13,20 @@ const SUGESTOES = [
   'Há relatórios sobre queimadas em Cuiabá?',
 ];
 const LIMITE = 500;
-const SEM_INFORMACAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
+const MAX_TURNOS = 4;
 
-/**
- * A aderência textual (alta/média/baixa) vem da busca textual da API e é relativa ao documento com mais
- * termos da pergunta: não é a probabilidade de a resposta estar correta (relatório técnico, P2).
- */
-export const EXPLICACAO_ADERENCIA =
-  'Aderência textual: quanto o documento contém os termos da pergunta, em comparação com o documento ' +
-  'mais aderente desta busca. Não é a probabilidade de a resposta estar correta — confira o trecho citado.';
-function Avatar() {
-  return (
-    <span className="nx-ai-avatar" aria-hidden="true">
-      <Icon name="assistant" size={16} />
-    </span>
-  );
-}
-
-function Resposta({ item }) {
-  const semInfo = SEM_INFORMACAO.test(item.resposta ?? '');
-  const comAgente = item.agente === 'LOCAL' || item.agente === 'CLAUDE';
-  const idExplicacao = useId();
-  return (
-    <div className="nx-ai-row" data-testid="resposta">
-      <Avatar />
-      <div className="nx-ai-bubble">
-        <div className="nx-ai-mode" data-testid="modo-resposta">
-          <Icon name={comAgente ? 'sparkles' : 'flask'} size={12} />
-          {item.modo || 'Modo não informado'}
-        </div>
-        {comAgente && (
-          <span className="badge nx-agente-selo mb-2" data-testid="agente-resposta">
-            {item.agente === 'CLAUDE' ? 'Claude' : 'IA local'} · {item.modelo}
-          </span>
-        )}
-        <p className={`mb-2 ${semInfo ? 'text-body-secondary fst-italic' : ''}`}>{item.resposta}</p>
-        {item.referencias?.length > 0 && (
-          <>
-            <h3 className="h6">Referências</h3>
-            <ul className="list-unstyled mb-0">
-              {item.referencias.map((r, i) => (
-                <li key={`${r.documentoId}-${i}`} className="mb-2">
-                  <Link to={`/docia/documentos/${r.documentoId}`}>{r.titulo}</Link>
-                  {r.aderenciaTextual && (
-                    <span
-                      className="badge text-bg-light border ms-2 fw-normal"
-                      data-testid="aderencia-textual"
-                      title={EXPLICACAO_ADERENCIA}
-                      aria-describedby={idExplicacao}
-                    >
-                      Aderência textual: {r.aderenciaTextual}
-                    </span>
-                  )}
-                  <blockquote className="small text-body-secondary border-start ps-2 mb-0">
-                    {r.trecho}
-                  </blockquote>
-                </li>
-              ))}
-            </ul>
-            {item.referencias.some((r) => r.aderenciaTextual) && (
-              <p
-                className="small text-body-secondary mb-0"
-                id={idExplicacao}
-                data-testid="explicacao-aderencia"
-              >
-                {EXPLICACAO_ADERENCIA}
-              </p>
-            )}
-          </>
-        )}
-        {comAgente && item.passos?.length > 0 && (
-          <details className="small mt-2">
-            <summary>Como o agente chegou à resposta</summary>
-            <ul className="mb-0 mt-1">
-              {item.passos.map((p, i) => (
-                <li key={i}>{p}</li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </div>
-    </div>
-  );
+/** Últimos turnos completos (pergunta + resposta) da conversa, no formato `historico` da API. */
+function turnosDoHistorico(conversa) {
+  const turnos = [];
+  let pergunta = null;
+  for (const item of conversa) {
+    if (item.tipo === 'pergunta') pergunta = item.texto;
+    else if (pergunta !== null && item.resposta) {
+      turnos.push({ pergunta, resposta: item.resposta });
+      pergunta = null;
+    }
+  }
+  return turnos.slice(-MAX_TURNOS);
 }
 
 /** Assistente DocIA (`/docia/assistente`): perguntas sobre os documentos, com modo e referências. */
@@ -134,7 +66,7 @@ export default function AssistentePage() {
     setHistorico((h) => [p, ...h.filter((x) => x !== p)].slice(0, 10));
     setTexto('');
     try {
-      const r = await perguntar(p);
+      const r = await perguntar(p, { historico: turnosDoHistorico(conversa) });
       setConversa((c) => [...c, { tipo: 'resposta', ...r }]);
     } catch (e) {
       setTexto((atual) => atual || p);
@@ -151,6 +83,8 @@ export default function AssistentePage() {
     setTexto('');
   }
 
+  const contexto = turnosDoHistorico(conversa).length;
+
   return (
     <>
       <PageHeader
@@ -159,7 +93,7 @@ export default function AssistentePage() {
         description="Assistente para consultas sobre os documentos cadastrados no SEMA ALERTA."
         actions={
           <button type="button" className="btn btn-outline-secondary btn-sm" onClick={limpar}>
-            <Icon name="trash" size={14} /> Limpar conversa
+            <Icon name="trash" size={14} /> Nova conversa
           </button>
         }
       />
@@ -185,6 +119,13 @@ export default function AssistentePage() {
 
       <div className="nx-ai-layout">
         <section className="card nx-ai-chat" aria-label="Conversa">
+          {contexto > 0 && (
+            <p className="nx-ai-contexto small mb-0 px-3 pt-2" data-testid="contexto-ativo">
+              <Icon name="history" size={12} /> Contexto ativo: considerando {contexto}{' '}
+              {contexto === 1 ? 'turno anterior' : 'turnos anteriores'} desta conversa. Use “Nova
+              conversa” para recomeçar sem contexto.
+            </p>
+          )}
           <div className="nx-ai-msgs" aria-live="polite">
             <div className="nx-ai-row">
               <Avatar />
@@ -202,7 +143,7 @@ export default function AssistentePage() {
                   <div className="nx-ai-bubble nx-ai-bubble-user">{item.texto}</div>
                 </div>
               ) : (
-                <Resposta key={i} item={item} />
+                <RespostaDocia key={i} item={item} />
               ),
             )}
             {enviando && (
