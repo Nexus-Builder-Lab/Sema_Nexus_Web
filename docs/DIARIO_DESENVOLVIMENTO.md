@@ -467,3 +467,10 @@
 - **Decisões técnicas:** destaque numa camada própria do mapa, abaixo dos marcadores e sem receber clique, para não cobrir nada.
 - **Testes:** `npm test` → 48 arquivos, 337 testes (eram 331) com `--maxWorkers=3`; com o paralelismo padrão alguns testes do Flux estouram o tempo, o que já acontecia no `main` (3 falhas no baseline). Lint e build aprovados.
 - **Docker:** validado — `demo-up` com API#128; `validar-integracao.mjs` 15/15; polígono, painel e área fictícia conferidos no navegador, com a visão de satélite Esri.
+
+## 2026-11-24 · GH-154 · Hooks reais do Claude Code (PreToolUse) para comandos destrutivos e segredos
+- **Status:** PR aberto a pedido do proprietário. Par da API#149.
+- **Executado por:** Claude Code (subagente), a pedido do proprietário.
+- **O que foi feito:** `.claude/hooks/guard.mjs` registrado em `hooks.PreToolUse` do `.claude/settings.json` (permissões existentes intactas). Bloqueia, com exit 2 e mensagem em português: `docker compose down -v/--volumes`, `docker volume rm/prune`, `docker system prune` e leitura de `.env*` (cat/type/Get-Content/Read etc.), liberando `.env.example`. `.claude/hooks/test-hooks.mjs` + `npm run test:hooks` provam cada regra. Documentado no `CLAUDE.md`.
+- **Decisões técnicas:** Node puro (sem dependências), igual em PowerShell e Git Bash; sem regra de migration (o Web não tem Flyway).
+- **Testes:** `npm run test:hooks` → 16/16 casos ok (ver resultados de lint/vitest/build no PR).
