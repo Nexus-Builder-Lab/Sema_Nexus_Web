@@ -48,3 +48,9 @@ export const obterReferenciaPontos = (filtros = {}) =>
 /** Filtros: `tipo`, `de`, `ate` → `{ ..., total, itens: [{ municipioId, municipio, bioma, total }] }`. */
 export const obterReferenciaPorMunicipio = (filtros = {}) =>
   obter('/intelligence/referencia/por-municipio', limparFiltros(filtros));
+/**
+ * GET /api/intelligence/referencia/pontos/{id} → `{ fonte, oficialSema, aviso, ponto, areaInformada, areaCampoFonte,
+ * areaKm2Fonte, areaObservacao, geometria, atributos, importacao }`. Só alertas DETER têm polígono e área (da fonte);
+ * focos de calor vêm como ponto, sem área.
+ */
+export const obterReferenciaPonto = (id) => obter(`/intelligence/referencia/pontos/${id}`);

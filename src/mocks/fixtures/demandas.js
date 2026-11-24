@@ -34,6 +34,32 @@ function dataRecebimento(i) {
   return `2026-10-${String((i % 28) + 1).padStart(2, '0')}`;
 }
 
+// Área afetada fictícia (polígono GeoJSON + ha) só em algumas demandas, como na massa demonstrativa da API.
+const AREAS = {
+  9: { ha: 42.35, lat: -15.601, lon: -56.097 },
+  10: { ha: 118.6, lat: -9.876, lon: -56.086 },
+};
+function areaFicticia(i) {
+  const a = AREAS[i];
+  if (!a) return { areaHa: null, areaGeometria: null };
+  const d = 0.004;
+  return {
+    areaHa: a.ha,
+    areaGeometria: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [a.lon - d, a.lat - d],
+          [a.lon + d, a.lat - d],
+          [a.lon + d, a.lat + d],
+          [a.lon - d, a.lat + d],
+          [a.lon - d, a.lat - d],
+        ],
+      ],
+    },
+  };
+}
+
 function fixture(i) {
   const municipio = MUNICIPIOS[i % MUNICIPIOS.length];
   const status = STATUS[i % STATUS.length];
@@ -52,6 +78,7 @@ function fixture(i) {
     localidade: 'Estrada vicinal km 12',
     latitude: null,
     longitude: null,
+    ...areaFicticia(i),
     dataRecebimento: dataRecebimento(i),
     prioridade: i % 7 === 6 ? null : PRIORIDADES[i % PRIORIDADES.length],
     prazo,

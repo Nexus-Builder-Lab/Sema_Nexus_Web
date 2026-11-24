@@ -1,4 +1,5 @@
 import 'leaflet/dist/leaflet.css';
+import { useEffect } from 'react';
 import {
   CircleMarker,
   GeoJSON,
@@ -8,11 +9,13 @@ import {
   Pane,
   Popup,
   TileLayer,
+  useMap,
 } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import {
   CENTRO_MT,
   PANE_INPE_AREAS,
+  PANE_SELECAO,
   ROTULOS_STATUS,
   ZOOM_MT,
   corDaCategoria,
@@ -21,6 +24,7 @@ import {
 import ConcentracaoLayer from './ConcentracaoLayer.jsx';
 import { COR_CONTORNO_UF } from './concentracao.js';
 import useGeoJson from './useGeoJson.js';
+import { limitesDaGeometria } from './selecaoMapa.js';
 
 export const PANE_FUNDO_UF = 'nx-fundo-uf';
 export const PANE_MALHA = 'nx-malha';
@@ -75,6 +79,57 @@ function PopupDemanda({ ponto }) {
   );
 }
 
+/** Aproxima o mapa do polígono selecionado (sem mexer no zoom quando a seleção é só um ponto). */
+function AjustarSelecao({ geometria }) {
+  const mapa = useMap();
+  useEffect(() => {
+    const limites = limitesDaGeometria(geometria);
+    if (!limites) return;
+    const tamanho = mapa.getSize();
+    if (!tamanho.x || !tamanho.y) return; // sem área visível (ex.: testes em jsdom)
+    mapa.fitBounds(limites, { maxZoom: 14, padding: [24, 24] });
+  }, [mapa, geometria]);
+  return null;
+}
+
+/**
+ * Destaque da seleção (área afetada): polígono (DETER ou demanda) e anel no ponto. Fica no pane PANE_SELECAO (390),
+ * abaixo do overlayPane, e não é interativo: nunca cobre nem rouba o clique dos marcadores (Web#109).
+ */
+function DestaqueSelecao({ selecao }) {
+  if (!selecao) return null;
+  const { geometria, latitude, longitude, cor, chave } = selecao;
+  return (
+    <>
+      {geometria && (
+        <GeoJSON
+          key={`selecao-${chave}`}
+          data={geometria}
+          interactive={false}
+          style={{
+            color: cor,
+            weight: 3,
+            fillColor: cor,
+            fillOpacity: 0.3,
+            className: 'nx-selecao-area',
+          }}
+        />
+      )}
+      {latitude != null && longitude != null && (
+        <CircleMarker
+          key={`selecao-ponto-${chave}`}
+          center={[latitude, longitude]}
+          radius={13}
+          interactive={false}
+          className="nx-selecao-ponto"
+          pathOptions={{ color: cor, weight: 3, dashArray: '4 3', fill: false }}
+        />
+      )}
+      <AjustarSelecao geometria={geometria} />
+    </>
+  );
+}
+
 /**
  * Mapa de Mato Grosso. Camadas: malha IBGE local (base), "Demandas (fictícias)" (modo Ocorrências),
  * coroplético de concentração por município e fundo online opcional (`fundo`: `osm` = OpenStreetMap, `satelite` = Esri
@@ -88,6 +143,8 @@ export default function MapaMT({
   municipios = [],
   onSelecionarMunicipio,
   fundo = null,
+  selecao = null,
+  onSelecionarDemanda,
   children,
 }) {
   const uf = useGeoJson('/geo/mt-uf.geojson');
@@ -143,6 +200,10 @@ export default function MapaMT({
       </Pane>
       {/* Áreas do INPE (coroplético agregado) entram neste pane pela prop `pane` (SatelliteLayer). */}
       <Pane name={PANE_INPE_AREAS} style={{ zIndex: 380 }} />
+      {/* Área afetada do item selecionado (polígono DETER/demanda e anel do ponto), sempre abaixo dos marcadores. */}
+      <Pane name={PANE_SELECAO} style={{ zIndex: 390 }}>
+        <DestaqueSelecao selecao={selecao} />
+      </Pane>
       <Pane name={PANE_CONCENTRACAO} style={{ zIndex: 370 }}>
         {malha && modo === 'concentracao' && (
           <ConcentracaoLayer
@@ -169,6 +230,7 @@ export default function MapaMT({
                   fillColor: corDaCategoria(p.categoria),
                   fillOpacity: 0.9,
                 }}
+                eventHandlers={{ click: () => onSelecionarDemanda?.(p) }}
               >
                 <Popup>
                   <PopupDemanda ponto={p} />

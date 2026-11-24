@@ -459,3 +459,11 @@
 - **O que foi feito:** `AssistentePage` mostra "Aderência textual: alta/média/baixa" em cada citação, com a explicação "não é a probabilidade de a resposta estar correta" ligada por `aria-describedby`; `src/mocks/openapi.json` atualizado a partir do OpenAPI da API validada (a cópia anterior não tinha 23 dos 61 caminhos); matriz Implementado/Parcial/Planejado no README, validada contra a API real.
 - **Testes:** `npm test` → 47 arquivos, 331 testes (eram 330); `npm run lint` e `npm run build` aprovados; `format:check` aponta 8 arquivos que já estavam fora do padrão em `03494762` (nenhum alterado aqui).
 - **Docker:** validado contra a API real com mocks desligados (0 service workers): selo e explicação na DocIA, 401 encerra a sessão, CONSULTA sem botões de ação e 403 da API ao forçar a sugestão. Evidências em `Sema_Nexus_API/docs/VALIDACAO_INTEGRADA.md`.
+
+## 2026-11-24 · GH-133 · Área afetada e painel de detalhes ao selecionar foco, alerta ou demanda no mapa
+- **Status:** PR aberto a pedido do proprietário (Issue, revisão, validação, PR e merge autorizados em 24/11/2026). Depende de API#128.
+- **Executado por:** Claude Code (subagente Opus, esforço médio), a pedido do proprietário.
+- **O que foi feito:** `DetalheSelecaoPainel.jsx` (coluna da direita, botão fechar) e `selecaoMapa.js` (formatação pt-BR e carregamento do detalhe). DETER: desenha o polígono, aproxima e mostra ha, km² da fonte e campo usado; foco de calor: destaca o ponto e informa "área não informada pela fonte"; demanda: área fictícia com selo de dados fictícios, e 403 só avisa. Popups mostram a área em ha ou "não informada". Mocks e `src/mocks/openapi.json` sincronizados com o OpenAPI da API.
+- **Decisões técnicas:** destaque numa camada própria do mapa, abaixo dos marcadores e sem receber clique, para não cobrir nada.
+- **Testes:** `npm test` → 48 arquivos, 337 testes (eram 331) com `--maxWorkers=3`; com o paralelismo padrão alguns testes do Flux estouram o tempo, o que já acontecia no `main` (3 falhas no baseline). Lint e build aprovados.
+- **Docker:** validado — `demo-up` com API#128; `validar-integracao.mjs` 15/15; polígono, painel e área fictícia conferidos no navegador, com a visão de satélite Esri.
