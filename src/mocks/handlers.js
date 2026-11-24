@@ -1,4 +1,5 @@
 import { explicacaoComparacaoMock } from './fixtures/comparacao.js';
+import { preAnaliseMock } from './fixtures/preAnalise.js';
 import { painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
 import { handlersAdmin } from './fixtures/admin.js';
@@ -363,6 +364,12 @@ const fluxo = [
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
+  // Pré-análise de documento (API#140): sugere metadados, não grava.
+  http.post('/api/documentos/pre-analise', ({ request }) =>
+    temToken(request)
+      ? HttpResponse.json(preAnaliseMock())
+      : naoAutenticado('/api/documentos/pre-analise'),
+  ),
   // Explicar impacto das diferenças (API#142): grandezas determinísticas + resumo (demonstrativo nos mocks).
   http.post('/api/docia/comparacao/explicar', async ({ request }) => {
     const caminho = '/api/docia/comparacao/explicar';

@@ -493,3 +493,10 @@
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
 - **O que foi feito:** `AssistentePage` envia os últimos 4 turnos como `historico` `[{pergunta, resposta}]`, mostra "Contexto ativo" e o botão "Nova conversa" limpa o contexto. Novo painel `PerguntarSobreDemanda.jsx` em `DemandaDetailPage` (envia `demandaId`; estado vazio sem documentos; 403/404/429 tratados; aviso de 30–50 s). `RespostaDocia.jsx` compartilha modo, citações e aderência textual. `src/mocks/openapi.json` sincronizado com a API (`PerguntaRequest.demandaId/historico`).
 - **Testes:** `Assistente.test.jsx` (+1) e `DemandaDetailPage.test.jsx` (+5). Contagens da suíte completa no PR.
+
+## 2026-11-24 · GH-144 · Auto-preenchimento de metadados no upload (pré-análise)
+- **Status:** PR solicitado. Depende de API#140 (PR #154, main 6669524).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** `DocumentoFormPage` chama `POST /api/documentos/pre-analise` (`preAnalisarDocumento` em `documentosApi.js`) ao escolher um arquivo de extensão permitida e preenche título, município, data e palavras-chave só em campos ainda vazios/não editados, com o selo "sugerido pela pré-análise" e botão "Desfazer"; mostra avisos da API (OCR etc.) e os vínculos DEM-AAAA/NNNN citados. Falha ou 429 (`mensagemDeUpload`) não bloqueia o formulário. `src/mocks/openapi.json` atualizado do export da API (6669524), handler e fixture `preAnalise.js`.
+- **Decisões:** sem fallback client-side (`analiseEngine.js` não reutilizado, para não duplicar regra); vínculos DEM só informativos (o vínculo continua via `?demandaId=`).
+- **Testes:** `DocumentoFormPage.test.jsx` (+4: sugestões, não sobrescrever/desfazer, falha/429, aviso de OCR). Suíte completa e build: ver PR.
