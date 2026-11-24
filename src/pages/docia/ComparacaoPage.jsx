@@ -11,6 +11,7 @@ import KpiCard from '../../components/KpiCard.jsx';
 import Loading from '../../components/Loading.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
 import { montarCampos } from './comparacaoCampos.js';
+import ExplicarImpacto from './ExplicarImpacto.jsx';
 
 const pct = (v) =>
   `${Number(v ?? 0)
@@ -178,6 +179,8 @@ function Resultado({ aId, bId, docs }) {
           </table>
         </div>
       </div>
+
+      <ExplicarImpacto aId={aId} bId={bId} />
 
       <div className="card mb-4">
         <div className="card-header bg-transparent d-flex flex-wrap justify-content-between gap-2">

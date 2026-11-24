@@ -158,3 +158,79 @@ describe('montarCampos', () => {
     expect(c.map((x) => x.status)).toEqual(['igual', 'diferente', 'ausente']);
   });
 });
+
+describe('Explicar impacto das diferenças', () => {
+  beforeEach(() => iniciarSessao());
+  const base = () => [
+    lista(),
+    detalhes(),
+    http.post('/api/documentos/comparacao', () => HttpResponse.json(resposta)),
+  ];
+
+  it('mostra tabela acessível, resumo e selo do modo (fixture dos mocks)', async () => {
+    const user = userEvent.setup();
+    server.use(...base());
+    abrir();
+    await screen.findByTestId('resultado');
+    expect(screen.queryByTestId('explicacao')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /explicar impacto das diferenças/i }));
+    const ex = await screen.findByTestId('explicacao');
+    expect(within(ex).getByTestId('explicacao-modo')).toHaveTextContent(/demonstrativo/i);
+    expect(within(ex).getByTestId('explicacao-resumo')).toHaveTextContent(/150 ha/);
+    const tabela = within(ex).getByRole('table');
+    expect(within(tabela).getByText(/grandezas que mudaram/i)).toBeInTheDocument();
+    expect(within(tabela).getAllByRole('columnheader')).toHaveLength(7);
+    expect(within(tabela).getAllByText('Alterado')).toHaveLength(2);
+    expect(within(tabela).getByText('Removido')).toBeInTheDocument();
+    expect(within(tabela).getByText('+25%')).toBeInTheDocument();
+    expect(within(tabela).getByText('+30')).toBeInTheDocument();
+  });
+
+  it('mostra o selo LOCAL com o modelo e o estado de carregamento', async () => {
+    const user = userEvent.setup();
+    let liberar;
+    server.use(
+      ...base(),
+      http.post('/api/docia/comparacao/explicar', async () => {
+        await new Promise((r) => {
+          liberar = r;
+        });
+        return HttpResponse.json({
+          modo: 'LOCAL',
+          modelo: 'qwen3:4b-instruct',
+          resumoGeradoPorIa: true,
+          resumo: 'Resumo.',
+          grandezas: [],
+          grandezasIguais: 0,
+        });
+      }),
+    );
+    abrir();
+    await screen.findByTestId('resultado');
+    await user.click(screen.getByRole('button', { name: /explicar impacto/i }));
+    expect(await screen.findByText(/explicando as diferenças/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /explicar impacto/i })).toBeDisabled();
+    liberar();
+    expect(await screen.findByTestId('explicacao-modo')).toHaveTextContent(
+      'IA local · qwen3:4b-instruct',
+    );
+    expect(screen.getByText(/nenhuma grandeza mudou/i)).toBeInTheDocument();
+  });
+
+  it.each([
+    [400, 'Documento sem texto extraído.'],
+    [404, 'Documento inexistente.'],
+  ])('mostra a mensagem da API no erro %i', async (status, detail) => {
+    const user = userEvent.setup();
+    server.use(
+      ...base(),
+      http.post('/api/docia/comparacao/explicar', () =>
+        HttpResponse.json({ title: 'Erro', detail }, { status }),
+      ),
+    );
+    abrir();
+    await screen.findByTestId('resultado');
+    await user.click(screen.getByRole('button', { name: /explicar impacto/i }));
+    expect(await screen.findByTestId('erro-explicacao')).toHaveTextContent(detail);
+  });
+});
