@@ -473,4 +473,4 @@
 - **Executado por:** Claude Code (subagente), a pedido do proprietário.
 - **O que foi feito:** `.claude/hooks/guard.mjs` registrado em `hooks.PreToolUse` do `.claude/settings.json` (permissões existentes intactas). Bloqueia, com exit 2 e mensagem em português: `docker compose down -v/--volumes`, `docker volume rm/prune`, `docker system prune` e leitura de `.env*` (cat/type/Get-Content/Read etc.), liberando `.env.example`. `.claude/hooks/test-hooks.mjs` + `npm run test:hooks` provam cada regra. Documentado no `CLAUDE.md`.
 - **Decisões técnicas:** Node puro (sem dependências), igual em PowerShell e Git Bash; sem regra de migration (o Web não tem Flyway).
-- **Testes:** `npm run test:hooks` → 16/16 casos ok (ver resultados de lint/vitest/build no PR).
+- **Testes:** `npm run test:hooks` → 28/28 casos ok (alinhado ao hook da API#152: globs `.e*`, aspas, Grep com glob, `compose rm -v`, leitores .NET/node) (ver resultados de lint/vitest/build no PR).

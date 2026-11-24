@@ -1,58 +1,93 @@
-// Hook PreToolUse do Claude Code (SEMA ALERTA Web). Lê o JSON do hook na stdin.
-// Exit 2 + mensagem em português na stderr = bloqueia a chamada. Exit 0 = permite.
-import { basename } from 'node:path';
+#!/usr/bin/env node
+// Hook PreToolUse do SEMA ALERTA (Issue #154, Web). Lê o JSON do hook na entrada padrão.
+// Bloqueia (exit 2, mensagem em português no stderr): volumes Docker e leitura do .env
+// (o Web não tem Flyway: sem regra de migration). Qualquer outro caso: exit 0.
+import path from 'node:path';
 
-const BS = String.fromCharCode(92);
-const SEGREDO = /^\.env(\.(?!example$|sample$|template$|dist$)[\w.-]+)?$/i;
-const LEITORES = /(^|[\s;|&(])(cat|type|get-content|gc|less|more|head|tail|bat|nl|tac|od|xxd|strings|select-string|sls|grep|egrep|rg|awk|sed|cut|sort|python3?|node|source|\.|printenv|import-csv|findstr|certutil|copy|cp|cpi|copy-item)(\s|$)/i;
-
-export function ehArquivoSegredo(caminho) {
-  return SEGREDO.test(basename(String(caminho).split(BS).join('/')));
+export function ler(texto) {
+  try {
+    const o = JSON.parse(texto || '{}');
+    return o && typeof o === 'object' ? o : {};
+  } catch { return {}; }
 }
 
-function tokens(cmd) {
-  return cmd.split(/[\s;|&()<>]+/).map((t) => t.replace(/^['"`]+|['"`]+$/g, '')).filter(Boolean);
+const SUFIXOS_SEGUROS = /^(example|sample|template|dist)$/i;
+
+function bloqueioDocker(cmd) {
+  const c = cmd.replace(/\s+/g, ' ');
+  if (/\bdocker(?:-compose|\s+compose)\b[^;&|\n]*\bdown\b[^;&|\n]*(\s--volumes\b|\s-[a-zA-Z]*v[a-zA-Z]*\b)/i.test(c))
+    return '`docker compose down -v/--volumes` apaga os volumes (banco Oracle, uploads e modelo de IA). Use `docker compose down` sem -v; o reset da demo é feito por scripts/demo-reset.';
+  if (/\bdocker(?:-compose|\s+compose)\b[^;&|\n]*\brm\b[^;&|\n]*(\s--volumes\b|\s-[a-zA-Z]*v[a-zA-Z]*\b)/i.test(c)
+    || /\bdocker\s+(?:container\s+)?rm\b[^;&|\n]*(\s--volumes\b|\s-[a-zA-Z]*v[a-zA-Z]*\b)/i.test(c))
+    return '`docker compose rm -v` / `docker rm -v` apaga volumes anônimos dos contêineres. Peça autorização explícita ao proprietário.';
+  if (/\bdocker\s+volume\s+(rm|remove|prune)\b/i.test(c))
+    return '`docker volume rm/prune` apaga volumes de dados do projeto. Peça autorização explícita ao proprietário.';
+  if (/\bdocker\s+system\s+prune\b/i.test(c))
+    return '`docker system prune` pode apagar volumes e imagens do ambiente. Peça autorização explícita ao proprietário.';
+  return null;
 }
 
-export function avaliar(entrada) {
-  const nome = entrada.tool_name || '';
-  const inp = entrada.tool_input || {};
-  if (['Read', 'Grep', 'Glob', 'NotebookRead'].includes(nome)) {
-    const alvo = inp.file_path || inp.path || inp.notebook_path || '';
-    if (alvo && ehArquivoSegredo(alvo)) return `Leitura de arquivo de segredos bloqueada (${basename(alvo.split(BS).join('/'))}). Use .env.example como referência; nunca leia nem imprima o .env.`;
-    return null;
+const MSG_ENV = 'O arquivo .env contém segredos (senhas e chaves) e não pode ser lido nem impresso. Use `.env.example` como referência ou peça ao proprietário o nome da variável.';
+const LEITORES = /\b(cat|type|get-content|gc|more|less|head|tail|bat|sed|awk|grep|egrep|rg|select-string|sls|cp|copy|copy-item|cpi|mv|move|base64|certutil|source|xxd|od|strings|import-csv|printenv|readalltext|readalllines|readallbytes|readfilesync|open|node|python|python3|php|ruby|perl)\b|(^|[\s;&|(])\.\s+\S*\.env|\$\(\s*<|<\s*\S*\.env/i;
+
+function globParaRegex(g) {
+  return new RegExp('^' + g.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+}
+
+// alvo pode ser caminho, nome ou glob. true se aponta para .env/.env.* sensível.
+function ehEnvSensivel(alvo) {
+  const base = path.basename(String(alvo).replace(/["'`]/g, '').trim().replace(/\\/g, '/'));
+  if (/[*?]/.test(base)) {
+    if (base.replace(/[*?]/g, '').length < 2) return false;
+    const re = globParaRegex(base);
+    return ['.env', '.env.local', '.env.production', '.env.prod', '.env.dev'].some((n) => re.test(n));
   }
-  const cmd = inp.command;
-  if (typeof cmd !== 'string') return null;
-  const t = tokens(cmd).map((x) => x.toLowerCase());
-  for (let i = 0; i < t.length; i++) {
-    const compose = t[i] === 'docker-compose' ? i : t[i] === 'docker' && t[i + 1] === 'compose' ? i + 1 : -1;
-    if (compose >= 0) {
-      const resto = t.slice(compose + 1);
-      const d = resto.indexOf('down');
-      if (d >= 0 && resto.slice(d + 1).some((a) => a === '--volumes' || /^-[a-z]*v[a-z]*$/.test(a))) {
-        return 'Bloqueado: "docker compose down -v/--volumes" apaga os volumes (banco Oracle e dados da demo). Use "docker compose down" sem -v, ou peça autorização do proprietário.';
-      }
-    }
-    if (t[i] === 'docker' && t[i + 1] === 'volume' && ['rm', 'remove', 'prune'].includes(t[i + 2])) {
-      return 'Bloqueado: "docker volume rm/prune" apaga volumes de dados. Peça autorização do proprietário.';
-    }
-    if (t[i] === 'docker' && t[i + 1] === 'system' && t[i + 2] === 'prune') {
-      return 'Bloqueado: "docker system prune" remove recursos Docker (inclusive volumes com --volumes). Peça autorização do proprietário.';
-    }
-  }
-  if (LEITORES.test(cmd) && tokens(cmd).some((x) => ehArquivoSegredo(x))) {
-    return 'Bloqueado: leitura/impressão de arquivo .env (segredos). Use .env.example como referência; nunca exiba o conteúdo do .env.';
+  const m = /^\.env(?:\.([\w.-]+))?$/i.exec(base);
+  if (!m) return false;
+  if (!m[1]) return true;
+  return !m[1].split('.').some((p) => SUFIXOS_SEGUROS.test(p));
+}
+
+function bloqueioEnvComando(cmd) {
+  if (!LEITORES.test(cmd)) return null;
+  const limpo = cmd.replace(/["'`]/g, '');
+  for (const t of limpo.split(/[\s;|&()<>,=]+/)) {
+    if (t && /e|\*|\?/i.test(t) && ehEnvSensivel(t)) return MSG_ENV;
   }
   return null;
 }
 
-async function main() {
-  let bruto = '';
-  for await (const c of process.stdin) bruto += c;
-  let entrada;
-  try { entrada = JSON.parse(bruto); } catch { process.exit(0); }
-  const motivo = avaliar(entrada);
-  if (motivo) { process.stderr.write(`[hook guard SEMA] ${motivo}\n`); process.exit(2); }
+export function avaliar(entrada, cwdPadrao = process.cwd()) {
+  if (!entrada || typeof entrada !== 'object') return null;
+  const ferramenta = entrada.tool_name || '';
+  const ti = entrada.tool_input && typeof entrada.tool_input === 'object' ? entrada.tool_input : {};
+  const cwd = entrada.cwd || cwdPadrao;
+  if (ferramenta === 'Bash' || ferramenta === 'PowerShell') {
+    const cmd = String(ti.command || '');
+    const d = bloqueioDocker(cmd) || bloqueioEnvComando(cmd);
+    if (d) return d;
+    return null;
+  }
+  if (ferramenta === 'Read' || ferramenta === 'Grep') {
+    for (const alvo of [ti.file_path, ti.path, ferramenta === 'Grep' ? ti.glob : null]) {
+      if (alvo && ehEnvSensivel(String(alvo))) return MSG_ENV;
+    }
+    return null;
+  }
+  return null;
 }
-if (import.meta.url === `file:///${process.argv[1]?.split(BS).join('/')}` || process.argv[1]?.endsWith('guard.mjs')) await main();
+
+if (process.argv[1] && path.basename(process.argv[1]) === 'guard.mjs') {
+  let dados = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', (c) => (dados += c));
+  process.stdin.on('end', () => {
+    let motivo = null;
+    try { motivo = avaliar(ler(dados)); } catch { motivo = null; }
+    if (motivo) {
+      process.stderr.write(`BLOQUEADO pelo hook de proteção do SEMA ALERTA: ${motivo}\n`);
+      process.exit(2);
+    }
+    process.exit(0);
+  });
+}

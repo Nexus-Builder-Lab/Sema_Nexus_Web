@@ -6,7 +6,20 @@ const BS = String.fromCharCode(92);
 const B = (command) => ({ tool_name: 'Bash', tool_input: { command } });
 const P = (command) => ({ tool_name: 'PowerShell', tool_input: { command } });
 const R = (file_path) => ({ tool_name: 'Read', tool_input: { file_path } });
+const G = (o) => ({ tool_name: 'Grep', tool_input: o });
 const casos = [
+  ['Grep glob .env* bloqueado', G({ pattern: 'KEY', glob: '.env*' }), 2],
+  ['Grep em src permitido', G({ pattern: 'KEY', path: 'src' }), 0],
+  ['cat .e* bloqueado', B('cat .e*'), 2],
+  ['cat .en? bloqueado', B('cat .en?'), 2],
+  ['cat com aspas bloqueado', B('cat ".env"'), 2],
+  ['ReadAllText bloqueado', P('[IO.File]::ReadAllText(".env")'), 2],
+  ['readFileSync bloqueado', B('node -e "fs.readFileSync(\'.env\')"'), 2],
+  ['Read com espaço final bloqueado', R('/repo/.env '), 2],
+  ['docker compose rm -sv bloqueado', B('docker compose rm -sv'), 2],
+  ['docker rm -v bloqueado', P('docker rm -v meu'), 2],
+  ['docker compose rm sem -v permitido', B('docker compose rm -f'), 0],
+  ['stdin null sai 0', 'null', 0],
   ['down -v bloqueado', B('docker compose down -v'), 2],
   ['down --volumes bloqueado (PowerShell)', P('docker compose down --volumes --remove-orphans'), 2],
   ['down sem -v permitido', B('docker compose down'), 0],
@@ -26,8 +39,8 @@ const casos = [
 ];
 let falhas = 0;
 for (const [nome, entrada, esperado] of casos) {
-  const r = spawnSync(process.execPath, [guard], { input: JSON.stringify(entrada), encoding: 'utf8' });
-  const ok = r.status === esperado && (esperado === 0 || /Bloqueado|bloqueada/.test(r.stderr));
+  const r = spawnSync(process.execPath, [guard], { input: typeof entrada === 'string' ? entrada : JSON.stringify(entrada), encoding: 'utf8' });
+  const ok = r.status === esperado && (esperado === 0 || /BLOQUEADO/.test(r.stderr));
   if (!ok) falhas++;
   console.log(`${ok ? 'OK  ' : 'FALHA'} ${nome} (exit ${r.status})`);
 }
