@@ -64,3 +64,9 @@ export const rotuloDoBioma = (codigo) => (codigo ? (ROTULOS_BIOMA[codigo] ?? cod
 // Panes do mapa (z-index): tiles 200 · fundo da UF 350 · malha 360 · concentração 370 · áreas do INPE 380 ·
 // overlayPane 400 (marcadores de demanda, focos INPE, contorno). Camadas recriadas nunca cobrem os marcadores (Web#109).
 export const PANE_INPE_AREAS = 'nx-inpe-areas';
+
+// Seleção no mapa (área afetada): pane próprio abaixo do overlayPane, para o polígono/destaque nunca cobrir os
+// marcadores (regra dos panes, Web#109). Cores distintas de demandas, focos e DETER.
+export const PANE_SELECAO = 'nx-selecao';
+export const COR_SELECAO_INPE = '#c2255c';
+export const COR_SELECAO_DEMANDA = '#1864ab';

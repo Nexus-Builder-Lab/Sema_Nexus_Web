@@ -23,7 +23,9 @@ import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
-import { FILTROS_VAZIOS } from './mapaConfig.js';
+import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS } from './mapaConfig.js';
+import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
+import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
 
 const CATALOGOS_VAZIOS = { municipios: [], biomas: [], categorias: [], situacoes: [] };
 
@@ -52,6 +54,10 @@ export default function InteligenciaAmbientalPage() {
   const [sateliteDisponivel, setSateliteDisponivel] = useState(false);
   const [telaCheia, setTelaCheia] = useState(false);
   const cartaoMapa = useRef(null);
+  // Item clicado no mapa (foco, alerta DETER ou demanda): `{ tipo, id, resumo }`.
+  const [selecao, setSelecao] = useState(null);
+  const [tentativaSelecao, setTentativaSelecao] = useState(0);
+  const detalheSelecao = useDetalheSelecao(selecao, tentativaSelecao);
 
   // A visão de satélite só fica disponível se o Nginx tiver ESRI_API_KEY (status 204).
   useEffect(() => {
@@ -128,6 +134,16 @@ export default function InteligenciaAmbientalPage() {
   const limpar = () => {
     setRascunho(FILTROS_VAZIOS);
     setAplicados(FILTROS_VAZIOS);
+  };
+
+  const selecionarDemanda = (p) => setSelecao({ tipo: 'DEMANDA', id: p.demandaId, resumo: p });
+  const selecionarInpe = (p) => setSelecao({ tipo: p.tipo, id: p.id, resumo: p });
+  const destaque = selecao && {
+    chave: `${selecao.tipo}-${selecao.id}`,
+    cor: selecao.tipo === 'DEMANDA' ? COR_SELECAO_DEMANDA : COR_SELECAO_INPE,
+    latitude: selecao.resumo?.latitude,
+    longitude: selecao.resumo?.longitude,
+    geometria: geometriaDaSelecao(selecao, detalheSelecao.dados),
   };
 
   const carregando = resposta.chave !== chave;
@@ -246,6 +262,8 @@ export default function InteligenciaAmbientalPage() {
                 municipios={catalogos.municipios}
                 onSelecionarMunicipio={filtrarPorMunicipio}
                 fundo={fundo}
+                selecao={destaque}
+                onSelecionarDemanda={selecionarDemanda}
               >
                 <SatelliteLayer
                   focos={sat.focos}
@@ -255,6 +273,7 @@ export default function InteligenciaAmbientalPage() {
                   temDeter={sat.temDeter}
                   fonte={sat.fonte}
                   onToggle={aoLigar}
+                  onSelecionar={selecionarInpe}
                 />
               </MapaMT>
               {carregando && (
@@ -321,6 +340,12 @@ export default function InteligenciaAmbientalPage() {
           )}
         </div>
         <div className="col-12 col-xl-3">
+          <DetalheSelecaoPainel
+            selecao={selecao}
+            estado={detalheSelecao}
+            onFechar={() => setSelecao(null)}
+            onTentarDeNovo={() => setTentativaSelecao((n) => n + 1)}
+          />
           <RankingMunicipios
             itens={itensMunicipio}
             municipios={catalogos.municipios}

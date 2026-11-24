@@ -17,6 +17,7 @@ import {
 } from './mapaConfig.js';
 import { criarPopupMunicipio, formatarDataHora } from './satelliteFormat.js';
 import useGeoJson from './useGeoJson.js';
+import { formatarHectares } from './selecaoMapa.js';
 
 const rotuloTipo = { FOCO_CALOR: 'Foco de calor', DESMATAMENTO: 'Alerta DETER' };
 
@@ -27,7 +28,11 @@ function PopupSatelite({ ponto, fonte }) {
       <div>{formatarDataHora(ponto.dataHora)} (UTC)</div>
       <div>Satélite: {ponto.satelite ?? '—'}</div>
       {ponto.classe && <div>Classe: {ponto.classe}</div>}
-      {ponto.areaKm2 != null && <div>Área: {ponto.areaKm2} km²</div>}
+      {ponto.tipo === 'DESMATAMENTO' && formatarHectares(ponto.areaHa) && (
+        <div>Área afetada: {formatarHectares(ponto.areaHa)} (fonte INPE)</div>
+      )}
+      {ponto.tipo === 'FOCO_CALOR' && <div>Área: não informada pela fonte (foco é um ponto)</div>}
+      <div className="text-body-secondary">Detalhes completos no painel ao lado.</div>
       <div>
         {ponto.municipio ?? 'Município não informado'} · {rotuloDoBioma(ponto.bioma)}
       </div>
@@ -36,13 +41,14 @@ function PopupSatelite({ ponto, fonte }) {
   );
 }
 
-function Pontos({ pontos, cor, fonte, raio }) {
+function Pontos({ pontos, cor, fonte, raio, onSelecionar }) {
   return pontos.map((p) => (
     <CircleMarker
       key={p.id}
       center={[p.latitude, p.longitude]}
       radius={raio}
       pathOptions={{ color: cor, weight: 0, fillColor: cor, fillOpacity: 0.55 }}
+      eventHandlers={{ click: () => onSelecionar?.(p) }}
     >
       <Popup>
         <PopupSatelite ponto={p} fonte={fonte} />
@@ -95,6 +101,7 @@ export default function SatelliteLayer({
   temDeter = false,
   fonte = 'INPE — dados públicos',
   onToggle,
+  onSelecionar,
 }) {
   const disparar = (nome, ligada) => {
     if (nome === NOME_CAMADA_FOCOS) onToggle?.('FOCO_CALOR', ligada);
@@ -112,14 +119,26 @@ export default function SatelliteLayer({
           {agregado ? (
             <Coropletico itens={porMunicipio} fonte={fonte} />
           ) : (
-            <Pontos pontos={focos} cor={COR_FOCO} fonte={fonte} raio={3} />
+            <Pontos
+              pontos={focos}
+              cor={COR_FOCO}
+              fonte={fonte}
+              raio={3}
+              onSelecionar={onSelecionar}
+            />
           )}
         </LayerGroup>
       </LayersControl.Overlay>
       {temDeter && (
         <LayersControl.Overlay name={NOME_CAMADA_DETER}>
           <LayerGroup>
-            <Pontos pontos={deter} cor={COR_DETER} fonte={fonte} raio={5} />
+            <Pontos
+              pontos={deter}
+              cor={COR_DETER}
+              fonte={fonte}
+              raio={5}
+              onSelecionar={onSelecionar}
+            />
           </LayerGroup>
         </LayersControl.Overlay>
       )}

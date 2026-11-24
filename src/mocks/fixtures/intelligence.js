@@ -265,6 +265,7 @@ const f = (id, dataHora, latitude, longitude, municipioId, municipio, bioma, sat
   satelite,
   classe: null,
   areaKm2: null,
+  areaHa: null,
 });
 const d = (id, dataHora, latitude, longitude, municipioId, municipio, bioma, classe, areaKm2) => ({
   id,
@@ -278,6 +279,7 @@ const d = (id, dataHora, latitude, longitude, municipioId, municipio, bioma, cla
   satelite: 'DETER',
   classe,
   areaKm2,
+  areaHa: Math.round(areaKm2 * 100 * 100) / 100,
 });
 
 export const PONTOS_REFERENCIA = [
@@ -354,6 +356,64 @@ export function referenciaPontosMock(params) {
   return { ...ATRIBUICAO, limite: 5000, truncado: false, pontos };
 }
 
+/** Quadrado fictício em torno do ponto (só na fixture; na API o polígono é o do INPE). */
+const poligonoEm = (lat, lon, meio = 0.01) => ({
+  type: 'MultiPolygon',
+  coordinates: [
+    [
+      [
+        [lon - meio, lat - meio],
+        [lon + meio, lat - meio],
+        [lon + meio, lat + meio],
+        [lon - meio, lat + meio],
+        [lon - meio, lat - meio],
+      ],
+    ],
+  ],
+});
+
+/** GET /api/intelligence/referencia/pontos/{id}: detalhe no formato da API (PontoDetalhe). */
+export function referenciaDetalheMock(id) {
+  const ponto = PONTOS_REFERENCIA.find((p) => p.id === Number(id));
+  if (!ponto) return null;
+  const deter = ponto.tipo === 'DESMATAMENTO';
+  const importacao = metadadosReferenciaMock().importacoes.find((i) => i.tipo === ponto.tipo);
+  return {
+    fonte: ATRIBUICAO.fonte,
+    oficialSema: false,
+    aviso: ATRIBUICAO.aviso,
+    ponto,
+    areaInformada: deter,
+    areaCampoFonte: deter ? 'areamunkm' : null,
+    areaKm2Fonte: deter ? ponto.areaKm2 : null,
+    areaObservacao: deter
+      ? 'Área do polígono do alerta informada pelo INPE/TerraBrasilis (campo areamunkm, em km²), convertida para hectares (1 km² = 100 ha).'
+      : 'Área afetada: não informada pela fonte (o INPE fornece o foco de calor como ponto — centro do pixel de detecção do satélite —, sem área queimada).',
+    geometria: deter ? poligonoEm(ponto.latitude, ponto.longitude) : null,
+    atributos: deter
+      ? {
+          gid: `${ponto.id}_curr`,
+          classname: ponto.classe,
+          path_row: '036017',
+          view_date: ponto.dataHora.slice(0, 10),
+          sensor: 'WFI',
+          satellite: 'AMAZONIA-1',
+          areauckm: 0,
+          areamunkm: ponto.areaKm2,
+          municipality: ponto.municipio,
+          uf: 'MT',
+        }
+      : {
+          id: `00000000-0000-0000-0000-${String(ponto.id).padStart(12, '0')}`,
+          frp: 53.8,
+          numero_dias_sem_chuva: 4,
+          precipitacao: 0,
+          risco_fogo: 0.82,
+        },
+    importacao,
+  };
+}
+
 export function referenciaPorMunicipioMock(params) {
   const lista = filtrarReferencia(params);
   const mapa = new Map();
@@ -380,6 +440,24 @@ export const handlersReferencia = [
     '/api/intelligence/referencia/pontos',
     protegido((r) => referenciaPontosMock(new URL(r.url).searchParams)),
   ),
+  http.get('/api/intelligence/referencia/pontos/:id', ({ request, params }) => {
+    if (!temToken(request))
+      return problema(
+        401,
+        'Não autenticado',
+        'Token ausente ou inválido.',
+        new URL(request.url).pathname,
+      );
+    const detalhe = referenciaDetalheMock(params.id);
+    return detalhe
+      ? HttpResponse.json(detalhe)
+      : problema(
+          404,
+          'Não encontrado',
+          'Ponto de satélite inexistente.',
+          `/api/intelligence/referencia/pontos/${params.id}`,
+        );
+  }),
   http.get(
     '/api/intelligence/referencia/por-municipio',
     protegido((r) => referenciaPorMunicipioMock(new URL(r.url).searchParams)),
