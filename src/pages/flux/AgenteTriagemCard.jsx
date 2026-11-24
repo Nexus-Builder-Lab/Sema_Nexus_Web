@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { sugerirTriagem } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import Icon from '../../components/Icon.jsx';
+import EvidenciaEspacial from './EvidenciaEspacial.jsx';
 import { rotuloModo } from './agenteTriagem.js';
 
 const DECISOES = {
@@ -123,10 +124,13 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
               <Link to={`/flux/demandas/${d.id}`} target="_blank" rel="noopener">
                 {d.numero}
               </Link>
+              {d.distanciaKm != null &&
+                ` (a ${Number(d.distanciaKm).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km)`}
             </span>
           ))}
         </div>
       )}
+      <EvidenciaEspacial espacial={sugestao.espacial} />
       {divergente && (
         <div className="alert alert-info small py-2 mb-2" role="note">
           O agente sugere <strong>{DECISOES[sugestao.decisao]?.toLowerCase()}</strong>. Aplicar

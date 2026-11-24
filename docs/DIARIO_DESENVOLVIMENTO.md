@@ -500,3 +500,9 @@
 - **O que foi feito:** `DocumentoFormPage` chama `POST /api/documentos/pre-analise` (`preAnalisarDocumento` em `documentosApi.js`) ao escolher um arquivo de extensão permitida e preenche título, município, data e palavras-chave só em campos ainda vazios/não editados, com o selo "sugerido pela pré-análise" e botão "Desfazer"; mostra avisos da API (OCR etc.) e os vínculos DEM-AAAA/NNNN citados. Falha ou 429 (`mensagemDeUpload`) não bloqueia o formulário. `src/mocks/openapi.json` atualizado do export da API (6669524), handler e fixture `preAnalise.js`.
 - **Decisões:** sem fallback client-side (`analiseEngine.js` não reutilizado, para não duplicar regra); vínculos DEM só informativos (o vínculo continua via `?demandaId=`).
 - **Testes:** `DocumentoFormPage.test.jsx` (+4: sugestões, não sobrescrever/desfazer, falha/429, aviso de OCR). Suíte completa e build: ver PR.
+
+## 2026-11-24 · GH-136 · Evidências espaciais no card e modal de triagem
+- **Status:** PR solicitado. Depende de API#132 (PR #157, main ec09367).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** novo `EvidenciaEspacial.jsx` dentro do `AgenteTriagemCard` (portanto do `TriagemModal`): seção com títulos e listas mostrando referência (coordenada/área/município), raio e período, contagens dos dados públicos do INPE (focos, alertas DETER, polígono, município), possíveis duplicatas geográficas com distância em km (links para a demanda), documentos relacionados (links) e aviso quando a referência é MUNICIPIO (sem coordenada). Duplicatas simples também mostram `distanciaKm`. `src/mocks/openapi.json` regenerado da main ec09367; handler MSW com `espacial`.
+- **Testes:** `EvidenciaEspacial.test.jsx` (3: completo, município/vazios, sem bloco). Suíte completa, lint e build verdes (ver PR).
