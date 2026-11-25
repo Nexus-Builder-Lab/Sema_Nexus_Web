@@ -35,11 +35,10 @@ export const AVISO_BUSCA =
  * documentos mais relevantes (a API de pesquisa não recebe esses filtros).
  */
 function filtrarResultadosBusca(resultados, filtros) {
-  const contem = (valor, termo) =>
-    (valor ?? '').toLocaleLowerCase('pt-BR').includes(termo.toLocaleLowerCase('pt-BR'));
+  // Mesma semântica dos filtros da listagem: categoria e tipo com correspondência exata.
   return resultados.filter(({ documento: d }) => {
-    if (filtros.categoria && !contem(d.categoria, filtros.categoria)) return false;
-    if (filtros.tipo && !contem(d.tipo, filtros.tipo)) return false;
+    if (filtros.categoria && d.categoria !== filtros.categoria) return false;
+    if (filtros.tipo && d.tipo !== filtros.tipo) return false;
     if (filtros.municipioId && String(d.municipio?.id ?? '') !== filtros.municipioId) return false;
     if (filtros.de && (d.dataDocumento ?? '') < filtros.de) return false;
     if (filtros.ate && (d.dataDocumento ?? '') > filtros.ate) return false;

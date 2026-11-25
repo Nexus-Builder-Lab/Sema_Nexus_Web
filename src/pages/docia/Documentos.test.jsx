@@ -66,7 +66,7 @@ describe('Biblioteca de documentos', () => {
     expect(screen.getByRole('link', { name: 'Cadastrar documento' })).toBeVisible();
 
     await user.type(screen.getByLabelText('Pesquisar nos documentos'), 'vistoria');
-    await user.type(screen.getByLabelText('Categoria'), 'Relatório');
+    await user.type(screen.getByLabelText('Categoria'), 'Relatório técnico');
     await user.click(screen.getByRole('button', { name: 'Filtrar' }));
     await waitFor(() => expect(buscas.at(-1)).toBe('vistoria'));
     expect(await screen.findByTestId('recuperacao')).toHaveTextContent('Busca: por palavras');
@@ -111,7 +111,7 @@ describe('Biblioteca de documentos', () => {
     const selo = screen.getByTestId('recuperacao');
     expect(selo).toHaveTextContent('Busca: híbrida (palavras + semântica)');
     const explicacao = document.getElementById(selo.getAttribute('aria-describedby'));
-    expect(explicacao).toHaveTextContent(/NÃO são a probabilidade de a resposta estar correta/);
+    expect(explicacao).toHaveTextContent(/não a probabilidade de a resposta estar correta/);
     expect(screen.getByText('Trecho da vistoria.')).toBeVisible();
     expect(screen.getByTestId('aderencia-textual')).toHaveTextContent('Aderência textual: alta');
     const similaridade = screen.getAllByTestId('similaridade-semantica');

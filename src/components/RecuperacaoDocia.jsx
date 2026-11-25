@@ -1,13 +1,14 @@
 import { useId } from 'react';
 
-/**
- * Como a API recuperou os documentos (`recuperacao` de RespostaAssistente e PesquisaDocumentos). Em ambos os
- * casos a explicação deixa claro que os índices são proximidade com a pergunta, não probabilidade de acerto.
- */
-export const EXPLICACAO_RECUPERACAO =
-  'Por palavras: os documentos foram encontrados pelos termos e radicais da pergunta. ' +
-  'Híbrida: a busca por palavras foi combinada com similaridade semântica (embeddings locais). ' +
-  'Em ambos os casos, os índices mostram proximidade com a pergunta e NÃO são a probabilidade de a resposta estar correta — confira o trecho citado.';
+/** Só os índices de proximidade: nunca probabilidade de acerto. */
+const NAO_E_PROBABILIDADE =
+  'Os índices mostram proximidade com a pergunta, não a probabilidade de a resposta estar correta — confira o trecho citado.';
+
+/** Explicação de cada modo: descreve apenas o modo ativo. */
+const EXPLICACAO_RECUPERACAO = {
+  LEXICAL: `Busca por palavras: os documentos foram encontrados pelos termos e radicais da pergunta. ${NAO_E_PROBABILIDADE}`,
+  HIBRIDA: `Busca híbrida: a busca por palavras foi combinada com similaridade semântica (embeddings locais). ${NAO_E_PROBABILIDADE}`,
+};
 
 /** Explicação da similaridade semântica (cosseno), mostrada só quando a API a informa. */
 export const EXPLICACAO_SIMILARIDADE =
@@ -43,7 +44,7 @@ export function SeloRecuperacao({ recuperacao, className = '', explicacaoId, com
         id={idExplicacao}
         data-testid="explicacao-recuperacao"
       >
-        {EXPLICACAO_RECUPERACAO}
+        {EXPLICACAO_RECUPERACAO[recuperacao]}
         {complemento ? ` ${complemento}` : ''}
       </p>
     </div>

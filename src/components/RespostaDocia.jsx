@@ -24,6 +24,8 @@ export default function Resposta({ item }) {
   const semInfo = SEM_INFORMACAO.test(item.resposta ?? '');
   const comAgente = item.agente === 'LOCAL' || item.agente === 'CLAUDE';
   const idExplicacao = useId();
+  const temAderencia = (item.referencias ?? []).some((r) => r.aderenciaTextual);
+  const temSimilaridade = (item.referencias ?? []).some((r) => r.similaridadeSemantica != null);
   return (
     <div className="nx-ai-row" data-testid="resposta">
       <Avatar />
@@ -63,15 +65,16 @@ export default function Resposta({ item }) {
                 </li>
               ))}
             </ul>
-            {item.referencias.some((r) => r.aderenciaTextual) && (
+            {/* Sempre que um selo aponta para esta explicação, ela existe no DOM (aria-describedby válido). */}
+            {(temAderencia || temSimilaridade) && (
               <p
                 className="small text-body-secondary mb-0"
                 id={idExplicacao}
                 data-testid="explicacao-aderencia"
               >
-                {EXPLICACAO_ADERENCIA}
-                {item.referencias.some((r) => r.similaridadeSemantica != null) &&
-                  ` ${EXPLICACAO_SIMILARIDADE}`}
+                {[temAderencia && EXPLICACAO_ADERENCIA, temSimilaridade && EXPLICACAO_SIMILARIDADE]
+                  .filter(Boolean)
+                  .join(' ')}
               </p>
             )}
           </>
