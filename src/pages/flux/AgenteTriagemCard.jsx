@@ -1,9 +1,9 @@
-import AcoesSugeridas from '../../components/AcoesSugeridas.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sugerirTriagemStream } from '../../api/demandasApi.js';
 import { mensagemDeErroStream } from '../../api/sseClient.js';
 import { useAgenteStream } from '../../api/useAgenteStream.js';
+import AcoesSugeridas from '../../components/AcoesSugeridas.jsx';
 import ProgressoAgente from '../../components/ProgressoAgente.jsx';
 import Icon from '../../components/Icon.jsx';
 import EvidenciaEspacial from './EvidenciaEspacial.jsx';

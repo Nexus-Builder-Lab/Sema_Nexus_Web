@@ -93,4 +93,15 @@ describe('AcoesSugeridas', () => {
     expect(destinoDaAcao({ tipo: 'ABRIR_DEMANDA', parametros: { demandaId: 'x' } })).toBeNull();
     expect(destinoDaAcao({ tipo: 'VER_NO_MAPA', parametros: { lat: 200, lon: 0 } })).toBeNull();
   });
+
+  it('VER_NO_MAPA fora de MT ou não numérico não renderiza; zoom é limitado', () => {
+    expect(destinoDaAcao({ tipo: 'VER_NO_MAPA', parametros: { lat: null, lon: -56 } })).toBeNull();
+    expect(destinoDaAcao({ tipo: 'VER_NO_MAPA', parametros: { lat: 'abc', lon: -56 } })).toBeNull();
+    expect(destinoDaAcao({ tipo: 'VER_NO_MAPA', parametros: { lat: 48.8, lon: 2.3 } })).toBeNull();
+    expect(
+      destinoDaAcao({ tipo: 'VER_NO_MAPA', parametros: { lat: -15, lon: -56, zoom: 99 } }),
+    ).toMatch(/zoom=18/);
+    montar([{ tipo: 'VER_NO_MAPA', rotulo: 'Fora', parametros: { lat: 48.8, lon: 2.3 } }]);
+    expect(screen.queryByRole('button', { name: 'Fora' })).toBeNull();
+  });
 });

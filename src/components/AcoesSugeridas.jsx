@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vincularDocumento } from '../api/documentosApi.js';
 import { mensagemDeErro } from '../api/httpClient.js';
+import { focoValido } from '../pages/intelligence/mapaConfig.js';
 import ConfirmDialog from './ConfirmDialog.jsx';
 import Icon from './Icon.jsx';
 
@@ -19,11 +20,10 @@ export function destinoDaAcao(acao) {
     case 'ABRIR_DEMANDA':
       return idOk(p.demandaId) ? `/flux/demandas/${num(p.demandaId)}` : null;
     case 'VER_NO_MAPA': {
-      const lat = num(p.lat);
-      const lon = num(p.lon);
-      if (!(Math.abs(lat) <= 90) || !(Math.abs(lon) <= 180)) return null;
-      const q = new URLSearchParams({ lat: String(lat), lon: String(lon) });
-      if (p.zoom != null && Number.isFinite(num(p.zoom))) q.set('zoom', String(num(p.zoom)));
+      const foco = focoValido(p.lat, p.lon, p.zoom);
+      if (!foco) return null;
+      const q = new URLSearchParams({ lat: String(foco.lat), lon: String(foco.lon) });
+      if (foco.zoom != null) q.set('zoom', String(foco.zoom));
       if (idOk(p.demandaId)) q.set('demandaId', String(num(p.demandaId)));
       return `/intelligence/inteligencia-ambiental?${q}`;
     }

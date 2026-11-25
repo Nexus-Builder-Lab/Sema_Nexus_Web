@@ -24,7 +24,7 @@ import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
-import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS } from './mapaConfig.js';
+import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS, focoValido } from './mapaConfig.js';
 import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
 import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
 
@@ -40,19 +40,12 @@ function baixarCsv(itens) {
   URL.revokeObjectURL(url);
 }
 
-/** Foco por URL (`?lat&lon&zoom`), usado pelos Action Cards; valores inválidos são ignorados. */
-function focoDaUrl(params) {
-  const lat = Number(params.get('lat'));
-  const lon = Number(params.get('lon'));
-  if (!params.get('lat') || !params.get('lon') || Math.abs(lat) > 90 || Math.abs(lon) > 180)
-    return null;
-  const z = Number(params.get('zoom'));
-  return { lat, lon, zoom: z >= 5 && z <= 18 ? z : undefined };
-}
-
 export default function InteligenciaAmbientalPage() {
   const [searchParams] = useSearchParams();
-  const foco = useMemo(() => focoDaUrl(searchParams), [searchParams]);
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
+  const zoom = searchParams.get('zoom');
+  const foco = useMemo(() => focoValido(lat, lon, zoom), [lat, lon, zoom]);
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
   const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
   const [aplicados, setAplicados] = useState(FILTROS_VAZIOS);
