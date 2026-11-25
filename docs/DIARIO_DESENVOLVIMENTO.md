@@ -513,6 +513,12 @@
 - **O que foi feito:** novo `EvidenciaEspacial.jsx` dentro do `AgenteTriagemCard` (portanto do `TriagemModal`): seção com títulos e listas mostrando referência (coordenada/área/município), raio e período, contagens dos dados públicos do INPE (focos, alertas DETER, polígono, município), possíveis duplicatas geográficas com distância em km (links para a demanda), documentos relacionados (links) e aviso quando a referência é MUNICIPIO (sem coordenada). Duplicatas simples também mostram `distanciaKm`. `src/mocks/openapi.json` regenerado da main ec09367; handler MSW com `espacial`.
 - **Testes:** `EvidenciaEspacial.test.jsx` (3: completo, município/vazios, sem bloco). Suíte completa, lint e build verdes (ver PR).
 
+## 2026-11-24 · GH-141 · Geração e revisão da minuta de vistoria
+- **Status:** PR solicitado. Depende de API#137 (PR #159, main 658f131).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** botão "Gerar minuta de relatório" em `DemandaDetailPage` (ADMIN/GESTOR/ANALISTA e FISCAL designado; oculto para CONSULTA) abre `MinutaVistoriaModal`: chama `POST /api/demandas/{id}/minuta-vistoria` (timeout 120 s, aviso de 30–50 s), mostra o aviso "MINUTA GERADA PARA REVISÃO HUMANA — AMBIENTE DEMONSTRATIVO", selo do modo e avisos; edição em textarea e pré-visualização segura (`MarkdownSeguro`, sem HTML bruto, links como texto). "Enviar como documento" leva a uma confirmação final (título `Minuta de relatório — DEM-AAAA/NNNN`, categoria Relatório técnico, data de hoje) e só então faz upload `.md` + vínculo à demanda; nunca salva sozinho. 403/404/429 tratados; respostas antigas descartadas. `openapi.json` regenerado da API (658f131); handler/fixture MSW.
+- **Testes:** `MinutaVistoria.test.jsx` (8). Suíte completa: 402 testes, 0 falhas (após merge da main); lint e build verdes.
+
 ## 2026-11-24 · GH-138 · Streaming SSE dos agentes (triagem e DocIA)
 - **Status:** PR solicitado. Depende de API#135 (PR #160, main caade05).
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.

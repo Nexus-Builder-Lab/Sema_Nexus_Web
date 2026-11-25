@@ -65,3 +65,12 @@ export const PERFIS_ADMIN = ['ADMIN'];
 
 /** Relatórios de demandas: FISCAL recebe 403 da API. */
 export const PERFIS_RELATORIOS = ['ADMIN', 'GESTOR', 'ANALISTA', 'CONSULTA'];
+
+/** "Gerar minuta de relatório" (API#137): ADMIN/GESTOR/ANALISTA e o FISCAL designado (a API confere). */
+export function podeGerarMinuta(usuario, demanda) {
+  if (!usuario) return false;
+  if (['ADMIN', 'GESTOR', 'ANALISTA'].includes(usuario.perfil)) return true;
+  return (
+    usuario.perfil === 'FISCAL' && demanda?.fiscal?.id != null && demanda.fiscal.id === usuario.id
+  );
+}

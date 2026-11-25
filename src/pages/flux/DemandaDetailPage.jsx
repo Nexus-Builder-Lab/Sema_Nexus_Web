@@ -7,7 +7,12 @@ import {
   listarHistorico,
 } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
-import { acoesDisponiveis, podeEditarDemandas, STATUS_EDITAVEIS } from '../../auth/perfis.js';
+import {
+  acoesDisponiveis,
+  podeEditarDemandas,
+  podeGerarMinuta,
+  STATUS_EDITAVEIS,
+} from '../../auth/perfis.js';
 import { useAuth } from '../../auth/useAuth.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import ErrorState from '../../components/ErrorState.jsx';
@@ -26,6 +31,7 @@ import AtividadeForm from './AtividadeForm.jsx';
 import ConclusaoModal from './ConclusaoModal.jsx';
 import DistribuicaoModal from './DistribuicaoModal.jsx';
 import FiscalizacaoModal, { AVISO_FISCALIZACAO } from './FiscalizacaoModal.jsx';
+import MinutaVistoriaModal from './MinutaVistoriaModal.jsx';
 import TriagemModal from './TriagemModal.jsx';
 
 function Dado({ rotulo, children }) {
@@ -44,6 +50,7 @@ export default function DemandaDetailPage() {
   const { showToast } = useToast();
   const [acaoAberta, setAcaoAberta] = useState(null);
   const [executando, setExecutando] = useState(false);
+  const [recarregarDocs, setRecarregarDocs] = useState(0);
 
   const catalogos = useCarregar(carregarCatalogosFlux);
   const demanda = useCarregar(useCallback(() => detalharDemanda(id), [id]));
@@ -186,6 +193,15 @@ export default function DemandaDetailPage() {
           Concluir demanda
         </button>
       )}
+      {podeGerarMinuta(usuario, d) && (
+        <button
+          type="button"
+          className="btn btn-outline-primary"
+          onClick={() => setAcaoAberta('MINUTA')}
+        >
+          Gerar minuta de relatório
+        </button>
+      )}
       {acoes.includes('DISTRIBUIR') && (
         <button
           type="button"
@@ -265,7 +281,11 @@ export default function DemandaDetailPage() {
 
       <div className="row g-3">
         <section className="col-12 col-lg-5" aria-labelledby="docs-demanda">
-          <DemandaDocumentos demandaId={d.id} onAlterado={historico.recarregar} />
+          <DemandaDocumentos
+            key={recarregarDocs}
+            demandaId={d.id}
+            onAlterado={historico.recarregar}
+          />
         </section>
         <section className="col-12 col-lg-7" aria-labelledby="hist-demanda">
           <div className="card card-body shadow-sm h-100">
@@ -340,6 +360,19 @@ export default function DemandaDetailPage() {
           modo={acaoAberta}
           onClose={() => setAcaoAberta(null)}
           onSucesso={aposAcao}
+        />
+      )}
+      {acaoAberta === 'MINUTA' && (
+        <MinutaVistoriaModal
+          key={d.id}
+          demanda={d}
+          onClose={() => setAcaoAberta(null)}
+          onSucesso={(m) => {
+            setAcaoAberta(null);
+            showToast({ message: m });
+            setRecarregarDocs((n) => n + 1);
+            historico.recarregar();
+          }}
         />
       )}
       {acaoAberta === 'DISTRIBUIR' && (
