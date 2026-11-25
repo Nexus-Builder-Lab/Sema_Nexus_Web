@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { sugerirTriagemStream } from '../../api/demandasApi.js';
 import { mensagemDeErroStream } from '../../api/sseClient.js';
 import { useAgenteStream } from '../../api/useAgenteStream.js';
+import AcoesSugeridas from '../../components/AcoesSugeridas.jsx';
 import ProgressoAgente from '../../components/ProgressoAgente.jsx';
 import Icon from '../../components/Icon.jsx';
 import EvidenciaEspacial from './EvidenciaEspacial.jsx';
@@ -145,6 +146,7 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
         </div>
       )}
       <EvidenciaEspacial espacial={sugestao.espacial} />
+      <AcoesSugeridas acoes={sugestao.acoesSugeridas} />
       {divergente && (
         <div className="alert alert-info small py-2 mb-2" role="note">
           O agente sugere <strong>{DECISOES[sugestao.decisao]?.toLowerCase()}</strong>. Aplicar

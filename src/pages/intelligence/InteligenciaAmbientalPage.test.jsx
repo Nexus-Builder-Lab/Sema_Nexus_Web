@@ -320,6 +320,47 @@ describe('Inteligência ambiental (mapa)', () => {
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(await screen.findByText('4 demandas no mapa')).toBeInTheDocument();
   });
+
+  describe('foco por URL (Action Card VER_NO_MAPA)', () => {
+    function comUrl(query) {
+      return render(
+        <MemoryRouter initialEntries={[`${ROTA}${query}`]}>
+          <App />
+        </MemoryRouter>,
+      );
+    }
+
+    it('desenha o anel no pane da seleção (390), sem interação', async () => {
+      const { container } = comUrl('?lat=-15.6&lon=-56.1&zoom=11');
+      await screen.findByText('4 demandas no mapa');
+      await waitFor(() =>
+        expect(container.querySelector('.leaflet-nx-selecao-pane .nx-foco-url')).toBeTruthy(),
+      );
+      expect(container.querySelector('.leaflet-nx-selecao-pane').style.zIndex).toBe('390');
+      expect(
+        container.querySelector('.nx-foco-url').classList.contains('leaflet-interactive'),
+      ).toBe(false);
+    });
+
+    it.each(['?lat=abc&lon=-56', '?lat=-15&lon=NaN', '?lat=40&lon=-56', '?lat=-15.6'])(
+      'ignora foco inválido ou fora de MT (%s) sem quebrar',
+      async (query) => {
+        const { container } = comUrl(query);
+        await screen.findByText('4 demandas no mapa');
+        expect(container.querySelector('.nx-foco-url')).toBeNull();
+      },
+    );
+
+    it('o clique num item depois da carga prevalece sobre o foco da URL (fitBounds da seleção)', async () => {
+      const user = userEvent.setup();
+      const { container } = comUrl('?lat=-15.6&lon=-56.1');
+      await screen.findByText('4 demandas no mapa');
+      await waitFor(() => expect(marcadores(container)).toHaveLength(4));
+      await user.click(marcadores(container)[0]);
+      // O foco da URL é aplicado só quando muda; a seleção continua funcionando e mostra o popup.
+      expect(await screen.findByRole('link', { name: /Abrir demanda/ })).toBeInTheDocument();
+    });
+  });
 });
 
 describe('estadoInicialDaUrl (atalho da Sentinela)', () => {

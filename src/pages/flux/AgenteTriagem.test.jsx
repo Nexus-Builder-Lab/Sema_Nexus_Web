@@ -179,4 +179,50 @@ describe('Agente de Triagem por streaming (SSE)', () => {
     await user.click(within(modal).getByRole('button', { name: 'Sugerir com o agente' }));
     expect(await within(modal).findByTestId('agente-modo')).toBeInTheDocument();
   });
+
+  it('renderiza cada Action Card uma única vez no fluxo SSE', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/demandas/:id/triagem/sugestao/stream', () => {
+        const enc = new TextEncoder();
+        const e = (n, d) =>
+          enc.encode(`event: ${n}
+data: ${JSON.stringify(d)}
+
+`);
+        return new HttpResponse(
+          new ReadableStream({
+            start(c) {
+              c.enqueue(e('inicio', { agente: 'triagem' }));
+              c.enqueue(
+                e('concluido', {
+                  modo: 'DEMONSTRATIVO',
+                  decisao: 'CLASSIFICAR',
+                  categoria: 'QUEIMADA_INCENDIO',
+                  prioridade: 'ALTA',
+                  justificativa: 'Texto.',
+                  duplicatas: [],
+                  evidencias: [],
+                  avisos: [],
+                  acoesSugeridas: [
+                    {
+                      tipo: 'ABRIR_DEMANDA',
+                      rotulo: 'Abrir demanda DEM-9',
+                      parametros: { demandaId: 9 },
+                    },
+                  ],
+                }),
+              );
+              c.close();
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    const modal = await abrirModal(user);
+    await user.click(within(modal).getByRole('button', { name: 'Sugerir com o agente' }));
+    await within(modal).findByTestId('agente-modo');
+    expect(within(modal).getAllByRole('button', { name: 'Abrir demanda DEM-9' })).toHaveLength(1);
+  });
 });

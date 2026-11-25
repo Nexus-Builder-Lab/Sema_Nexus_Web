@@ -70,3 +70,22 @@ export const PANE_INPE_AREAS = 'nx-inpe-areas';
 export const PANE_SELECAO = 'nx-selecao';
 export const COR_SELECAO_INPE = '#c2255c';
 export const COR_SELECAO_DEMANDA = '#1864ab';
+
+/** Caixa aproximada de Mato Grosso: foco vindo de URL/Action Card fora dela (ou não numérico) é ignorado. */
+export const LIMITES_MT = { latMin: -18.5, latMax: -7, lonMin: -62, lonMax: -50 };
+export const ZOOM_FOCO_MIN = 5;
+export const ZOOM_FOCO_MAX = 18;
+
+/** `{ lat, lon, zoom? }` válido dentro de MT (zoom limitado a 5..18) ou `null`. */
+export function focoValido(latBruto, lonBruto, zoomBruto) {
+  const vazio = (v) => v == null || v === '';
+  if (vazio(latBruto) || vazio(lonBruto)) return null;
+  const lat = Number(latBruto);
+  const lon = Number(lonBruto);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < LIMITES_MT.latMin || lat > LIMITES_MT.latMax) return null;
+  if (lon < LIMITES_MT.lonMin || lon > LIMITES_MT.lonMax) return null;
+  const z = vazio(zoomBruto) ? NaN : Number(zoomBruto);
+  const zoom = Number.isFinite(z) ? Math.min(ZOOM_FOCO_MAX, Math.max(ZOOM_FOCO_MIN, z)) : undefined;
+  return { lat, lon, zoom };
+}
