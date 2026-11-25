@@ -522,3 +522,9 @@
 - **Testes:** `npx vitest run --maxWorkers=3` → 51 arquivos, 377 testes, 0 falhas.
 - **API real ou mocks:** somente mocks (validação Docker a cargo do validador).
 - **Pendências:** `demandaId` do VER_NO_MAPA ainda não seleciona a demanda no mapa; revisão visual do mapa pendente.
+
+## 2026-11-24 · GH-138 · Streaming SSE dos agentes (triagem e DocIA)
+- **Status:** PR solicitado. Depende de API#135 (PR #160, main caade05).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** novo cliente `src/api/sseClient.js` (`fetch` + `ReadableStream`, JWT só no cabeçalho `Authorization`, sem `EventSource`; analisador de quadros tolerante a pedaços partidos, `:keepalive`, `data:` multilinha e JSON malformado). Falhas antes do stream (400/403/404/409/429/503 problem+json) seguem `mensagemDeErro`; 401 aciona o tratador de sessão; sem suporte ao stream (404/405/501 sem problem+json, rede, resposta não SSE, fluxo vazio) cai de forma transparente no endpoint JSON. `AgenteTriagemCard`, `AssistentePage` e `PerguntarSobreDemanda` mostram o progresso ao vivo (`ProgressoAgente`, região `role="status"` aria-live, "Iniciando…", ferramentas com rótulos em português, texto parcial, aviso de `fallback_demonstrativo`), tratam o evento `erro` e abortam (AbortController) ao desmontar, repetir ou em "Nova conversa". `openapi.json` regenerado da main da API (caade05); MSW com `respostaSse` e `handlersSse` (por padrão o stream responde 405 e os testes antigos usam o JSON).
+- **Testes:** `sseClient.test.js` (14) e +3 em `AgenteTriagem.test.jsx`, +3 em `Assistente.test.jsx`. Suíte completa: 392 testes, lint e build verdes.

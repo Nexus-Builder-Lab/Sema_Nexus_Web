@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { statusAgentes } from '../../api/agentesApi.js';
-import { perguntar } from '../../api/assistenteApi.js';
-import { mensagemDeErro } from '../../api/httpClient.js';
+import { perguntarStream } from '../../api/assistenteApi.js';
+import { mensagemDeErroStream } from '../../api/sseClient.js';
+import { useAgenteStream } from '../../api/useAgenteStream.js';
+import ProgressoAgente from '../../components/ProgressoAgente.jsx';
 import { useAuth } from '../../auth/useAuth.js';
 import Icon from '../../components/Icon.jsx';
 import RespostaDocia, { Avatar } from '../../components/RespostaDocia.jsx';
@@ -41,6 +43,7 @@ export default function AssistentePage() {
   const [agentes, setAgentes] = useState(null);
   const fim = useRef(null);
   const geracao = useRef(0);
+  const { progresso, executar, cancelar } = useAgenteStream();
 
   useEffect(() => {
     let ativo = true;
@@ -69,13 +72,15 @@ export default function AssistentePage() {
     setTexto('');
     const minha = geracao.current;
     try {
-      const r = await perguntar(p, { historico: turnosDoHistorico(conversa) });
-      if (minha !== geracao.current) return;
+      const r = await executar((opcoes) =>
+        perguntarStream(p, { historico: turnosDoHistorico(conversa), ...opcoes }),
+      );
+      if (r === undefined || minha !== geracao.current) return;
       setConversa((c) => [...c, { tipo: 'resposta', ...r }]);
     } catch (e) {
       if (minha !== geracao.current) return;
       setTexto((atual) => atual || p);
-      setErro(mensagemDeErro(e, 'Não foi possível obter a resposta.'));
+      setErro(mensagemDeErroStream(e, 'Não foi possível obter a resposta.'));
     } finally {
       if (minha === geracao.current) setEnviando(false);
     }
@@ -83,6 +88,7 @@ export default function AssistentePage() {
 
   function limpar() {
     geracao.current += 1;
+    cancelar();
     setEnviando(false);
     setConversa([]);
     setHistorico([]);
@@ -153,13 +159,15 @@ export default function AssistentePage() {
                 <RespostaDocia key={i} item={item} />
               ),
             )}
-            {enviando && (
-              <p className="text-body-secondary small" role="status">
-                {comIa
-                  ? 'O agente está buscando e lendo os documentos…'
-                  : 'Consultando documentos…'}
-              </p>
-            )}
+            <div className="text-body-secondary small mb-2">
+              <ProgressoAgente
+                progresso={progresso}
+                ativo={enviando}
+                rotulo={
+                  comIa ? 'O agente está buscando e lendo os documentos' : 'Consultando documentos'
+                }
+              />
+            </div>
             {erro && (
               <div className="alert alert-danger" role="alert">
                 {erro}
