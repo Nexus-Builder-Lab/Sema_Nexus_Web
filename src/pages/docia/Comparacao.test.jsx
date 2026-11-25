@@ -254,4 +254,47 @@ describe('Explicar impacto das diferenças', () => {
     await user.click(screen.getByRole('button', { name: /explicar impacto/i }));
     expect(await screen.findByTestId('erro-explicacao')).toHaveTextContent(detail);
   });
+
+  it('pré-preenche A e B pelos parâmetros ?a e ?b', async () => {
+    const corpos = [];
+    server.use(
+      lista(),
+      detalhes(),
+      http.post('/api/documentos/comparacao', async ({ request }) => {
+        corpos.push(await request.json());
+        return HttpResponse.json(resposta);
+      }),
+    );
+    render(
+      <MemoryRouter initialEntries={['/docia/comparacao?a=2&b=1']}>
+        <App />
+      </MemoryRouter>,
+    );
+    await screen.findByTestId('resultado');
+    expect(corpos[0]).toEqual({ aId: 2, bId: 1 });
+    expect(screen.queryByTestId('aviso-parametros')).toBeNull();
+  });
+
+  it.each(['?a=999&b=1', '?a=x&b=2', '?a=-1&b=1'])(
+    'parâmetros inválidos (%s) caem no padrão com aviso',
+    async (query) => {
+      const corpos = [];
+      server.use(
+        lista(),
+        detalhes(),
+        http.post('/api/documentos/comparacao', async ({ request }) => {
+          corpos.push(await request.json());
+          return HttpResponse.json(resposta);
+        }),
+      );
+      render(
+        <MemoryRouter initialEntries={[`/docia/comparacao${query}`]}>
+          <App />
+        </MemoryRouter>,
+      );
+      expect(await screen.findByTestId('aviso-parametros')).toBeInTheDocument();
+      await screen.findByTestId('resultado');
+      expect(corpos[0]).toEqual({ aId: 1, bId: 2 });
+    },
+  );
 });

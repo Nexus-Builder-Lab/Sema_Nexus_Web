@@ -520,6 +520,22 @@
 - **Decisões:** a pesquisa ranqueada não tem paginação nem ordenação por coluna (a ordem é a da API). `AVISO_BUSCA` deixou de dizer "não é busca semântica", pois a busca híbrida pode estar ativa.
 - **Testes:** `Documentos.test.jsx` (lexical, híbrida com e sem similaridade, termo de 1 letra, estado vazio) e `Assistente.test.jsx` (+2: modo híbrido com explicação e similaridade; modo lexical sem similaridade). Suíte completa local (após merge de origin/main): 51 arquivos, 399 testes passando; lint sem erros; build OK. Validação com a API real: a cargo do validador.
 
+## 2026-11-24 23:45 — GH-139 · Action Cards com confirmação humana
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** Claude Code (implementador frontend)
+- **O que foi feito:** componente `AcoesSugeridas` renderiza `acoesSugeridas` (API#136) na resposta do Assistente DocIA (`RespostaDocia`) e no card do Agente de Triagem. ABRIR_COMPARACAO abre `/docia/comparacao?a=&b=` (página lê os parâmetros); ABRIR_DEMANDA abre o detalhe; VER_NO_MAPA abre `/intelligence/inteligencia-ambiental?lat&lon&zoom` (mapa centraliza e marca o ponto); SUGERIR_VINCULO_DEMANDA abre diálogo "Vincular documento X à demanda Y?" e só chama `POST /api/demandas/{id}/documentos` após confirmar (409 e 403 tratados). Tipo desconhecido ou parâmetro inválido é ignorado. `src/mocks/openapi.json` regenerado da API main 8f01b4c.
+- **Decisões técnicas:** navegação nunca grava; parâmetros validados no cliente além da validação da API; sem JWT em URL.
+- **Arquivos principais:** `src/components/AcoesSugeridas.jsx` (+ teste), `RespostaDocia.jsx`, `AgenteTriagemCard.jsx`, `ComparacaoPage.jsx`, `InteligenciaAmbientalPage.jsx`, `MapaMT.jsx`.
+- **Testes:** `npx vitest run --maxWorkers=3` → 51 arquivos, 377 testes, 0 falhas.
+- **API real ou mocks:** somente mocks (validação Docker a cargo do validador).
+- **Pendências:** `demandaId` do VER_NO_MAPA ainda não seleciona a demanda no mapa; revisão visual do mapa pendente.
+
+## 2026-11-24 · GH-141 · Geração e revisão da minuta de vistoria
+- **Status:** PR solicitado. Depende de API#137 (PR #159, main 658f131).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** botão "Gerar minuta de relatório" em `DemandaDetailPage` (ADMIN/GESTOR/ANALISTA e FISCAL designado; oculto para CONSULTA) abre `MinutaVistoriaModal`: chama `POST /api/demandas/{id}/minuta-vistoria` (timeout 120 s, aviso de 30–50 s), mostra o aviso "MINUTA GERADA PARA REVISÃO HUMANA — AMBIENTE DEMONSTRATIVO", selo do modo e avisos; edição em textarea e pré-visualização segura (`MarkdownSeguro`, sem HTML bruto, links como texto). "Enviar como documento" leva a uma confirmação final (título `Minuta de relatório — DEM-AAAA/NNNN`, categoria Relatório técnico, data de hoje) e só então faz upload `.md` + vínculo à demanda; nunca salva sozinho. 403/404/429 tratados; respostas antigas descartadas. `openapi.json` regenerado da API (658f131); handler/fixture MSW.
+- **Testes:** `MinutaVistoria.test.jsx` (8). Suíte completa: 402 testes, 0 falhas (após merge da main); lint e build verdes.
+
 ## 2026-11-24 · GH-138 · Streaming SSE dos agentes (triagem e DocIA)
 - **Status:** PR solicitado. Depende de API#135 (PR #160, main caade05).
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.

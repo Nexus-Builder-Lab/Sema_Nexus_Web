@@ -93,6 +93,27 @@ function AjustarSelecao({ geometria }) {
 }
 
 /**
+ * Foco vindo de um Action Card (`?lat&lon&zoom`): centraliza o mapa no ponto e o marca com um anel (pane da seleção,
+ * não interativo). Aplica-se quando o foco muda (carga da página); depois, clicar num item (AjustarSelecao) prevalece.
+ */
+function FocarPonto({ foco }) {
+  const mapa = useMap();
+  useEffect(() => {
+    mapa.setView([foco.lat, foco.lon], foco.zoom ?? 12);
+  }, [mapa, foco]);
+  return (
+    <CircleMarker
+      center={[foco.lat, foco.lon]}
+      radius={13}
+      pane={PANE_SELECAO}
+      interactive={false}
+      className="nx-selecao-ponto nx-foco-url"
+      pathOptions={{ color: '#d9480f', weight: 3, dashArray: '4 3', fill: false }}
+    />
+  );
+}
+
+/**
  * Destaque da seleção (área afetada): polígono (DETER ou demanda) e anel no ponto. Fica no pane PANE_SELECAO (390),
  * abaixo do overlayPane, e não é interativo: nunca cobre nem rouba o clique dos marcadores (Web#109).
  */
@@ -145,6 +166,7 @@ export default function MapaMT({
   fundo = null,
   selecao = null,
   onSelecionarDemanda,
+  foco = null,
   children,
 }) {
   const uf = useGeoJson('/geo/mt-uf.geojson');
@@ -202,6 +224,7 @@ export default function MapaMT({
       <Pane name={PANE_INPE_AREAS} style={{ zIndex: 380 }} />
       {/* Área afetada do item selecionado (polígono DETER/demanda e anel do ponto), sempre abaixo dos marcadores. */}
       <Pane name={PANE_SELECAO} style={{ zIndex: 390 }}>
+        {foco && <FocarPonto foco={foco} />}
         <DestaqueSelecao selecao={selecao} />
       </Pane>
       <Pane name={PANE_CONCENTRACAO} style={{ zIndex: 370 }}>
