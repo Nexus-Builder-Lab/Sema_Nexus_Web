@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from './Icon.jsx';
+import { EXPLICACAO_SIMILARIDADE, SeloRecuperacao, SeloSimilaridade } from './RecuperacaoDocia.jsx';
 
 const SEM_INFORMACAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
 
@@ -36,6 +37,7 @@ export default function Resposta({ item }) {
             {item.agente === 'CLAUDE' ? 'Claude' : 'IA local'} · {item.modelo}
           </span>
         )}
+        <SeloRecuperacao recuperacao={item.recuperacao} className="mb-2" />
         <p className={`mb-2 ${semInfo ? 'text-body-secondary fst-italic' : ''}`}>{item.resposta}</p>
         {item.referencias?.length > 0 && (
           <>
@@ -54,6 +56,7 @@ export default function Resposta({ item }) {
                       Aderência textual: {r.aderenciaTextual}
                     </span>
                   )}
+                  <SeloSimilaridade valor={r.similaridadeSemantica} idExplicacao={idExplicacao} />
                   <blockquote className="small text-body-secondary border-start ps-2 mb-0">
                     {r.trecho}
                   </blockquote>
@@ -67,6 +70,8 @@ export default function Resposta({ item }) {
                 data-testid="explicacao-aderencia"
               >
                 {EXPLICACAO_ADERENCIA}
+                {item.referencias.some((r) => r.similaridadeSemantica != null) &&
+                  ` ${EXPLICACAO_SIMILARIDADE}`}
               </p>
             )}
           </>

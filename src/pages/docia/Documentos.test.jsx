@@ -42,18 +42,25 @@ function abrir(path) {
 describe('Biblioteca de documentos', () => {
   beforeEach(() => iniciarSessao());
 
-  it('lista, explica que a busca é textual e envia a pesquisa e os filtros', async () => {
+  it('lista, explica a pesquisa e envia a pesquisa ranqueada e os filtros', async () => {
     const user = userEvent.setup();
-    const consultas = [];
+    const buscas = [];
     server.use(
-      http.get('/api/documentos', ({ request }) => {
-        consultas.push(Object.fromEntries(new URL(request.url).searchParams));
-        return HttpResponse.json(pagina([A, B]));
+      http.get('/api/documentos', () => HttpResponse.json(pagina([A, B]))),
+      http.get('/api/documentos/busca', ({ request }) => {
+        const q = new URL(request.url).searchParams.get('q');
+        buscas.push(q);
+        return HttpResponse.json({
+          consulta: q,
+          recuperacao: 'LEXICAL',
+          resultados: [{ documento: A, trecho: 'Vistoria realizada.', aderenciaTextual: 'alta' }],
+        });
       }),
     );
     abrir('/docia/documentos');
     expect(await screen.findByRole('link', { name: A.titulo })).toBeVisible();
-    expect(screen.getByText(/A pesquisa é textual/)).toBeVisible();
+    expect(screen.getByText(/A pesquisa procura o trecho/)).toBeVisible();
+    expect(screen.queryByTestId('recuperacao')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Todas (2)' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Relatório técnico (2)' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Cadastrar documento' })).toBeVisible();
@@ -61,15 +68,75 @@ describe('Biblioteca de documentos', () => {
     await user.type(screen.getByLabelText('Pesquisar nos documentos'), 'vistoria');
     await user.type(screen.getByLabelText('Categoria'), 'Relatório');
     await user.click(screen.getByRole('button', { name: 'Filtrar' }));
-    await waitFor(() =>
-      expect(consultas.at(-1)).toMatchObject({ q: 'vistoria', categoria: 'Relatório' }),
-    );
+    await waitFor(() => expect(buscas.at(-1)).toBe('vistoria'));
+    expect(await screen.findByTestId('recuperacao')).toHaveTextContent('Busca: por palavras');
+    expect(screen.getByText('Vistoria realizada.')).toBeVisible();
   });
 
-  it('mostra estado vazio com filtro e erro com nova tentativa', async () => {
-    server.use(http.get('/api/documentos', () => HttpResponse.json(pagina([]))));
+  it('mostra estado vazio com filtro', async () => {
+    server.use(
+      http.get('/api/documentos/busca', () =>
+        HttpResponse.json({ consulta: 'nada', recuperacao: 'LEXICAL', resultados: [] }),
+      ),
+    );
     abrir('/docia/documentos?q=nada');
     expect(await screen.findByText('Nenhum documento encontrado')).toBeVisible();
+  });
+
+  it('pesquisa híbrida mostra o modo, o trecho e a similaridade só quando informada', async () => {
+    server.use(
+      http.get('/api/documentos/busca', () =>
+        HttpResponse.json({
+          consulta: 'vistoria',
+          recuperacao: 'HIBRIDA',
+          resultados: [
+            {
+              documento: A,
+              trecho: 'Trecho da vistoria.',
+              aderenciaTextual: 'alta',
+              similaridadeSemantica: 0.712,
+            },
+            {
+              documento: B,
+              trecho: 'Outro trecho.',
+              aderenciaTextual: null,
+              similaridadeSemantica: null,
+            },
+          ],
+        }),
+      ),
+    );
+    abrir('/docia/documentos?q=vistoria');
+    expect(await screen.findByRole('link', { name: A.titulo })).toBeVisible();
+    const selo = screen.getByTestId('recuperacao');
+    expect(selo).toHaveTextContent('Busca: híbrida (palavras + semântica)');
+    const explicacao = document.getElementById(selo.getAttribute('aria-describedby'));
+    expect(explicacao).toHaveTextContent(/NÃO são a probabilidade de a resposta estar correta/);
+    expect(screen.getByText('Trecho da vistoria.')).toBeVisible();
+    expect(screen.getByTestId('aderencia-textual')).toHaveTextContent('Aderência textual: alta');
+    const similaridade = screen.getAllByTestId('similaridade-semantica');
+    expect(similaridade).toHaveLength(1);
+    expect(similaridade[0]).toHaveTextContent('Similaridade semântica: 0,71');
+    expect(similaridade[0]).toHaveAttribute('aria-describedby', explicacao.id);
+  });
+
+  it('termo de uma letra não usa a pesquisa ranqueada (mantém a listagem)', async () => {
+    const chamadas = { busca: 0, lista: 0 };
+    server.use(
+      http.get('/api/documentos/busca', () => {
+        chamadas.busca += 1;
+        return HttpResponse.json({ consulta: 'a', recuperacao: 'LEXICAL', resultados: [] });
+      }),
+      http.get('/api/documentos', () => {
+        chamadas.lista += 1;
+        return HttpResponse.json(pagina([A]));
+      }),
+    );
+    abrir('/docia/documentos?q=a');
+    expect(await screen.findByRole('link', { name: A.titulo })).toBeVisible();
+    expect(chamadas.lista).toBeGreaterThan(0);
+    expect(chamadas.busca).toBe(0);
+    expect(screen.queryByTestId('recuperacao')).not.toBeInTheDocument();
   });
 });
 

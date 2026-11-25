@@ -437,6 +437,30 @@ const fluxo = [
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
 export const handlers = [
+  // Recuperação da DocIA (Web#145): nos mocks, como na API com EMBEDDINGS_ATIVO=false (padrão), a busca é
+  // só lexical; a similaridade semântica fica nula. Os exemplos do contrato trazem HIBRIDA, por isso o ajuste.
+  http.post('/api/docia/perguntas', ({ request }) => {
+    const caminho = '/api/docia/perguntas';
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const base = exemploDoSchema('RespostaAssistente');
+    return HttpResponse.json({
+      ...base,
+      recuperacao: 'LEXICAL',
+      referencias: (base.referencias ?? []).map((r) => ({ ...r, similaridadeSemantica: null })),
+    });
+  }),
+  http.get('/api/documentos/busca', ({ request }) => {
+    const caminho = '/api/documentos/busca';
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const consulta = new URL(request.url).searchParams.get('q') ?? '';
+    const base = exemploDoSchema('PesquisaDocumentos');
+    return HttpResponse.json({
+      ...base,
+      consulta,
+      recuperacao: 'LEXICAL',
+      resultados: (base.resultados ?? []).map((item) => ({ ...item, similaridadeSemantica: null })),
+    });
+  }),
   // Pré-análise de documento (API#140): sugere metadados, não grava.
   http.post('/api/documentos/pre-analise', ({ request }) =>
     temToken(request)
