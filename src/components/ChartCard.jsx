@@ -20,7 +20,10 @@ export default function ChartCard({
   else if (empty) body = <EmptyState title="Sem dados" message={emptyMessage} />;
 
   return (
-    <section className="card h-100 shadow-sm" aria-label={typeof title === 'string' ? title : undefined}>
+    <section
+      className="card h-100 shadow-sm"
+      aria-label={typeof title === 'string' ? title : undefined}
+    >
       <div className="card-header bg-white d-flex justify-content-between align-items-start gap-2">
         <div>
           <h2 className="h6 mb-0">{title}</h2>

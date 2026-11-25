@@ -73,7 +73,11 @@ describe('Jornada dos fluxos críticos', () => {
     // 4. Upload de documento vinculado à demanda (corpo multipart lido como texto).
     // Navega sem recarregar (a sessão fica em memória): usa o histórico do router.
     await user.click(screen.getByRole('link', { name: /Documentos/ }));
-    await user.click(await screen.findByRole('link', { name: /Enviar documento|Novo documento|Cadastrar documento/ }));
+    await user.click(
+      await screen.findByRole('link', {
+        name: /Enviar documento|Novo documento|Cadastrar documento/,
+      }),
+    );
     await screen.findByRole('form', { name: 'Dados do documento' });
     await user.upload(
       screen.getByLabelText(/^Arquivo/),

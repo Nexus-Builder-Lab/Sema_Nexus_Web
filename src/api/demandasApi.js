@@ -1,3 +1,4 @@
+import { postSseComAlternativa } from './sseClient.js';
 import httpClient from './httpClient.js';
 
 /**
@@ -92,11 +93,24 @@ export async function devolverDemanda(id, corpo) {
  * devolve decisão, categoria, prioridade, núcleo, justificativa, duplicatas, evidências e avisos.
  * O agente pode levar alguns segundos (IA local); na primeira chamada, até ~1 minuto.
  */
-export async function sugerirTriagem(id) {
+export async function sugerirTriagem(id, { signal } = {}) {
   const { data } = await httpClient.post(`/demandas/${id}/triagem/sugestao`, null, {
     timeout: 120_000,
+    signal,
   });
   return data;
+}
+
+/**
+ * Mesma sugestão por SSE (API#135, `/triagem/sugestao/stream`): `onEvento(nome, dados)` recebe o progresso
+ * e a função resolve com o `concluido`. Sem suporte ao stream, usa o endpoint JSON de forma transparente.
+ */
+export function sugerirTriagemStream(id, { signal, onEvento } = {}) {
+  return postSseComAlternativa(`/demandas/${id}/triagem/sugestao/stream`, null, {
+    signal,
+    onEvento,
+    alternativa: () => sugerirTriagem(id, { signal }),
+  });
 }
 
 /**

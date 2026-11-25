@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { perguntar } from '../../api/assistenteApi.js';
+import { perguntarStream } from '../../api/assistenteApi.js';
 import { listarDocumentosDaDemanda } from '../../api/documentosApi.js';
-import { mensagemDeErro } from '../../api/httpClient.js';
+import { mensagemDeErroStream } from '../../api/sseClient.js';
+import { useAgenteStream } from '../../api/useAgenteStream.js';
+import ProgressoAgente from '../../components/ProgressoAgente.jsx';
 import Icon from '../../components/Icon.jsx';
 import RespostaDocia from '../../components/RespostaDocia.jsx';
 
@@ -11,7 +13,7 @@ function mensagemDoErro(e) {
   const status = e?.response?.status;
   if (status === 403) return 'Você não tem acesso a esta demanda.';
   if (status === 404) return 'Demanda não encontrada.';
-  return mensagemDeErro(e, 'Não foi possível obter a resposta.');
+  return mensagemDeErroStream(e, 'Não foi possível obter a resposta.');
 }
 
 /** Painel "Perguntar ao DocIA sobre esta demanda": a API restringe a busca aos documentos vinculados. */
@@ -22,10 +24,12 @@ export default function PerguntarSobreDemanda({ demandaId }) {
   const [erro, setErro] = useState(null);
   const [semDocumentos, setSemDocumentos] = useState(false);
   const fim = useRef(null);
+  const { progresso, executar, cancelar } = useAgenteStream();
   const atual = useRef(demandaId);
   useEffect(() => {
     atual.current = demandaId;
-  }, [demandaId]);
+    return cancelar;
+  }, [demandaId, cancelar]);
 
   useEffect(() => {
     let ativo = true;
@@ -48,8 +52,10 @@ export default function PerguntarSobreDemanda({ demandaId }) {
     setErro(null);
     setEnviando(true);
     try {
-      const r = await perguntar(p, { demandaId: Number(demandaId) });
-      if (atual.current !== demandaId) return;
+      const r = await executar((opcoes) =>
+        perguntarStream(p, { demandaId: Number(demandaId), ...opcoes }),
+      );
+      if (r === undefined || atual.current !== demandaId) return;
       setRespostas((rs) => [...rs, { pergunta: p, ...r }]);
       setTexto('');
     } catch (err) {
@@ -85,10 +91,12 @@ export default function PerguntarSobreDemanda({ demandaId }) {
           </div>
         ))}
         {enviando && (
-          <p className="text-body-secondary small mb-0" role="status">
-            Consultando os documentos da demanda… a primeira resposta pode levar de 30 a 50
-            segundos.
-          </p>
+          <div className="text-body-secondary small">
+            <ProgressoAgente progresso={progresso} rotulo="Consultando os documentos da demanda" />
+            <span className="d-block mt-1">
+              A primeira resposta pode levar de 30 a 50 segundos.
+            </span>
+          </div>
         )}
         {erro && (
           <div className="alert alert-danger mb-0" role="alert">

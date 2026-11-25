@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
 import App from '../../App.jsx';
+import { handlersSse } from '../../mocks/handlers.js';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao } from '../../test/auth.js';
 
@@ -260,5 +261,67 @@ describe('Assistente DocIA — robustez do contexto', () => {
     await user.keyboard('{Enter}');
     await screen.findByText('R-P3');
     expect(screen.queryByText('R-P2')).not.toBeInTheDocument();
+  });
+});
+
+describe('Assistente DocIA por streaming (SSE)', () => {
+  beforeEach(() => {
+    iniciarSessao();
+    server.use(...handlersSse);
+  });
+
+  it('mostra as ferramentas e entrega a resposta do concluido', async () => {
+    const user = userEvent.setup();
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Quais laudos existem?');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+    expect(
+      await screen.findByText(/Resposta demonstrativa para: Quais laudos existem\?/),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId('progresso-agente')).not.toBeInTheDocument();
+  });
+
+  it('429 antes do stream mostra a espera e Nova conversa cancela a execução', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas/stream', () =>
+        HttpResponse.json(
+          { retryAfterSegundos: 5 },
+          { status: 429, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'oi');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/5 s/);
+  });
+
+  it('Nova conversa aborta a requisição em andamento', async () => {
+    const user = userEvent.setup();
+    let abortou = false;
+    server.use(
+      http.post('/api/docia/perguntas/stream', ({ request }) => {
+        request.signal.addEventListener('abort', () => {
+          abortou = true;
+        });
+        const enc = new TextEncoder();
+        return new HttpResponse(
+          new ReadableStream({
+            start(c) {
+              c.enqueue(enc.encode('event: inicio\ndata: {"agente":"docia"}\n\n'));
+            },
+          }),
+          { headers: { 'Content-Type': 'text/event-stream' } },
+        );
+      }),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'oi');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+    expect(await screen.findByTestId('progresso-agente')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
+    await waitFor(() => expect(abortou).toBe(true));
+    expect(screen.queryByTestId('progresso-agente')).not.toBeInTheDocument();
   });
 });

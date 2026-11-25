@@ -23,6 +23,11 @@ export function setUnauthorizedHandler(handler) {
   };
 }
 
+/** Para clientes que não passam pelo Axios (SSE via fetch): trata um 401 como o interceptor abaixo. */
+export function notificarNaoAutorizado() {
+  if (getToken()) unauthorizedHandler?.();
+}
+
 httpClient.interceptors.request.use((config) => {
   const token = getToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;

@@ -103,7 +103,10 @@ describe('limite de requisições (429)', () => {
       http.post('/api/ia/teste', () =>
         HttpResponse.json(
           { status: 429, retryAfterSegundos: 42, categoria: 'IA' },
-          { status: 429, headers: { 'Retry-After': '99', 'Content-Type': 'application/problem+json' } },
+          {
+            status: 429,
+            headers: { 'Retry-After': '99', 'Content-Type': 'application/problem+json' },
+          },
         ),
       ),
     );
@@ -114,7 +117,9 @@ describe('limite de requisições (429)', () => {
 
   it('usa o cabeçalho Retry-After quando o corpo não traz o valor', async () => {
     server.use(
-      http.get('/api/ping', () => HttpResponse.json({}, { status: 429, headers: { 'Retry-After': '7' } })),
+      http.get('/api/ping', () =>
+        HttpResponse.json({}, { status: 429, headers: { 'Retry-After': '7' } }),
+      ),
     );
     const erro = await httpClient.get('/ping').catch((e) => e);
     expect(segundosDeEspera(erro)).toBe(7);
@@ -129,7 +134,9 @@ describe('limite de requisições (429)', () => {
   });
 
   it('não devolve espera para outros status nem para erros sem resposta', () => {
-    expect(segundosDeEspera({ response: { status: 500, data: { retryAfterSegundos: 5 } } })).toBeNull();
+    expect(
+      segundosDeEspera({ response: { status: 500, data: { retryAfterSegundos: 5 } } }),
+    ).toBeNull();
     expect(segundosDeEspera(new Error('Network Error'))).toBeNull();
   });
 
@@ -137,7 +144,9 @@ describe('limite de requisições (429)', () => {
     const aoExpirar = vi.fn();
     const remover = setUnauthorizedHandler(aoExpirar);
     server.use(
-      http.post('/api/auth/login', () => HttpResponse.json({ retryAfterSegundos: 30 }, { status: 429 })),
+      http.post('/api/auth/login', () =>
+        HttpResponse.json({ retryAfterSegundos: 30 }, { status: 429 }),
+      ),
     );
     saveSession({ token: 'valido', usuario: {} });
     await expect(httpClient.post('/auth/login', {})).rejects.toMatchObject({
@@ -153,7 +162,9 @@ describe('429 em rota protegida', () => {
     const aoExpirar = vi.fn();
     const remover = setUnauthorizedHandler(aoExpirar);
     server.use(
-      http.get('/api/demandas', () => HttpResponse.json({ retryAfterSegundos: 9 }, { status: 429 })),
+      http.get('/api/demandas', () =>
+        HttpResponse.json({ retryAfterSegundos: 9 }, { status: 429 }),
+      ),
     );
     saveSession({ token: 'valido', usuario: {} });
     const erro = await httpClient.get('/demandas').catch((e) => e);
