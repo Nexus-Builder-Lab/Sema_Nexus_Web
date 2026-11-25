@@ -5,9 +5,7 @@
  */
 export function rotuloCurtoSetor(nome) {
   if (!nome) return '';
-  const limpo = String(nome)
-    .replace(/\s*\((fictício|demonstração|demonstrativo)\)\s*$/i, '')
-    .trim();
+  const limpo = String(nome).replace(/\s*\((fictício|demonstração|demonstrativo)\)\s*$/i, '').trim();
   const nucleo = limpo.match(/^N[úu]cleo\s+Regional\b.*?[—–-]\s*(.+)$/i);
   if (nucleo) return `NR ${nucleo[1].trim()}`;
   return limpo.length > 22 ? `${limpo.slice(0, 21).trimEnd()}…` : limpo;

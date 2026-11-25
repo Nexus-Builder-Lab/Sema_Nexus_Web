@@ -37,16 +37,10 @@ describe('ProdutividadePage', () => {
     expect(valorDoCard('Tempo médio de conclusão')).toBe('12,5 d');
     expect(valorDoCard('Concluídas no prazo')).toBe('80%');
     expect(valorDoCard('Atrasadas (ativas)')).toBe('2');
-    expect(
-      screen.getByRole('heading', { name: 'Demandas por setor e situação' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: /Tempo médio de conclusão por setor/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Demandas por setor e situação' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Tempo médio de conclusão por setor/ })).toBeInTheDocument();
     expect(screen.getByText('Demandas recebidas × concluídas por mês')).toBeInTheDocument();
-    const linhas = within(
-      screen.getByRole('region', { name: 'Desempenho por responsável' }),
-    ).getAllByRole('row');
+    const linhas = within(screen.getByRole('region', { name: 'Desempenho por responsável' })).getAllByRole('row');
     expect(linhas[1]).toHaveTextContent('Fiscal Demo B');
     expect(linhas[1]).toHaveTextContent('—');
     expect(screen.getAllByTestId('demo-seal').length).toBeGreaterThan(0);
@@ -74,11 +68,7 @@ describe('ProdutividadePage', () => {
       http.get('/api/flux/produtividade', () =>
         HttpResponse.json({
           ...produtividadeMock(),
-          kpis: {
-            ...produtividadeMock().kpis,
-            percentualConclusao: null,
-            tempoMedioConclusaoDias: null,
-          },
+          kpis: { ...produtividadeMock().kpis, percentualConclusao: null, tempoMedioConclusaoDias: null },
           porSetorSituacao: [],
           historicoMensal: [],
           porResponsavel: [],
@@ -93,17 +83,13 @@ describe('ProdutividadePage', () => {
   it('mostra erro da API', async () => {
     server.use(http.get('/api/flux/produtividade', () => HttpResponse.json({}, { status: 500 })));
     abrir();
-    expect(
-      await screen.findByText('Não foi possível carregar a produtividade'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Não foi possível carregar a produtividade')).toBeInTheDocument();
   });
 
   it('gera CSV com setores e responsáveis', () => {
     const csv = gerarCsvProdutividade(produtividadeMock());
     const linhas = csv.split('\r\n');
-    expect(linhas[0]).toBe(
-      'Nível;Nome;Total;Concluídas;Ativas;Atrasadas;Tempo médio (dias);% conclusão',
-    );
+    expect(linhas[0]).toBe('Nível;Nome;Total;Concluídas;Ativas;Atrasadas;Tempo médio (dias);% conclusão');
     expect(linhas[1]).toBe('Setor;Fiscalização Ambiental;12;4;8;2;14,2;33%');
     expect(linhas).toContain('Responsável;Fiscal Demo A;5;2;3;1;11,5;40%');
   });

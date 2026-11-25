@@ -46,10 +46,7 @@ export default function MapFilters({
         vazio="Todos"
         valor={valores.municipioId}
         onChange={set('municipioId')}
-        opcoes={municipiosDoBioma(municipios, valores.bioma).map((m) => ({
-          valor: m.id,
-          rotulo: m.nome,
-        }))}
+        opcoes={municipiosDoBioma(municipios, valores.bioma).map((m) => ({ valor: m.id, rotulo: m.nome }))}
       />
       <Selecao
         id={`${id}-bio`}
