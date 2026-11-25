@@ -301,73 +301,12 @@ const fluxo = [
     acaoDeFluxo('PENDENTE', (demanda) => iniciarTriagemMock(demanda)),
   ),
   // Agente de Triagem (Issue API#107): sugestão sem gravar nada; 409 fora de Pendente/Em triagem.
-  http.post('/api/demandas/:id/triagem/sugestao', ({ request, params }) => {
-    const caminho = `/api/demandas/${params.id}`;
-    if (!temToken(request)) return naoAutenticado(caminho);
-    const demanda = buscarDemanda(params.id);
-    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
-    if (!['PENDENTE', 'EM_TRIAGEM'].includes(demanda.status)) {
-      return conflito(
-        params.id,
-        'A sugestão de triagem só se aplica a demandas Pendentes ou Em triagem.',
-      );
-    }
-    return HttpResponse.json({
-      modo: 'LOCAL',
-      modelo: 'qwen3:4b-instruct',
-      decisao: 'CLASSIFICAR',
-      categoria: 'QUEIMADA_INCENDIO',
-      prioridade: 'ALTA',
-      nucleo: { sigla: 'NR-CBA', nome: 'Núcleo Regional de Cuiabá' },
-      justificativa:
-        'Relato de queimada em vegetação nativa. Há muitos focos de calor do INPE no município.',
-      duplicatas: [
-        {
-          id: 3,
-          numero: 'DEM-2026/0003',
-          titulo: 'Fumaça na MT-251',
-          status: 'PENDENTE',
-          dataRecebimento: '2026-11-10',
-          distanciaKm: 2.4,
-        },
-      ],
-      espacial: {
-        referencia: 'COORDENADA',
-        latitude: -15.6,
-        longitude: -56.1,
-        raioKm: 10,
-        inpe: {
-          focosNoRaio: 7,
-          focoMaisProximoKm: 1.3,
-          alertasDeterNoRaio: 2,
-          dentroDePoligonoDeter: true,
-          menorDistanciaDeterKm: 0,
-          focosMunicipio: 42,
-          alertasDeterMunicipio: 3,
-          periodoDias: 30,
-          truncado: false,
-        },
-        demandasProximas: [
-          {
-            id: 3,
-            numero: 'DEM-2026/0003',
-            titulo: 'Fumaça na MT-251',
-            status: 'PENDENTE',
-            categoria: 'QUEIMADA_INCENDIO',
-            municipio: 'Cuiabá',
-            distanciaKm: 2.4,
-          },
-        ],
-        documentos: [{ id: 7, titulo: 'Laudo de queimada 2025', motivo: 'Mesmo município' }],
-      },
-      evidencias: [
-        `Leu a demanda ${demanda.numero}.`,
-        'Buscou demandas semelhantes: 0 encontrada(s).',
-        'Consultou o INPE no município: 42 foco(s) de calor e 3 alerta(s) de desmatamento.',
-      ],
-      avisos: [],
-    });
-  }),
+  http.post('/api/demandas/:id/triagem/sugestao', sugerirTriagemMock),
+  // Streaming SSE não é simulado por padrão (405 → o cliente usa o endpoint JSON); veja `handlersSse`.
+  http.post(
+    '/api/demandas/:id/triagem/sugestao/stream',
+    () => new HttpResponse(null, { status: 405 }),
+  ),
   http.post(
     '/api/demandas/:id/triagem',
     acaoDeFluxo('EM_TRIAGEM', decidirTriagemMock, validarTriagemMock),
@@ -437,7 +376,91 @@ const fluxo = [
 ];
 
 // Handlers específicos primeiro: o MSW usa o primeiro que casar.
+function sugerirTriagemMock({ request, params }) {
+  const caminho = `/api/demandas/${params.id}`;
+  if (!temToken(request)) return naoAutenticado(caminho);
+  const demanda = buscarDemanda(params.id);
+  if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+  if (!['PENDENTE', 'EM_TRIAGEM'].includes(demanda.status)) {
+    return conflito(
+      params.id,
+      'A sugestão de triagem só se aplica a demandas Pendentes ou Em triagem.',
+    );
+  }
+  return HttpResponse.json({
+    modo: 'LOCAL',
+    modelo: 'qwen3:4b-instruct',
+    decisao: 'CLASSIFICAR',
+    categoria: 'QUEIMADA_INCENDIO',
+    prioridade: 'ALTA',
+    nucleo: { sigla: 'NR-CBA', nome: 'Núcleo Regional de Cuiabá' },
+    justificativa:
+      'Relato de queimada em vegetação nativa. Há muitos focos de calor do INPE no município.',
+    duplicatas: [
+      {
+        id: 3,
+        numero: 'DEM-2026/0003',
+        titulo: 'Fumaça na MT-251',
+        status: 'PENDENTE',
+        dataRecebimento: '2026-11-10',
+        distanciaKm: 2.4,
+      },
+    ],
+    espacial: {
+      referencia: 'COORDENADA',
+      latitude: -15.6,
+      longitude: -56.1,
+      raioKm: 10,
+      inpe: {
+        focosNoRaio: 7,
+        focoMaisProximoKm: 1.3,
+        alertasDeterNoRaio: 2,
+        dentroDePoligonoDeter: true,
+        menorDistanciaDeterKm: 0,
+        focosMunicipio: 42,
+        alertasDeterMunicipio: 3,
+        periodoDias: 30,
+        truncado: false,
+      },
+      demandasProximas: [
+        {
+          id: 3,
+          numero: 'DEM-2026/0003',
+          titulo: 'Fumaça na MT-251',
+          status: 'PENDENTE',
+          categoria: 'QUEIMADA_INCENDIO',
+          municipio: 'Cuiabá',
+          distanciaKm: 2.4,
+        },
+      ],
+      documentos: [{ id: 7, titulo: 'Laudo de queimada 2025', motivo: 'Mesmo município' }],
+    },
+    evidencias: [
+      `Leu a demanda ${demanda.numero}.`,
+      'Buscou demandas semelhantes: 0 encontrada(s).',
+      'Consultou o INPE no município: 42 foco(s) de calor e 3 alerta(s) de desmatamento.',
+    ],
+    avisos: [],
+  });
+}
+
+/** Resposta `text/event-stream` (ReadableStream) com os eventos `[nome, dados]`, para os testes do SSE. */
+export function respostaSse(eventos, { comentario = ':keepalive' } = {}) {
+  const enc = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(enc.encode(`${comentario}\n\n`));
+      for (const [nome, dados] of eventos) {
+        controller.enqueue(enc.encode(`event: ${nome}\ndata: ${JSON.stringify(dados)}\n\n`));
+      }
+      controller.close();
+    },
+  });
+  return new HttpResponse(stream, { headers: { 'Content-Type': 'text/event-stream' } });
+}
+
 export const handlers = [
+  http.post('/api/docia/perguntas/stream', () => new HttpResponse(null, { status: 405 })),
   // Pré-análise de documento (API#140): sugere metadados, não grava.
   http.post('/api/documentos/pre-analise', ({ request }) =>
     temToken(request)
@@ -490,4 +513,47 @@ export const handlers = [
   ...fluxo,
   ...semRespostaNoContrato,
   ...criarHandlersDoContrato(),
+];
+
+/** Handlers de streaming SSE (ReadableStream) para os testes: `server.use(...handlersSse)`. */
+export const handlersSse = [
+  // Assistente DocIA por SSE (API#135).
+  http.post('/api/docia/perguntas/stream', async ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/docia/perguntas/stream');
+    const { pergunta } = await request.json();
+    const resposta = {
+      resposta: `Resposta demonstrativa para: ${pergunta}`,
+      modo: 'Modo demonstrativo',
+      referencias: [],
+      agente: 'DEMONSTRATIVO',
+      modelo: null,
+      passos: [],
+    };
+    return respostaSse([
+      ['inicio', { agente: 'docia' }],
+      ['ferramenta_iniciada', { ferramenta: 'buscar_documentos', ordem: 1 }],
+      [
+        'ferramenta_concluida',
+        { ferramenta: 'buscar_documentos', ordem: 1, resumo: '0 documento(s).', erro: false },
+      ],
+      ['delta_texto', { texto: resposta.resposta }],
+      ['concluido', resposta],
+    ]);
+  }),
+  // Mesmo agente por SSE (API#135): inicio, ferramentas, delta_texto e concluido.
+  http.post('/api/demandas/:id/triagem/sugestao/stream', async (info) => {
+    const resposta = sugerirTriagemMock(info);
+    if (resposta.status !== 200) return resposta;
+    const sugestao = await resposta.json();
+    return respostaSse([
+      ['inicio', { agente: 'triagem' }],
+      ['ferramenta_iniciada', { ferramenta: 'obter_demanda', ordem: 1 }],
+      [
+        'ferramenta_concluida',
+        { ferramenta: 'obter_demanda', ordem: 1, resumo: 'Demanda lida.', erro: false },
+      ],
+      ['delta_texto', { texto: sugestao.justificativa }],
+      ['concluido', sugestao],
+    ]);
+  }),
 ];

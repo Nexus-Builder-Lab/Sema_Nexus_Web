@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { sugerirTriagem } from '../../api/demandasApi.js';
-import { mensagemDeErro } from '../../api/httpClient.js';
+import { sugerirTriagemStream } from '../../api/demandasApi.js';
+import { mensagemDeErroStream } from '../../api/sseClient.js';
+import { useAgenteStream } from '../../api/useAgenteStream.js';
+import ProgressoAgente from '../../components/ProgressoAgente.jsx';
 import Icon from '../../components/Icon.jsx';
 import EvidenciaEspacial from './EvidenciaEspacial.jsx';
 import { rotuloModo } from './agenteTriagem.js';
@@ -21,16 +23,19 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
   const [sugestao, setSugestao] = useState(null);
   const [erro, setErro] = useState(null);
   const [aplicada, setAplicada] = useState(false);
+  const { progresso, executar } = useAgenteStream();
 
   async function pedir() {
     setEstado('carregando');
     setErro(null);
     setAplicada(false);
     try {
-      setSugestao(await sugerirTriagem(demandaId));
+      const r = await executar((opcoes) => sugerirTriagemStream(demandaId, opcoes));
+      if (r === undefined) return;
+      setSugestao(r);
       setEstado('pronto');
     } catch (e) {
-      setErro(mensagemDeErro(e, 'Não foi possível obter a sugestão do agente.'));
+      setErro(mensagemDeErroStream(e, 'Não foi possível obter a sugestão do agente.'));
       setEstado('erro');
     }
   }
@@ -73,10 +78,10 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
   if (estado === 'carregando') {
     return (
       <div className="nx-agente-card mb-3" aria-label="Agente de Triagem" aria-busy="true">
-        <div className="d-flex align-items-center gap-2" role="status">
-          <span className="spinner-border spinner-border-sm text-success" aria-hidden="true" />
-          <span>O agente está consultando a demanda, demandas semelhantes e os dados do INPE…</span>
-        </div>
+        <ProgressoAgente
+          progresso={progresso}
+          rotulo="O agente está consultando a demanda e o INPE"
+        />
       </div>
     );
   }
@@ -90,6 +95,15 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
           {rotuloModo(sugestao)}
         </span>
       </div>
+      {progresso.fallback && (
+        <div
+          className="alert alert-warning small py-2 mb-2"
+          role="note"
+          data-testid="aviso-fallback"
+        >
+          Modo demonstrativo: {progresso.fallback}
+        </div>
+      )}
       <dl className="nx-agente-dados mb-2">
         <dt>Decisão</dt>
         <dd>{DECISOES[sugestao.decisao] ?? sugestao.decisao}</dd>
