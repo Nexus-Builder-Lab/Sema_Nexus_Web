@@ -380,22 +380,33 @@ export default function DemandaFormPage() {
   } else if (carregando) {
     conteudo = <Loading message="Carregando formulário..." />;
   } else {
+    const pedeMunicipio = ['municipioId', 'municipio'].some((c) => searchParams.get(c));
+    const semMunicipio =
+      !demanda.data && pedeMunicipio && !valoresDaUrl(searchParams, catalogos.data).municipio;
     conteudo = (
-      <Formulario
-        // Recria o formulário ao trocar de demanda, reaproveitando o estado só dentro da mesma.
-        key={id ?? 'nova'}
-        inicial={
-          demanda.data
-            ? valoresDaDemanda(demanda.data)
-            : {
-                ...VALORES_INICIAIS,
-                dataRecebimento: hojeISO(),
-                ...valoresDaUrl(searchParams, catalogos.data),
-              }
-        }
-        catalogos={catalogos.data}
-        demanda={demanda.data}
-      />
+      <>
+        {semMunicipio && (
+          <div className="alert alert-warning" role="status">
+            O município informado no atalho não foi encontrado no catálogo de Mato Grosso:
+            selecione-o manualmente.
+          </div>
+        )}
+        <Formulario
+          // Recria o formulário ao trocar de demanda, reaproveitando o estado só dentro da mesma.
+          key={id ?? 'nova'}
+          inicial={
+            demanda.data
+              ? valoresDaDemanda(demanda.data)
+              : {
+                  ...VALORES_INICIAIS,
+                  dataRecebimento: hojeISO(),
+                  ...valoresDaUrl(searchParams, catalogos.data),
+                }
+          }
+          catalogos={catalogos.data}
+          demanda={demanda.data}
+        />
+      </>
     );
   }
 

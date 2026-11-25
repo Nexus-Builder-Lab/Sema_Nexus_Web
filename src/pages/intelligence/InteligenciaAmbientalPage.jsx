@@ -24,23 +24,14 @@ import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
-import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS, focoValido } from './mapaConfig.js';
+import {
+  COR_SELECAO_DEMANDA,
+  COR_SELECAO_INPE,
+  FILTROS_VAZIOS,
+  lerParametrosMapa,
+} from './mapaConfig.js';
 import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
 import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
-
-/**
- * Filtros iniciais vindos da URL (atalhos da Sentinela, GH-142): `municipioId`, `categoria`, `status`,
- * `bioma`, `de`/`ate` (janela do INPE → filtros do satélite) e `camada=INPE` (liga focos e DETER).
- */
-export function estadoInicialDaUrl(params) {
-  const ler = (c) => params.get(c) ?? '';
-  const filtros = { ...FILTROS_VAZIOS };
-  for (const c of ['municipioId', 'bioma', 'categoria', 'status']) filtros[c] = ler(c);
-  filtros.satDe = ler('de');
-  filtros.satAte = ler('ate');
-  const inpe = ler('camada').toUpperCase() === 'INPE';
-  return { filtros, ligadas: { FOCO_CALOR: inpe, DESMATAMENTO: inpe } };
-}
 
 const CATALOGOS_VAZIOS = { municipios: [], biomas: [], categorias: [], situacoes: [] };
 
@@ -56,13 +47,9 @@ function baixarCsv(itens) {
 
 export default function InteligenciaAmbientalPage() {
   const [searchParams] = useSearchParams();
-  const lat = searchParams.get('lat');
-  const lon = searchParams.get('lon');
-  const zoom = searchParams.get('zoom');
-  const foco = useMemo(() => focoValido(lat, lon, zoom), [lat, lon, zoom]);
+  const [inicial] = useState(() => lerParametrosMapa(searchParams));
+  const foco = inicial.foco;
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
-  const [searchParams] = useSearchParams();
-  const [inicial] = useState(() => estadoInicialDaUrl(searchParams));
   const [rascunho, setRascunho] = useState(inicial.filtros);
   const [aplicados, setAplicados] = useState(inicial.filtros);
   const [resposta, setResposta] = useState({ chave: null, erro: null, pontos: [] });
@@ -100,7 +87,17 @@ export default function InteligenciaAmbientalPage() {
     let ativo = true;
     Promise.all([listarMunicipios(), listarBiomas(), listarCategorias(), listarStatus()])
       .then(([municipios, biomas, categorias, situacoes]) => {
-        if (ativo) setCatalogos({ municipios, biomas, categorias, situacoes });
+        if (!ativo) return;
+        setCatalogos({ municipios, biomas, categorias, situacoes });
+        // Descarta da URL valores que não existem nos catálogos (ex.: categoria=XYZ).
+        const { filtros } = lerParametrosMapa(searchParams, { biomas, categorias, situacoes });
+        const podar = (atual) => {
+          const novo = { ...atual };
+          for (const c of ['bioma', 'categoria', 'status']) if (!filtros[c]) novo[c] = '';
+          return novo;
+        };
+        setRascunho(podar);
+        setAplicados(podar);
       })
       .catch(() => {});
     return () => {

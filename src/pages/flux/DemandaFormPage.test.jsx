@@ -73,6 +73,11 @@ describe('Cadastro de demanda', () => {
     expect(screen.getByTestId('local')).toHaveTextContent('/flux/demandas/nova');
   });
 
+  it('avisa quando o município do atalho não existe no catálogo', async () => {
+    await abrirFormulario('/flux/demandas/nova?municipioId=999&origem=MONITORAMENTO');
+    expect(await screen.findByText(/município informado no atalho não foi encontrado/)).toBeInTheDocument();
+  });
+
   it('valida no cliente: mostra os erros por campo, foca o primeiro e não chama a API', async () => {
     const user = userEvent.setup();
     let chamadas = 0;
