@@ -76,7 +76,14 @@ function MenuUsuario({ user, onLogout }) {
  * Barra superior. `user` e `onLogout` chegam do AuthContext (Issue #4);
  * o sino (NotificationBell) consulta /api/notificacoes.
  */
-export default function Topbar({ sidebarId, mobileOpen, onToggleMobile, user, onLogout }) {
+export default function Topbar({
+  sidebarId,
+  mobileOpen,
+  onToggleMobile,
+  user,
+  onLogout,
+  onAbrirAssistente,
+}) {
   return (
     <header className="nx-topbar">
       <button
@@ -92,6 +99,18 @@ export default function Topbar({ sidebarId, mobileOpen, onToggleMobile, user, on
       <Breadcrumbs />
       <div className="nx-topbar-actions">
         <GlobalSearch user={user} />
+        {onAbrirAssistente && (
+          <button
+            type="button"
+            className="nx-icon-btn"
+            onClick={onAbrirAssistente}
+            aria-label="Assistente global (Ctrl+K)"
+            aria-haspopup="dialog"
+            title="Assistente global (Ctrl+K)"
+          >
+            <Icon name="assistant" />
+          </button>
+        )}
         <NotificationBell />
         {user && <MenuUsuario user={user} onLogout={onLogout} />}
       </div>

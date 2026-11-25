@@ -334,7 +334,7 @@
 
 ## 2026-11-12 — GH-68 · Pesquisa global (Ctrl+K) igual ao protótipo
 - **Executado por:** autopilot (sessão Web, Sonnet 5.5)
-- **O que foi feito:** `GlobalSearch` na topbar (substitui o campo que levava à Central de demandas): atalho Ctrl+K/Cmd+K, dica "Ctrl K", painel com resultados agrupados (Demandas, Documentos, Usuários), mínimo de 2 caracteres, debounce, setas/Enter/Esc, estados de busca/vazio/erro por grupo.
+- **O que foi feito:** `GlobalSearch` na topbar (substitui o campo que levava à Central de demandas): atalho Ctrl+K/Cmd+K (a partir do GH-143 é Ctrl+/, pois Ctrl+K abre o Assistente Global), dica "Ctrl K", painel com resultados agrupados (Demandas, Documentos, Usuários), mínimo de 2 caracteres, debounce, setas/Enter/Esc, estados de busca/vazio/erro por grupo.
 - **Decisões:** usa `GET /demandas`, `/documentos` e `/usuarios` com `q` (usuários só para ADMIN; a API segue autorizando). Ocorrências e setores do protótipo ficaram fora (sem endpoint de listagem com `q` previsto na Issue). Campo oculto no mobile, como antes.
 - **Arquivos principais:** `GlobalSearch.jsx`, `GlobalSearch.test.jsx`, `Topbar.jsx`, `theme.scss`.
 - **Testes:** afetados (layout + App + fluxosCriticos: 19) passaram; lint 0 erros. Suíte completa, build, Docker contra API real e rolagem 375/768/1366 px: a confirmar pelo validador (VISUAL PENDENTE (lote)).
@@ -547,3 +547,10 @@
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
 - **O que foi feito:** `SentinelaPanel` na `HomePage` (só ADMIN/GESTOR; `GET /api/intelligence/sentinela/briefing`): resumo com selo do modo (IA local/Claude/demonstrativo), geração/validade, avisos, anomalias agrupadas por tipo com severidade, números e `assunto`, e atalhos. `FILTRAR_MAPA` abre Inteligência ambiental (a página agora lê `municipioId`, `categoria`, `status`, `bioma`, `de`/`ate` da URL e `camada=INPE` liga focos/DETER); `FILTRAR_DEMANDAS` abre a lista (nova opção de URL `atrasada`); `CRIAR_DEMANDA_MONITORAMENTO` abre `/flux/demandas/nova` pré-preenchida (origem MONITORAMENTO, município, categoria, coordenadas, título; `valoresDaUrl`), sem salvar. 503 com `Retry-After` vira aviso "ainda não gerado"; 403 oculta o painel; dados do INPE identificados como públicos e selo de dados fictícios. `openapi.json` regenerado da API (22987a2); handler/fixture MSW.
 - **Testes:** `SentinelaPanel.test.jsx` (7), +1 `HomePage`, +1 `DemandaFormPage`, +2 `validarDemanda`, +1 mapa. Suíte completa e build: ver PR.
+
+## 2026-11-25 · GH-143 · Gaveta do Assistente Global (Ctrl+K)
+- **Status:** PR solicitado. Depende de API#139 (PR #166, main 58b0328).
+- **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.
+- **O que foi feito:** `AssistenteGlobalGaveta` (diálogo modal à direita, tela cheia no celular) aberta pelo botão da topbar e por Ctrl+K/Cmd+K em qualquer tela; chama `POST /api/agentes/assistente-global` (JSON, timeout 120 s; não há SSE). Mostra pergunta, resposta em texto puro (nunca HTML), selo do modo (IA local/Claude/Demonstrativo) + modelo, avisos, aviso demonstrativo e `links[]` como navegação interna: `linksAssistente.js` aceita só caminhos iniciados em "/" que casam com rotas conhecidas do app (query permitida); externos, `//`, `javascript:` e rotas desconhecidas são ignorados. Carregando (aviso de 30–50 s), 429 (`mensagemDeErro`) e 503. Acessibilidade: foco preso, Esc fecha, foco volta ao elemento de origem, `aria-live`. Fechar aborta a requisição (AbortController).
+- **Decisões:** Ctrl+K abre mesmo com o foco num campo de texto (combinação com modificador não digita nada) e não abre sobre outro `aria-modal`. Como o Ctrl+K da pesquisa global conflitava, a pesquisa passou a Ctrl+/ (dica "Ctrl /"). `openapi.json` regenerado da API 58b0328; handler/fixture MSW.
+- **Testes:** `AssistenteGlobal.test.jsx` (11 incl. atalho, links, foco, abort, 429/503). Suíte completa: 55 arquivos, 449 testes, 0 falhas; lint e build verdes.

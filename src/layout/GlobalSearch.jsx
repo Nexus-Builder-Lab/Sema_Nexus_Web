@@ -59,7 +59,7 @@ async function buscar(q, perfil) {
     .filter((g) => g.itens.length > 0 || g.falhou);
 }
 
-/** Pesquisa global da topbar (Ctrl+K): resultados agrupados, navegação por setas e Enter. */
+/** Pesquisa global da topbar (Ctrl+/): resultados agrupados, navegação por setas e Enter. */
 export default function GlobalSearch({ user }) {
   const navigate = useNavigate();
   const listaId = useId();
@@ -79,7 +79,7 @@ export default function GlobalSearch({ user }) {
 
   useEffect(() => {
     const atalho = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
         input.current?.focus();
         input.current?.select();
@@ -159,7 +159,7 @@ export default function GlobalSearch({ user }) {
           autoComplete="off"
         />
         <kbd className="nx-search-kbd" aria-hidden="true">
-          Ctrl K
+          Ctrl /
         </kbd>
       </form>
       {aberto && ativo && (

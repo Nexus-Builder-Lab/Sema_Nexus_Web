@@ -3,6 +3,7 @@ import { minutaVistoriaMock } from './fixtures/minuta.js';
 import { preAnaliseMock } from './fixtures/preAnalise.js';
 import { painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
+import { respostaAssistenteGlobalMock } from './fixtures/assistenteGlobal.js';
 import { handlersAdmin } from './fixtures/admin.js';
 import { handlersNotificacoes } from './fixtures/notificacoes.js';
 import { handlersRelatorios } from './fixtures/relatorios.js';
@@ -534,6 +535,20 @@ export const handlers = [
         })
       : naoAutenticado('/api/agentes/status'),
   ),
+  // Assistente Global (API#139): qualquer perfil autenticado, somente leitura.
+  http.post('/api/agentes/assistente-global', async ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/agentes/assistente-global');
+    const { pergunta } = await request.json();
+    if (!pergunta?.trim()) {
+      return problema(
+        400,
+        'Requisição inválida',
+        'Informe a pergunta.',
+        '/api/agentes/assistente-global',
+      );
+    }
+    return HttpResponse.json(respostaAssistenteGlobalMock(pergunta));
+  }),
   // Painel do sistema (API#114): somente ADMIN.
   http.get('/api/sistema/painel', ({ request }) => {
     if (!temToken(request)) return naoAutenticado('/api/sistema/painel');
