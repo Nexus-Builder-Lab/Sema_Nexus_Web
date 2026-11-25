@@ -6,6 +6,7 @@ import {
   montarCorpo,
   validarDemanda,
   valoresDaDemanda,
+  valoresDaUrl,
   VALORES_INICIAIS,
 } from './validarDemanda.js';
 
@@ -126,5 +127,30 @@ describe('montarCorpo e conversões', () => {
         { campo: 'titulo', mensagem: 'b' },
       ]),
     ).toEqual({ municipio: 'não deve ser nulo', titulo: 'a' });
+  });
+});
+
+describe('valoresDaUrl (pré-preenchimento da Sentinela)', () => {
+  const catalogos = {
+    origens: [{ codigo: 'MONITORAMENTO' }],
+    categorias: [{ codigo: 'QUEIMADA_INCENDIO' }],
+    municipios: [{ id: 5107909, nome: 'Sinop' }],
+  };
+  it('preenche origem, município por id, coordenadas e título', () => {
+    const p = new URLSearchParams(
+      'origem=MONITORAMENTO&municipioId=5107909&categoria=QUEIMADA_INCENDIO&lat=-11.86&lon=-55.5&titulo=Monitoramento',
+    );
+    expect(valoresDaUrl(p, catalogos)).toEqual({
+      origem: 'MONITORAMENTO',
+      categoria: 'QUEIMADA_INCENDIO',
+      titulo: 'Monitoramento',
+      municipio: 'Sinop',
+      latitude: '-11.86',
+      longitude: '-55.5',
+    });
+  });
+  it('ignora valores fora do catálogo ou inválidos', () => {
+    const p = new URLSearchParams('origem=XYZ&municipioId=1&latitude=abc');
+    expect(valoresDaUrl(p, catalogos)).toEqual({});
   });
 });

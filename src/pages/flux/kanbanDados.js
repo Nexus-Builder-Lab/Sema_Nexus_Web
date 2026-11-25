@@ -15,9 +15,7 @@ export async function carregarTodasDemandas() {
   const primeira = await listarDemandas({ page: 0, size: LIMITE, sort: 'numero,desc' });
   const content = [...primeira.content];
   for (let p = 1; p < (primeira.totalPages ?? 1); p += 1) {
-    content.push(
-      ...(await listarDemandas({ page: p, size: LIMITE, sort: 'numero,desc' })).content,
-    );
+    content.push(...(await listarDemandas({ page: p, size: LIMITE, sort: 'numero,desc' })).content);
   }
   return { ...primeira, content, totalPages: 1 };
 }

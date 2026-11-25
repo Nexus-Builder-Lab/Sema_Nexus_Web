@@ -29,6 +29,7 @@ const CAMPOS_FILTRO = [
   'status',
   'equipeId',
   'fiscalId',
+  'atrasada', // só por URL (atalho da Sentinela); a API aceita `atrasada=true`
   'de',
   'ate',
 ];

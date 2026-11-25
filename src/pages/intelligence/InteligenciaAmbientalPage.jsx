@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   listarBiomas,
   listarCategorias,
@@ -27,6 +28,20 @@ import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS } from './mapaCon
 import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
 import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
 
+/**
+ * Filtros iniciais vindos da URL (atalhos da Sentinela, GH-142): `municipioId`, `categoria`, `status`,
+ * `bioma`, `de`/`ate` (janela do INPE → filtros do satélite) e `camada=INPE` (liga focos e DETER).
+ */
+export function estadoInicialDaUrl(params) {
+  const ler = (c) => params.get(c) ?? '';
+  const filtros = { ...FILTROS_VAZIOS };
+  for (const c of ['municipioId', 'bioma', 'categoria', 'status']) filtros[c] = ler(c);
+  filtros.satDe = ler('de');
+  filtros.satAte = ler('ate');
+  const inpe = ler('camada').toUpperCase() === 'INPE';
+  return { filtros, ligadas: { FOCO_CALOR: inpe, DESMATAMENTO: inpe } };
+}
+
 const CATALOGOS_VAZIOS = { municipios: [], biomas: [], categorias: [], situacoes: [] };
 
 function baixarCsv(itens) {
@@ -41,11 +56,13 @@ function baixarCsv(itens) {
 
 export default function InteligenciaAmbientalPage() {
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
-  const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
-  const [aplicados, setAplicados] = useState(FILTROS_VAZIOS);
+  const [searchParams] = useSearchParams();
+  const [inicial] = useState(() => estadoInicialDaUrl(searchParams));
+  const [rascunho, setRascunho] = useState(inicial.filtros);
+  const [aplicados, setAplicados] = useState(inicial.filtros);
   const [resposta, setResposta] = useState({ chave: null, erro: null, pontos: [] });
   const [tentativa, setTentativa] = useState(0);
-  const [ligadas, setLigadas] = useState({ FOCO_CALOR: false, DESMATAMENTO: false });
+  const [ligadas, setLigadas] = useState(inicial.ligadas);
   const [agregadoManual, setAgregadoManual] = useState(false);
   const [tentativaSat, setTentativaSat] = useState(0);
   const [modo, setModo] = useState('pontos');

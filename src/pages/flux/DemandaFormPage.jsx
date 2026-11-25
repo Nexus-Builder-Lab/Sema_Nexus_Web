@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { cadastrarDemanda, detalharDemanda, editarDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { STATUS_EDITAVEIS } from '../../auth/perfis.js';
@@ -16,6 +16,7 @@ import {
   montarCorpo,
   validarDemanda,
   valoresDaDemanda,
+  valoresDaUrl,
   VALORES_INICIAIS,
 } from './validarDemanda.js';
 
@@ -346,6 +347,7 @@ function Formulario({ inicial, catalogos, demanda }) {
 /** Cadastro (`/flux/demandas/nova`) e edição (`/flux/demandas/:id/editar`) de demanda. */
 export default function DemandaFormPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const editando = Boolean(id);
 
   const catalogos = useCarregar(carregarCatalogosFlux);
@@ -385,7 +387,11 @@ export default function DemandaFormPage() {
         inicial={
           demanda.data
             ? valoresDaDemanda(demanda.data)
-            : { ...VALORES_INICIAIS, dataRecebimento: hojeISO() }
+            : {
+                ...VALORES_INICIAIS,
+                dataRecebimento: hojeISO(),
+                ...valoresDaUrl(searchParams, catalogos.data),
+              }
         }
         catalogos={catalogos.data}
         demanda={demanda.data}

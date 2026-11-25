@@ -6,8 +6,7 @@ const REFERENCIAS = {
   MUNICIPIO: 'município da demanda',
 };
 
-const formatarKm = (v) =>
-  `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`;
+const formatarKm = (v) => `${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`;
 const n = (v) => Number(v ?? 0).toLocaleString('pt-BR');
 
 /**

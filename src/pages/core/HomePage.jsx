@@ -7,7 +7,7 @@ import {
   obterPorMunicipio,
   obterSerieMensal,
 } from '../../api/intelligenceApi.js';
-import { PERFIS_RELATORIOS, podeEditarDemandas } from '../../auth/perfis.js';
+import { PERFIS_RELATORIOS, PERFIS_SENTINELA, podeEditarDemandas } from '../../auth/perfis.js';
 import { useAuth } from '../../auth/useAuth.js';
 import ChartCard from '../../components/ChartCard.jsx';
 import DemoSeal from '../../components/DemoSeal.jsx';
@@ -22,6 +22,7 @@ import PriorityBadge from '../../components/PriorityBadge.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { formatarData } from '../../utils/datas.js';
 import { CORES_STATUS } from '../../utils/paleta.js';
+import SentinelaPanel from '../intelligence/SentinelaPanel.jsx';
 import { rotuloCurtoSetor } from '../../utils/rotulos.js';
 
 const TIPO_ATIVIDADE = {
@@ -267,6 +268,8 @@ export default function HomePage() {
         description={`Panorama em ${dataHoje} — demandas de fiscalização, documentos e ocorrências ambientais em Mato Grosso.`}
         actions={acoes}
       />
+
+      {PERFIS_SENTINELA.includes(usuario?.perfil) && <SentinelaPanel />}
 
       {error ? (
         <div className="mb-4">

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
+import { estadoInicialDaUrl } from './InteligenciaAmbientalPage.jsx';
 import { vi } from 'vitest';
 import App from '../../App.jsx';
 import { server } from '../../mocks/server.js';
@@ -318,5 +319,22 @@ describe('Inteligência ambiental (mapa)', () => {
     server.resetHandlers();
     await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(await screen.findByText('4 demandas no mapa')).toBeInTheDocument();
+  });
+});
+
+describe('estadoInicialDaUrl (atalho da Sentinela)', () => {
+  it('lê filtros, janela do INPE e liga a camada INPE', () => {
+    const e = estadoInicialDaUrl(
+      new URLSearchParams('municipioId=5107909&camada=INPE&de=2026-10-26&ate=2026-11-25&status=EM_TRIAGEM'),
+    );
+    expect(e.filtros).toMatchObject({
+      municipioId: '5107909',
+      status: 'EM_TRIAGEM',
+      satDe: '2026-10-26',
+      satAte: '2026-11-25',
+      de: '',
+    });
+    expect(e.ligadas).toEqual({ FOCO_CALOR: true, DESMATAMENTO: true });
+    expect(estadoInicialDaUrl(new URLSearchParams('')).ligadas.FOCO_CALOR).toBe(false);
   });
 });

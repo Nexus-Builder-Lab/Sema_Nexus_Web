@@ -74,3 +74,6 @@ export function podeGerarMinuta(usuario, demanda) {
     usuario.perfil === 'FISCAL' && demanda?.fiscal?.id != null && demanda.fiscal.id === usuario.id
   );
 }
+
+/** Perfis que veem o painel Sentinela Territorial (GET /api/intelligence/sentinela/briefing). */
+export const PERFIS_SENTINELA = ['ADMIN', 'GESTOR'];

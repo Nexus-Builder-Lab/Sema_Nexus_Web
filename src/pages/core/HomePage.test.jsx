@@ -137,3 +137,20 @@ describe('HomePage (dashboard inicial)', () => {
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
   });
 });
+
+describe('HomePage — painel Sentinela por perfil', () => {
+  it('ADMIN vê o painel', async () => {
+    iniciarSessao();
+    renderPagina();
+    expect(await screen.findByTestId('sentinela-painel')).toBeInTheDocument();
+  });
+
+  it('CONSULTA não vê o painel', async () => {
+    const consulta = { id: 9, nome: 'Consulta Demo', email: 'c@demo', perfil: 'CONSULTA' };
+    server.use(http.get('/api/auth/me', () => HttpResponse.json(consulta)));
+    iniciarSessao(consulta);
+    renderPagina();
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByTestId('sentinela-painel')).not.toBeInTheDocument();
+  });
+});
