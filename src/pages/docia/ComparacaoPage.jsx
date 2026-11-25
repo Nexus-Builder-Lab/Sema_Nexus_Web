@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowLeftRight, Info } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { compararDocumentos } from '../../api/comparacaoApi.js';
 import { detalharDocumento, listarDocumentos } from '../../api/documentosApi.js';
@@ -247,6 +248,9 @@ function Resultado({ aId, bId, docs }) {
   );
 }
 
+const AVISO_PARAMS =
+  'Os documentos indicados no link não foram encontrados; foram selecionados os dois mais recentes.';
+
 /** Comparação documental (`/docia/comparacao`): seletores A/B, KPIs, campos e diff textual. */
 export default function ComparacaoPage() {
   const [docs, setDocs] = useState([]);
@@ -254,6 +258,10 @@ export default function ComparacaoPage() {
   const [erroLista, setErroLista] = useState(null);
   const [aId, setAId] = useState('');
   const [bId, setBId] = useState('');
+  const [params] = useSearchParams();
+  const [aviso, setAviso] = useState(null);
+  const pa = params.get('a');
+  const pb = params.get('b');
 
   useEffect(() => {
     let ativo = true;
@@ -262,7 +270,13 @@ export default function ComparacaoPage() {
         if (!ativo) return;
         const lista = p.content ?? [];
         setDocs(lista);
-        if (lista.length >= 2) {
+        const ids = lista.map((d) => String(d.id));
+        const valido = (v) => /^[1-9]\d*$/.test(v ?? '') && ids.includes(v);
+        if (pa || pb) setAviso(valido(pa) && valido(pb) ? null : AVISO_PARAMS);
+        if (valido(pa) && valido(pb)) {
+          setAId(pa);
+          setBId(pb);
+        } else if (lista.length >= 2) {
           setAId(String(lista[0].id));
           setBId(String(lista[1].id));
         }
@@ -274,7 +288,7 @@ export default function ComparacaoPage() {
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [pa, pb]);
 
   const mesmo = aId !== '' && aId === bId;
   const opcoes = docs.map((d) => (
@@ -290,6 +304,15 @@ export default function ComparacaoPage() {
         title="Comparação documental"
         description="Selecione dois documentos para identificar informações coincidentes, divergentes, diferenças textuais e campos presentes em apenas um deles."
       />
+      {aviso && (
+        <div
+          className="alert alert-warning small py-2"
+          role="status"
+          data-testid="aviso-parametros"
+        >
+          {aviso}
+        </div>
+      )}
       <div className="nx-ai-disclaimer d-flex gap-2 mb-4" role="note">
         <Info size={16} className="flex-shrink-0 mt-1" aria-hidden="true" />
         <div>

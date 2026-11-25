@@ -513,6 +513,16 @@
 - **O que foi feito:** novo `EvidenciaEspacial.jsx` dentro do `AgenteTriagemCard` (portanto do `TriagemModal`): seção com títulos e listas mostrando referência (coordenada/área/município), raio e período, contagens dos dados públicos do INPE (focos, alertas DETER, polígono, município), possíveis duplicatas geográficas com distância em km (links para a demanda), documentos relacionados (links) e aviso quando a referência é MUNICIPIO (sem coordenada). Duplicatas simples também mostram `distanciaKm`. `src/mocks/openapi.json` regenerado da main ec09367; handler MSW com `espacial`.
 - **Testes:** `EvidenciaEspacial.test.jsx` (3: completo, município/vazios, sem bloco). Suíte completa, lint e build verdes (ver PR).
 
+## 2026-11-24 23:45 — GH-139 · Action Cards com confirmação humana
+- **PR:** (preenchido no PR) · **Status:** em validação
+- **Executado por:** Claude Code (implementador frontend)
+- **O que foi feito:** componente `AcoesSugeridas` renderiza `acoesSugeridas` (API#136) na resposta do Assistente DocIA (`RespostaDocia`) e no card do Agente de Triagem. ABRIR_COMPARACAO abre `/docia/comparacao?a=&b=` (página lê os parâmetros); ABRIR_DEMANDA abre o detalhe; VER_NO_MAPA abre `/intelligence/inteligencia-ambiental?lat&lon&zoom` (mapa centraliza e marca o ponto); SUGERIR_VINCULO_DEMANDA abre diálogo "Vincular documento X à demanda Y?" e só chama `POST /api/demandas/{id}/documentos` após confirmar (409 e 403 tratados). Tipo desconhecido ou parâmetro inválido é ignorado. `src/mocks/openapi.json` regenerado da API main 8f01b4c.
+- **Decisões técnicas:** navegação nunca grava; parâmetros validados no cliente além da validação da API; sem JWT em URL.
+- **Arquivos principais:** `src/components/AcoesSugeridas.jsx` (+ teste), `RespostaDocia.jsx`, `AgenteTriagemCard.jsx`, `ComparacaoPage.jsx`, `InteligenciaAmbientalPage.jsx`, `MapaMT.jsx`.
+- **Testes:** `npx vitest run --maxWorkers=3` → 51 arquivos, 377 testes, 0 falhas.
+- **API real ou mocks:** somente mocks (validação Docker a cargo do validador).
+- **Pendências:** `demandaId` do VER_NO_MAPA ainda não seleciona a demanda no mapa; revisão visual do mapa pendente.
+
 ## 2026-11-24 · GH-141 · Geração e revisão da minuta de vistoria
 - **Status:** PR solicitado. Depende de API#137 (PR #159, main 658f131).
 - **Executado por:** Claude Code (subagente implementador), a pedido do proprietário.

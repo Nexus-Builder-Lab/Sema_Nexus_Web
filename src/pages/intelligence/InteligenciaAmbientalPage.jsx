@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   listarBiomas,
   listarCategorias,
@@ -23,7 +24,7 @@ import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
-import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS } from './mapaConfig.js';
+import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS, focoValido } from './mapaConfig.js';
 import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
 import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
 
@@ -40,6 +41,11 @@ function baixarCsv(itens) {
 }
 
 export default function InteligenciaAmbientalPage() {
+  const [searchParams] = useSearchParams();
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
+  const zoom = searchParams.get('zoom');
+  const foco = useMemo(() => focoValido(lat, lon, zoom), [lat, lon, zoom]);
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
   const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
   const [aplicados, setAplicados] = useState(FILTROS_VAZIOS);
@@ -263,6 +269,7 @@ export default function InteligenciaAmbientalPage() {
                 onSelecionarMunicipio={filtrarPorMunicipio}
                 fundo={fundo}
                 selecao={destaque}
+                foco={foco}
                 onSelecionarDemanda={selecionarDemanda}
               >
                 <SatelliteLayer
