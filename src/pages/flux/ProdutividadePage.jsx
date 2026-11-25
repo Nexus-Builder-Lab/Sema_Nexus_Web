@@ -46,16 +46,35 @@ function aspas(v) {
 
 /** CSV (separador ";", vírgula decimal) com setores e responsáveis. */
 export function gerarCsvProdutividade(r) {
-  const cab = ['Nível', 'Nome', 'Total', 'Concluídas', 'Ativas', 'Atrasadas', 'Tempo médio (dias)', '% conclusão'];
+  const cab = [
+    'Nível',
+    'Nome',
+    'Total',
+    'Concluídas',
+    'Ativas',
+    'Atrasadas',
+    'Tempo médio (dias)',
+    '% conclusão',
+  ];
   const tempoPorSetor = new Map(r.tempoMedioPorSetor.map((t) => [t.setorId, t.tempoMedioDias]));
   const linhas = [
     ...r.porSetorSituacao.map((s) => [
-      'Setor', s.setor, s.total, s.concluidas, s.ativas, s.atrasadas,
+      'Setor',
+      s.setor,
+      s.total,
+      s.concluidas,
+      s.ativas,
+      s.atrasadas,
       tempoPorSetor.get(s.setorId) == null ? '' : dec(tempoPorSetor.get(s.setorId)),
       s.total ? `${Math.round((s.concluidas / s.total) * 100)}%` : '',
     ]),
     ...r.porResponsavel.map((x) => [
-      'Responsável', x.fiscal, x.total, x.concluidas, x.ativas, x.atrasadas,
+      'Responsável',
+      x.fiscal,
+      x.total,
+      x.concluidas,
+      x.ativas,
+      x.atrasadas,
       x.tempoMedioDias == null ? '' : dec(x.tempoMedioDias),
       x.percentualConclusao == null ? '' : pct(x.percentualConclusao),
     ]),
@@ -95,7 +114,12 @@ export default function ProdutividadePage() {
 
   const { data, loading, error, recarregar } = useCarregar(
     useCallback(
-      () => obterProdutividade({ de: dataInicial(meses), ate: hojeISO(), ...(setorId ? { setorId } : {}) }),
+      () =>
+        obterProdutividade({
+          de: dataInicial(meses),
+          ate: hojeISO(),
+          ...(setorId ? { setorId } : {}),
+        }),
       [meses, setorId],
     ),
   );
@@ -113,12 +137,24 @@ export default function ProdutividadePage() {
         { label: 'Atrasadas', color: '#dc2626', data: ps.map((s) => s.atrasadas) },
       ],
       tempo: [
-        { label: 'Dias', color: '#166534', data: ps.map((s) => Number(tempos.get(s.setorId) ?? 0)) },
+        {
+          label: 'Dias',
+          color: '#166534',
+          data: ps.map((s) => Number(tempos.get(s.setorId) ?? 0)),
+        },
       ],
       meses: data.historicoMensal.map((m) => rotuloMes(m.mes)),
       historico: [
-        { label: 'Recebidas', color: '#1d4ed8', data: data.historicoMensal.map((m) => m.recebidas) },
-        { label: 'Concluídas', color: '#16a34a', data: data.historicoMensal.map((m) => m.concluidas) },
+        {
+          label: 'Recebidas',
+          color: '#1d4ed8',
+          data: data.historicoMensal.map((m) => m.recebidas),
+        },
+        {
+          label: 'Concluídas',
+          color: '#16a34a',
+          data: data.historicoMensal.map((m) => m.concluidas),
+        },
       ],
     };
   }, [data]);
@@ -140,7 +176,12 @@ export default function ProdutividadePage() {
         actions={
           <>
             <DemoSeal />
-            <button type="button" className="btn btn-outline-secondary" onClick={exportar} disabled={!data}>
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={exportar}
+              disabled={!data}
+            >
               <Icon name="download" size={16} /> Exportar CSV
             </button>
           </>
@@ -207,7 +248,13 @@ export default function ProdutividadePage() {
             {[
               ['Demandas no período', k.demandasNoPeriodo, 'clipboard', 'green'],
               ['Concluídas', k.concluidas, 'check', 'blue'],
-              ['Percentual de conclusão', pct(k.percentualConclusao), 'pie', 'amber', 'Desconsidera canceladas'],
+              [
+                'Percentual de conclusão',
+                pct(k.percentualConclusao),
+                'pie',
+                'amber',
+                'Desconsidera canceladas',
+              ],
               ['Tempo médio de conclusão', dias(k.tempoMedioConclusaoDias), 'clock', 'green'],
               ['Concluídas no prazo', pct(k.percentualConcluidasNoPrazo), 'check', 'green'],
               ['Atrasadas (ativas)', k.atrasadasAtivas, 'alarm', 'red'],
@@ -277,12 +324,24 @@ export default function ProdutividadePage() {
                   <thead>
                     <tr>
                       <th scope="col">Responsável</th>
-                      <th scope="col" className="text-end">Total</th>
-                      <th scope="col" className="text-end">Concluídas</th>
-                      <th scope="col" className="text-end">Ativas</th>
-                      <th scope="col" className="text-end">Atrasadas</th>
-                      <th scope="col" className="text-end">Tempo médio</th>
-                      <th scope="col" style={{ minWidth: 170 }}>Conclusão</th>
+                      <th scope="col" className="text-end">
+                        Total
+                      </th>
+                      <th scope="col" className="text-end">
+                        Concluídas
+                      </th>
+                      <th scope="col" className="text-end">
+                        Ativas
+                      </th>
+                      <th scope="col" className="text-end">
+                        Atrasadas
+                      </th>
+                      <th scope="col" className="text-end">
+                        Tempo médio
+                      </th>
+                      <th scope="col" style={{ minWidth: 170 }}>
+                        Conclusão
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -295,7 +354,11 @@ export default function ProdutividadePage() {
                           <td className="text-end">{x.concluidas}</td>
                           <td className="text-end">{x.ativas}</td>
                           <td className="text-end">
-                            {x.atrasadas ? <span className="nx-badge nx-badge-red">{x.atrasadas}</span> : '0'}
+                            {x.atrasadas ? (
+                              <span className="nx-badge nx-badge-red">{x.atrasadas}</span>
+                            ) : (
+                              '0'
+                            )}
                           </td>
                           <td className="text-end">{dias(x.tempoMedioDias)}</td>
                           <td>
@@ -309,7 +372,10 @@ export default function ProdutividadePage() {
                                 aria-valuemax={100}
                                 style={{ height: 8 }}
                               >
-                                <div className="progress-bar bg-success" style={{ width: `${p}%` }} />
+                                <div
+                                  className="progress-bar bg-success"
+                                  style={{ width: `${p}%` }}
+                                />
                               </div>
                               <span className="small">{p}%</span>
                             </div>

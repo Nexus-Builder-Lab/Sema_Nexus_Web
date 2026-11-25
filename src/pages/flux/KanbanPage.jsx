@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  detalharDemanda,
-  iniciarExecucao,
-  iniciarTriagem,
-} from '../../api/demandasApi.js';
+import { detalharDemanda, iniciarExecucao, iniciarTriagem } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { podeEditarDemandas } from '../../auth/perfis.js';
 import { useAuth } from '../../auth/useAuth.js';

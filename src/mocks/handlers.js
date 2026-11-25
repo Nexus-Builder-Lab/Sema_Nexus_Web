@@ -1,4 +1,5 @@
 import { explicacaoComparacaoMock } from './fixtures/comparacao.js';
+import { minutaVistoriaMock } from './fixtures/minuta.js';
 import { preAnaliseMock } from './fixtures/preAnalise.js';
 import { painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
@@ -442,6 +443,12 @@ export const handlers = [
     temToken(request)
       ? HttpResponse.json(preAnaliseMock())
       : naoAutenticado('/api/documentos/pre-analise'),
+  ),
+  // Minuta de vistoria (API#137): rascunho demonstrativo, não grava nada.
+  http.post('/api/demandas/:id/minuta-vistoria', ({ request, params }) =>
+    temToken(request)
+      ? HttpResponse.json(minutaVistoriaMock(params.id))
+      : naoAutenticado('/api/demandas'),
   ),
   // Explicar impacto das diferenças (API#142): grandezas determinísticas + resumo (demonstrativo nos mocks).
   http.post('/api/docia/comparacao/explicar', async ({ request }) => {

@@ -109,3 +109,15 @@ export async function sugerirDistribuicao(id) {
   });
   return data;
 }
+
+/**
+ * Agente Copiloto de Minuta (Issue API#137): `POST /api/demandas/{id}/minuta-vistoria` devolve o
+ * rascunho em Markdown (`markdown`, `aviso`, `modo`, `modelo`, `nomeArquivoSugerido`, `evidencias`,
+ * `avisos`). Não grava nada (ADMIN/GESTOR/ANALISTA/FISCAL designado). Primeira chamada: até ~1 minuto.
+ */
+export async function gerarMinutaVistoria(id) {
+  const { data } = await httpClient.post(`/demandas/${id}/minuta-vistoria`, null, {
+    timeout: 120_000,
+  });
+  return data;
+}
