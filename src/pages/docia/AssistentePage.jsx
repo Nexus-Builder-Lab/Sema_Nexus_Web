@@ -159,18 +159,15 @@ export default function AssistentePage() {
                 <RespostaDocia key={i} item={item} />
               ),
             )}
-            {enviando && (
-              <div className="text-body-secondary small mb-2">
-                <ProgressoAgente
-                  progresso={progresso}
-                  rotulo={
-                    comIa
-                      ? 'O agente está buscando e lendo os documentos'
-                      : 'Consultando documentos'
-                  }
-                />
-              </div>
-            )}
+            <div className="text-body-secondary small mb-2">
+              <ProgressoAgente
+                progresso={progresso}
+                ativo={enviando}
+                rotulo={
+                  comIa ? 'O agente está buscando e lendo os documentos' : 'Consultando documentos'
+                }
+              />
+            </div>
             {erro && (
               <div className="alert alert-danger" role="alert">
                 {erro}

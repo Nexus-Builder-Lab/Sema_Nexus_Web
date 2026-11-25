@@ -207,24 +207,6 @@ describe('postSseComAlternativa', () => {
       expect(eventos).toEqual(['alternativa']);
     }
   });
-
-  it('não usa a alternativa em 404 problem+json nem em erro do stream', async () => {
-    server.use(
-      http.post(URL_STREAM, () =>
-        HttpResponse.json(
-          { title: 'Não encontrado' },
-          { status: 404, headers: { 'Content-Type': 'application/problem+json' } },
-        ),
-      ),
-    );
-    const alt = vi.fn();
-    await expect(
-      postSseComAlternativa('/x/stream', null, { alternativa: alt }),
-    ).rejects.toMatchObject({
-      response: { status: 404 },
-    });
-    expect(alt).not.toHaveBeenCalled();
-  });
 });
 
 describe('agentesStream', () => {
@@ -245,5 +227,34 @@ describe('agentesStream', () => {
     ]);
     expect(rotuloFerramenta('obter_demanda')).toMatch(/demanda/i);
     expect(rotuloFerramenta('qualquer_coisa')).not.toMatch(/_/);
+  });
+});
+
+describe('404 do stream', () => {
+  it('404 problem+json (sem rota) usa o JSON; se o JSON também der 404, mostra esse erro', async () => {
+    server.use(
+      http.post(URL_STREAM, () =>
+        HttpResponse.json(
+          { title: 'No static resource' },
+          { status: 404, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    const alt = vi.fn().mockRejectedValue({ response: { status: 404 } });
+    await expect(
+      postSseComAlternativa('/x/stream', null, { alternativa: alt }),
+    ).rejects.toMatchObject({
+      response: { status: 404 },
+    });
+    expect(alt).toHaveBeenCalledTimes(1);
+  });
+
+  it('não chama a alternativa depois de ter recebido evento', async () => {
+    server.use(http.post(URL_STREAM, () => respostaSse([['inicio', {}]])));
+    const alt = vi.fn();
+    await expect(
+      postSseComAlternativa('/x/stream', null, { alternativa: alt }),
+    ).rejects.toBeInstanceOf(ErroDoStream);
+    expect(alt).not.toHaveBeenCalled();
   });
 });

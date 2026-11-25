@@ -141,9 +141,8 @@ export async function postSse(caminho, corpo, { signal, onEvento } = {}) {
   }
 
   if (!resposta.ok) {
-    const tipo = resposta.headers.get('content-type') ?? '';
-    const ehProblema = /json/i.test(tipo);
-    if ([404, 405, 501].includes(resposta.status) && !ehProblema) {
+    // Sem rota de stream (404/405/501, inclusive problem+json do Spring): usa o JSON, que repete o 404 real.
+    if ([404, 405, 501].includes(resposta.status)) {
       throw new StreamIndisponivel(`HTTP ${resposta.status}`);
     }
     const erro = await erroHttp(resposta);

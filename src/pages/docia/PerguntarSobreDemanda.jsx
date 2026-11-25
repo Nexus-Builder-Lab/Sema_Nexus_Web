@@ -90,14 +90,18 @@ export default function PerguntarSobreDemanda({ demandaId }) {
             <RespostaDocia item={r} />
           </div>
         ))}
-        {enviando && (
-          <div className="text-body-secondary small">
-            <ProgressoAgente progresso={progresso} rotulo="Consultando os documentos da demanda" />
+        <div className="text-body-secondary small">
+          <ProgressoAgente
+            progresso={progresso}
+            ativo={enviando}
+            rotulo="Consultando os documentos da demanda"
+          />
+          {enviando && (
             <span className="d-block mt-1">
               A primeira resposta pode levar de 30 a 50 segundos.
             </span>
-          </div>
-        )}
+          )}
+        </div>
         {erro && (
           <div className="alert alert-danger mb-0" role="alert">
             {erro}

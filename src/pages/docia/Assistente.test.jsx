@@ -278,7 +278,7 @@ describe('Assistente DocIA por streaming (SSE)', () => {
     expect(
       await screen.findByText(/Resposta demonstrativa para: Quais laudos existem\?/),
     ).toBeInTheDocument();
-    expect(screen.queryByTestId('progresso-agente')).not.toBeInTheDocument();
+    expect(screen.getByTestId('progresso-agente')).toBeEmptyDOMElement();
   });
 
   it('429 antes do stream mostra a espera e Nova conversa cancela a execução', async () => {
@@ -322,6 +322,13 @@ describe('Assistente DocIA por streaming (SSE)', () => {
     expect(await screen.findByTestId('progresso-agente')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Nova conversa/ }));
     await waitFor(() => expect(abortou).toBe(true));
-    expect(screen.queryByTestId('progresso-agente')).not.toBeInTheDocument();
+    expect(screen.getByTestId('progresso-agente')).toBeEmptyDOMElement();
   });
+});
+
+it('mantém a região ao vivo do progresso montada e vazia quando ocioso', async () => {
+  iniciarSessao();
+  abrir();
+  const regiao = await screen.findByTestId('progresso-agente');
+  expect(regiao).toBeEmptyDOMElement();
 });
