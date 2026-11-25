@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowLeftRight, Info } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { compararDocumentos } from '../../api/comparacaoApi.js';
 import { detalharDocumento, listarDocumentos } from '../../api/documentosApi.js';
@@ -254,6 +255,7 @@ export default function ComparacaoPage() {
   const [erroLista, setErroLista] = useState(null);
   const [aId, setAId] = useState('');
   const [bId, setBId] = useState('');
+  const [params] = useSearchParams();
 
   useEffect(() => {
     let ativo = true;
@@ -262,7 +264,12 @@ export default function ComparacaoPage() {
         if (!ativo) return;
         const lista = p.content ?? [];
         setDocs(lista);
-        if (lista.length >= 2) {
+        const pa = params.get('a');
+        const pb = params.get('b');
+        if (pa && pb) {
+          setAId(pa);
+          setBId(pb);
+        } else if (lista.length >= 2) {
           setAId(String(lista[0].id));
           setBId(String(lista[1].id));
         }

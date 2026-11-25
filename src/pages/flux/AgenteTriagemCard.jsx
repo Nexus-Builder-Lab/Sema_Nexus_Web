@@ -1,3 +1,4 @@
+import AcoesSugeridas from '../../components/AcoesSugeridas.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sugerirTriagem } from '../../api/demandasApi.js';
@@ -131,6 +132,7 @@ export default function AgenteTriagemCard({ demandaId, decisao, catalogos, onApl
         </div>
       )}
       <EvidenciaEspacial espacial={sugestao.espacial} />
+      <AcoesSugeridas acoes={sugestao.acoesSugeridas} />
       {divergente && (
         <div className="alert alert-info small py-2 mb-2" role="note">
           O agente sugere <strong>{DECISOES[sugestao.decisao]?.toLowerCase()}</strong>. Aplicar

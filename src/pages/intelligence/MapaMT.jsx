@@ -92,6 +92,23 @@ function AjustarSelecao({ geometria }) {
   return null;
 }
 
+/** Foco vindo de um Action Card (`?lat&lon&zoom`): centraliza o mapa no ponto e o marca com um anel. */
+function FocarPonto({ foco }) {
+  const mapa = useMap();
+  useEffect(() => {
+    mapa.setView([foco.lat, foco.lon], foco.zoom ?? 12);
+  }, [mapa, foco]);
+  return (
+    <CircleMarker
+      center={[foco.lat, foco.lon]}
+      radius={13}
+      interactive={false}
+      className="nx-selecao-ponto"
+      pathOptions={{ color: '#d9480f', weight: 3, dashArray: '4 3', fill: false }}
+    />
+  );
+}
+
 /**
  * Destaque da seleção (área afetada): polígono (DETER ou demanda) e anel no ponto. Fica no pane PANE_SELECAO (390),
  * abaixo do overlayPane, e não é interativo: nunca cobre nem rouba o clique dos marcadores (Web#109).
@@ -145,6 +162,7 @@ export default function MapaMT({
   fundo = null,
   selecao = null,
   onSelecionarDemanda,
+  foco = null,
   children,
 }) {
   const uf = useGeoJson('/geo/mt-uf.geojson');
@@ -157,6 +175,7 @@ export default function MapaMT({
       {/* Pane próprio, abaixo do overlayPane (400) e acima dos tiles (200): o preenchimento da UF é
           recriado ao ligar/desligar o fundo online e, no overlayPane, entraria por cima das demais
           camadas (Web#103). */}
+      {foco && <FocarPonto foco={foco} />}
       <Pane name={PANE_FUNDO_UF} style={{ zIndex: 350 }}>
         {uf && (
           <GeoJSON

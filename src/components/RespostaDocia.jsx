@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
+import AcoesSugeridas from './AcoesSugeridas.jsx';
 import Icon from './Icon.jsx';
 
 const SEM_INFORMACAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
@@ -71,6 +72,7 @@ export default function Resposta({ item }) {
             )}
           </>
         )}
+        <AcoesSugeridas acoes={item.acoesSugeridas} />
         {comAgente && item.passos?.length > 0 && (
           <details className="small mt-2">
             <summary>Como o agente chegou à resposta</summary>
