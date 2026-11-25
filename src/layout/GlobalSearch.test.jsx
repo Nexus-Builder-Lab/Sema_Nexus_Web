@@ -51,10 +51,10 @@ function montar(perfil) {
 }
 
 describe('GlobalSearch', () => {
-  it('Ctrl+K foca o campo e agrupa resultados; setas e Enter navegam', async () => {
+  it('Ctrl+/ foca o campo e agrupa resultados; setas e Enter navegam', async () => {
     const user = userEvent.setup();
     montar('ADMIN');
-    await user.keyboard('{Control>}k{/Control}');
+    await user.keyboard('{Control>}/{/Control}');
     const campo = screen.getByRole('combobox', { name: 'Pesquisa global' });
     expect(campo).toHaveFocus();
     await user.type(campo, 'rio');

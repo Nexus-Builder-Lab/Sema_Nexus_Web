@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import AssistenteGlobalGaveta from './AssistenteGlobalGaveta.jsx';
 import DemoBanner from './DemoBanner.jsx';
 import Sidebar from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
@@ -33,6 +34,33 @@ export default function AppLayout({ user, onLogout }) {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [mobileOpen]);
+
+  // Assistente Global: Ctrl+K / Cmd+K abre de qualquer tela, inclusive com o foco num campo de texto
+  // (combinação com modificador não digita nada). Não abre sobre outro diálogo modal.
+  // O foco volta ao elemento que o abriu (botão da topbar ou o campo em que se estava).
+  const [assistente, setAssistente] = useState(false);
+  const origemFoco = useRef(null);
+  const abrirAssistente = useCallback(() => {
+    origemFoco.current = document.activeElement;
+    setAssistente(true);
+  }, []);
+  const fecharAssistente = useCallback(() => {
+    setAssistente(false);
+    const alvo = origemFoco.current;
+    origemFoco.current = null;
+    if (alvo?.isConnected) setTimeout(() => alvo.focus(), 0);
+  }, []);
+  useEffect(() => {
+    const atalho = (e) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'k') return;
+      e.preventDefault();
+      if (assistente) return;
+      if (document.querySelector('[aria-modal="true"]')) return;
+      abrirAssistente();
+    };
+    document.addEventListener('keydown', atalho);
+    return () => document.removeEventListener('keydown', atalho);
+  }, [assistente, abrirAssistente]);
 
   function toggleCollapsed() {
     setCollapsed((value) => {
@@ -71,6 +99,7 @@ export default function AppLayout({ user, onLogout }) {
           onToggleMobile={() => setMobileOpen(!mobileOpen)}
           user={user}
           onLogout={onLogout}
+          onAbrirAssistente={abrirAssistente}
         />
         <DemoBanner />
         <main id="conteudo" className="nx-view" tabIndex={-1}>
@@ -81,6 +110,7 @@ export default function AppLayout({ user, onLogout }) {
           institucionais.
         </footer>
       </div>
+      <AssistenteGlobalGaveta aberta={assistente} onFechar={fecharAssistente} />
     </div>
   );
 }
