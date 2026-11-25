@@ -62,6 +62,22 @@ describe('Cadastro de demanda', () => {
     expect(screen.getByRole('note', { name: /ambiente demonstrativo/i })).toBeInTheDocument();
   });
 
+  it('pré-preenche pela URL (atalho da Sentinela) sem salvar', async () => {
+    await abrirFormulario(
+      '/flux/demandas/nova?origem=MONITORAMENTO&municipio=Sinop&categoria=QUEIMADA_INCENDIO&latitude=-11.86&longitude=-55.5&titulo=Monitoramento%20INPE%20%E2%80%94%20Sinop',
+    );
+    expect(screen.getByLabelText(/^Origem/)).toHaveValue('MONITORAMENTO');
+    expect(screen.getByLabelText(/^Município/)).toHaveValue('Sinop');
+    expect(screen.getByLabelText(/^Latitude/)).toHaveValue('-11.86');
+    expect(screen.getByLabelText(/^Título/)).toHaveValue('Monitoramento INPE — Sinop');
+    expect(screen.getByTestId('local')).toHaveTextContent('/flux/demandas/nova');
+  });
+
+  it('avisa quando o município do atalho não existe no catálogo', async () => {
+    await abrirFormulario('/flux/demandas/nova?municipioId=999&origem=MONITORAMENTO');
+    expect(await screen.findByText(/município informado no atalho não foi encontrado/)).toBeInTheDocument();
+  });
+
   it('valida no cliente: mostra os erros por campo, foca o primeiro e não chama a API', async () => {
     const user = userEvent.setup();
     let chamadas = 0;

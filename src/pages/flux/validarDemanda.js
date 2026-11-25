@@ -167,3 +167,38 @@ export function errosDaApi(errors = []) {
   }
   return saida;
 }
+
+/**
+ * Pré-preenchimento do cadastro por parâmetros da URL (atalho "Abrir demanda de monitoramento" da
+ * Sentinela, GH-142). Só preenche campos de texto/catálogo — quem salva é a pessoa. Aceita `origem`,
+ * `categoria`, `titulo`, `municipio` (nome) ou `municipioId` (resolvido no catálogo), `localidade`,
+ * `latitude`/`longitude` (também `lat`/`lon`). Valores fora do catálogo são ignorados.
+ */
+export function valoresDaUrl(params, catalogos = {}) {
+  const ler = (...nomes) => {
+    for (const n of nomes) {
+      const v = params.get(n);
+      if (v != null && v.trim() !== '') return v.trim();
+    }
+    return '';
+  };
+  const noCatalogo = (lista, codigo) => (lista ?? []).some((i) => i.codigo === codigo);
+  const saida = {};
+  const origem = ler('origem').toUpperCase();
+  if (noCatalogo(catalogos.origens, origem)) saida.origem = origem;
+  const categoria = ler('categoria').toUpperCase();
+  if (noCatalogo(catalogos.categorias, categoria)) saida.categoria = categoria;
+  const titulo = ler('titulo');
+  if (titulo) saida.titulo = titulo.slice(0, LIMITES.titulo.max);
+  const localidade = ler('localidade');
+  if (localidade) saida.localidade = localidade.slice(0, LIMITES.localidade.max);
+  const municipios = catalogos.municipios ?? [];
+  const porId = municipios.find((m) => String(m.id) === ler('municipioId'));
+  const municipio = porId ?? encontrarMunicipio(ler('municipio'), municipios);
+  if (municipio) saida.municipio = municipio.nome;
+  const lat = ler('latitude', 'lat');
+  const lon = ler('longitude', 'lon');
+  if (lat && !Number.isNaN(lerCoordenada(lat))) saida.latitude = lat;
+  if (lon && !Number.isNaN(lerCoordenada(lon))) saida.longitude = lon;
+  return saida;
+}

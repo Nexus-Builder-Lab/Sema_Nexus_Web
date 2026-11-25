@@ -10,6 +10,7 @@ import {
   BIOMAS,
   filtrarPontos,
   handlersFluxDashboard,
+  briefingSentinelaMock,
   handlersIntelligence,
   handlersReferencia,
 } from './fixtures/intelligence.js';
@@ -133,6 +134,19 @@ const catalogo = (caminho, itens) =>
   );
 
 const intelligence = [
+  // Sentinela (API#138): ADMIN/GESTOR.
+  http.get('/api/intelligence/sentinela/briefing', ({ request }) => {
+    const usuario = usuarioDoToken(request);
+    if (!usuario) return naoAutenticado('/api/intelligence/sentinela/briefing');
+    if (!['ADMIN', 'GESTOR'].includes(usuario.perfil))
+      return problema(
+        403,
+        'Acesso negado',
+        'Perfil sem acesso.',
+        '/api/intelligence/sentinela/briefing',
+      );
+    return HttpResponse.json(briefingSentinelaMock());
+  }),
   catalogo('/api/catalogos/biomas', BIOMAS),
   http.get('/api/intelligence/mapa', ({ request }) => {
     if (!temToken(request)) return naoAutenticado('/api/intelligence/mapa');

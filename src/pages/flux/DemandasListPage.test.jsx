@@ -252,3 +252,22 @@ describe('Listagem de demandas', () => {
     expect(screen.queryByRole('link', { name: /^Editar/ })).not.toBeInTheDocument();
   });
 });
+
+describe('Filtro atrasada por URL', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('mostra o chip removível só com atrasada=true e ignora outros valores', async () => {
+    renderAt('/flux/demandas?atrasada=sim');
+    await aguardarLista();
+    expect(screen.queryByTestId('chip-atrasadas')).not.toBeInTheDocument();
+  });
+
+  it('remove o filtro pelo chip', async () => {
+    const user = userEvent.setup();
+    renderAt('/flux/demandas?atrasada=true');
+    await aguardarLista();
+    expect(screen.getByText('Somente atrasadas')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Remover filtro Somente atrasadas/ }));
+    await waitFor(() => expect(screen.queryByTestId('chip-atrasadas')).not.toBeInTheDocument());
+  });
+});

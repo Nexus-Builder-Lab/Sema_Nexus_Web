@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter } from 'react-router-dom';
+import { lerParametrosMapa } from './mapaConfig.js';
 import { vi } from 'vitest';
 import App from '../../App.jsx';
 import { server } from '../../mocks/server.js';
@@ -359,5 +360,46 @@ describe('Inteligência ambiental (mapa)', () => {
       // O foco da URL é aplicado só quando muda; a seleção continua funcionando e mostra o popup.
       expect(await screen.findByRole('link', { name: /Abrir demanda/ })).toBeInTheDocument();
     });
+  });
+});
+
+describe('lerParametrosMapa (atalhos da Sentinela)', () => {
+  const P = (q) => new URLSearchParams(q);
+  it('lê filtros, janela do INPE, camada e foco combinados', () => {
+    const e = lerParametrosMapa(
+      P(
+        'municipioId=5107909&camada=INPE&de=2026-10-26&ate=2026-11-25&status=EM_TRIAGEM&lat=-11.86&lon=-55.5&zoom=12',
+      ),
+    );
+    expect(e.filtros).toMatchObject({
+      municipioId: '5107909',
+      status: 'EM_TRIAGEM',
+      satDe: '2026-10-26',
+      satAte: '2026-11-25',
+      de: '',
+    });
+    expect(e.ligadas).toEqual({ FOCO_CALOR: true, DESMATAMENTO: true });
+    expect(e.foco).toEqual({ lat: -11.86, lon: -55.5, zoom: 12 });
+    expect(lerParametrosMapa(P('')).ligadas.FOCO_CALOR).toBe(false);
+  });
+  it('descarta valores inválidos', () => {
+    const e = lerParametrosMapa(
+      P(
+        'municipioId=-3&de=2026-11-25&ate=2026-10-01&status=em_triagem&categoria=X;Y&camada=OUTRA&lat=10&lon=-55',
+      ),
+    );
+    expect(e.filtros).toEqual(lerParametrosMapa(P('')).filtros);
+    expect(e.ligadas.FOCO_CALOR).toBe(false);
+    expect(e.foco).toBeNull();
+    expect(lerParametrosMapa(P('de=2026-02-31&ate=2026-03-01')).filtros.satDe).toBe('');
+  });
+  it('confere categoria/status/bioma com os catálogos', () => {
+    const cat = {
+      categorias: [{ codigo: 'QUEIMADA_INCENDIO' }],
+      biomas: [{ codigo: 'CERRADO' }],
+      situacoes: [{ codigo: 'PENDENTE' }],
+    };
+    const e = lerParametrosMapa(P('categoria=XYZ&bioma=CERRADO&status=PENDENTE'), cat);
+    expect(e.filtros).toMatchObject({ categoria: '', bioma: 'CERRADO', status: 'PENDENTE' });
   });
 });

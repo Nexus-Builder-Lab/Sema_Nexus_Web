@@ -89,3 +89,44 @@ export function focoValido(latBruto, lonBruto, zoomBruto) {
   const zoom = Number.isFinite(z) ? Math.min(ZOOM_FOCO_MAX, Math.max(ZOOM_FOCO_MIN, z)) : undefined;
   return { lat, lon, zoom };
 }
+
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+const dataValida = (t) =>
+  DATA_ISO.test(t) &&
+  !Number.isNaN(Date.parse(`${t}T00:00:00Z`)) &&
+  new Date(`${t}T00:00:00Z`).toISOString().startsWith(t);
+const CODIGO = /^[A-Z][A-Z0-9_]*$/;
+
+/**
+ * Parser único dos parâmetros de URL do mapa (atalhos da Sentinela GH-142 e foco GH-139): devolve
+ * `{ filtros, ligadas, foco }` descartando o que for inválido. `municipioId` inteiro positivo;
+ * `de`/`ate` AAAA-MM-DD com de <= ate (satDe/satAte); `categoria`/`status`/`bioma` em maiúsculas e, quando
+ * `catalogos` traz a lista correspondente, existentes nela; `camada=INPE` liga focos e DETER; `lat`/`lon`/`zoom`
+ * viram `foco` via `focoValido`. Sem catálogo carregado só a forma é validada; reaplique após carregar.
+ */
+export function lerParametrosMapa(params, catalogos = {}) {
+  const ler = (c) => (params.get(c) ?? '').trim();
+  const filtros = { ...FILTROS_VAZIOS };
+  const municipioId = ler('municipioId');
+  if (/^[1-9]\d*$/.test(municipioId)) filtros.municipioId = municipioId;
+  const codigo = (campo, lista) => {
+    const v = ler(campo);
+    if (!CODIGO.test(v)) return '';
+    return lista && lista.length > 0 && !lista.some((i) => i.codigo === v) ? '' : v;
+  };
+  filtros.bioma = codigo('bioma', catalogos.biomas);
+  filtros.categoria = codigo('categoria', catalogos.categorias);
+  filtros.status = codigo('status', catalogos.situacoes);
+  const de = ler('de');
+  const ate = ler('ate');
+  if (dataValida(de) && dataValida(ate) && de <= ate) {
+    filtros.satDe = de;
+    filtros.satAte = ate;
+  }
+  const inpe = ler('camada') === 'INPE';
+  return {
+    filtros,
+    ligadas: { FOCO_CALOR: inpe, DESMATAMENTO: inpe },
+    foco: focoValido(params.get('lat'), params.get('lon'), params.get('zoom')),
+  };
+}

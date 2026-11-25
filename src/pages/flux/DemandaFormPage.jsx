@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { cadastrarDemanda, detalharDemanda, editarDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { STATUS_EDITAVEIS } from '../../auth/perfis.js';
@@ -16,6 +16,7 @@ import {
   montarCorpo,
   validarDemanda,
   valoresDaDemanda,
+  valoresDaUrl,
   VALORES_INICIAIS,
 } from './validarDemanda.js';
 
@@ -346,6 +347,7 @@ function Formulario({ inicial, catalogos, demanda }) {
 /** Cadastro (`/flux/demandas/nova`) e edição (`/flux/demandas/:id/editar`) de demanda. */
 export default function DemandaFormPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const editando = Boolean(id);
 
   const catalogos = useCarregar(carregarCatalogosFlux);
@@ -378,18 +380,33 @@ export default function DemandaFormPage() {
   } else if (carregando) {
     conteudo = <Loading message="Carregando formulário..." />;
   } else {
+    const pedeMunicipio = ['municipioId', 'municipio'].some((c) => searchParams.get(c));
+    const semMunicipio =
+      !demanda.data && pedeMunicipio && !valoresDaUrl(searchParams, catalogos.data).municipio;
     conteudo = (
-      <Formulario
-        // Recria o formulário ao trocar de demanda, reaproveitando o estado só dentro da mesma.
-        key={id ?? 'nova'}
-        inicial={
-          demanda.data
-            ? valoresDaDemanda(demanda.data)
-            : { ...VALORES_INICIAIS, dataRecebimento: hojeISO() }
-        }
-        catalogos={catalogos.data}
-        demanda={demanda.data}
-      />
+      <>
+        {semMunicipio && (
+          <div className="alert alert-warning" role="status">
+            O município informado no atalho não foi encontrado no catálogo de Mato Grosso:
+            selecione-o manualmente.
+          </div>
+        )}
+        <Formulario
+          // Recria o formulário ao trocar de demanda, reaproveitando o estado só dentro da mesma.
+          key={id ?? 'nova'}
+          inicial={
+            demanda.data
+              ? valoresDaDemanda(demanda.data)
+              : {
+                  ...VALORES_INICIAIS,
+                  dataRecebimento: hojeISO(),
+                  ...valoresDaUrl(searchParams, catalogos.data),
+                }
+          }
+          catalogos={catalogos.data}
+          demanda={demanda.data}
+        />
+      </>
     );
   }
 

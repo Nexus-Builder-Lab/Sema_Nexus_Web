@@ -29,12 +29,18 @@ const CAMPOS_FILTRO = [
   'status',
   'equipeId',
   'fiscalId',
+  'atrasada', // só por URL (atalho da Sentinela); a API aceita `atrasada=true`
   'de',
   'ate',
 ];
 
 function filtrosDaUrl(searchParams) {
-  return Object.fromEntries(CAMPOS_FILTRO.map((campo) => [campo, searchParams.get(campo) ?? '']));
+  const filtros = Object.fromEntries(
+    CAMPOS_FILTRO.map((campo) => [campo, searchParams.get(campo) ?? '']),
+  );
+  // `atrasada` só vale como "true" (atalho da Sentinela); qualquer outro valor é ignorado.
+  if (filtros.atrasada !== 'true') filtros.atrasada = '';
+  return filtros;
 }
 
 function Campo({ id, label, className = 'col-12 col-sm-6 col-lg-auto', children }) {
@@ -240,7 +246,7 @@ export default function DemandasListPage() {
   const pagina = Math.max(0, Number(searchParams.get('page')) || 0);
   const ordem = searchParams.get('sort') || ORDEM_PADRAO;
   const [campoOrdem, direcaoOrdem] = ordem.split(',');
-  const chaveFiltros = CAMPOS_FILTRO.map((campo) => searchParams.get(campo) ?? '').join('|');
+  const chaveFiltros = CAMPOS_FILTRO.map((campo) => filtros[campo]).join('|');
 
   const carregar = useCallback(
     () => listarDemandas({ ...filtros, page: pagina, size: TAMANHO_PAGINA, sort: ordem }),
@@ -423,6 +429,20 @@ export default function DemandasListPage() {
           </div>
         ))}
       </section>
+
+      {filtros.atrasada === 'true' && (
+        <p className="mb-2" data-testid="chip-atrasadas">
+          <span className="badge text-bg-warning d-inline-flex align-items-center gap-2 fs-6 fw-normal">
+            Somente atrasadas
+            <button
+              type="button"
+              className="btn-close btn-sm"
+              aria-label="Remover filtro Somente atrasadas"
+              onClick={() => atualizarUrl({ atrasada: '', page: '' })}
+            />
+          </span>
+        </p>
+      )}
 
       <FiltrosDemanda
         key={chaveFiltros}

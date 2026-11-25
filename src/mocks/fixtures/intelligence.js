@@ -573,3 +573,79 @@ export const handlersFluxDashboard = [
     protegido(() => produtividadeMock()),
   ),
 ];
+
+/** Briefing da Sentinela Territorial (API#138): dados fictícios; INPE identificado como público. */
+export const briefingSentinelaMock = () => ({
+  aviso:
+    'AMBIENTE DEMONSTRATIVO — DADOS FICTÍCIOS (demandas e equipes simuladas; focos e DETER são dados públicos do INPE)',
+  geradoEm: '2026-11-25T06:00:00',
+  validoAte: '2026-11-26T06:00:00',
+  origem: 'AGENDADA',
+  modo: 'LOCAL',
+  modelo: 'qwen3:4b-instruct',
+  resumo: 'Sinop concentra 12 registros do INPE sem demanda aberta; 3 demandas paradas em triagem.',
+  anomalias: [
+    {
+      id: 'INPE_SEM_DEMANDA:5107909',
+      tipo: 'INPE_SEM_DEMANDA',
+      severidade: 'ALTA',
+      titulo: 'Sinop: 12 registro(s) do INPE sem demanda aberta',
+      descricao: 'Sinop teve 8 foco(s) de calor e 4 alerta(s) DETER sem demanda aberta.',
+      numeros: { focos: 8, deter: 4, total: 12, demandasAbertas: 0 },
+      assunto: 'Sinop',
+      acoes: [
+        {
+          tipo: 'FILTRAR_MAPA',
+          rotulo: 'Ver focos e DETER de Sinop no mapa',
+          parametros: { municipioId: 5107909, camada: 'INPE', de: '2026-10-26', ate: '2026-11-25' },
+        },
+        {
+          tipo: 'CRIAR_DEMANDA_MONITORAMENTO',
+          rotulo: 'Abrir demanda de monitoramento em Sinop',
+          parametros: {
+            origem: 'MONITORAMENTO',
+            municipioId: 5107909,
+            municipio: 'Sinop',
+            categoria: 'QUEIMADA_INCENDIO',
+            latitude: -11.86,
+            longitude: -55.5,
+            titulo: 'Monitoramento INPE — Sinop',
+          },
+        },
+      ],
+    },
+    {
+      id: 'FILA_ACUMULADA:EM_TRIAGEM',
+      tipo: 'FILA_ACUMULADA',
+      severidade: 'MEDIA',
+      titulo: 'Fila em triagem',
+      descricao: '3 de 5 demanda(s) em "em triagem" estão paradas.',
+      numeros: { noStatus: 5, paradas: 3 },
+      assunto: 'Em triagem',
+      acoes: [
+        {
+          tipo: 'FILTRAR_DEMANDAS',
+          rotulo: 'Ver demandas em "em triagem"',
+          parametros: { status: 'EM_TRIAGEM' },
+        },
+      ],
+    },
+    {
+      id: 'EQUIPE_SOBRECARREGADA:2',
+      tipo: 'EQUIPE_SOBRECARREGADA',
+      severidade: 'BAIXA',
+      titulo: 'Equipe Norte sobrecarregada',
+      descricao: 'Equipe Norte com muitas demandas ativas.',
+      numeros: { ativas: 14, atrasadas: 4 },
+      assunto: 'Equipe Norte',
+      acoes: [
+        {
+          tipo: 'FILTRAR_DEMANDAS',
+          rotulo: 'Ver demandas atrasadas da Equipe Norte',
+          parametros: { equipeId: 2, atrasada: true },
+        },
+      ],
+    },
+  ],
+  avisos: [],
+});

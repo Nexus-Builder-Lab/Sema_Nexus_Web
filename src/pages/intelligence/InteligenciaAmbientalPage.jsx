@@ -24,7 +24,12 @@ import SatelliteLayer from './SatelliteLayer.jsx';
 import SatelliteLegend from './SatelliteLegend.jsx';
 import SatelliteSidePanel from './SatelliteSidePanel.jsx';
 import useReferenciaSatelite from './useReferenciaSatelite.js';
-import { COR_SELECAO_DEMANDA, COR_SELECAO_INPE, FILTROS_VAZIOS, focoValido } from './mapaConfig.js';
+import {
+  COR_SELECAO_DEMANDA,
+  COR_SELECAO_INPE,
+  FILTROS_VAZIOS,
+  lerParametrosMapa,
+} from './mapaConfig.js';
 import DetalheSelecaoPainel from './DetalheSelecaoPainel.jsx';
 import { geometriaDaSelecao, useDetalheSelecao } from './selecaoMapa.js';
 
@@ -42,16 +47,14 @@ function baixarCsv(itens) {
 
 export default function InteligenciaAmbientalPage() {
   const [searchParams] = useSearchParams();
-  const lat = searchParams.get('lat');
-  const lon = searchParams.get('lon');
-  const zoom = searchParams.get('zoom');
-  const foco = useMemo(() => focoValido(lat, lon, zoom), [lat, lon, zoom]);
+  const [inicial] = useState(() => lerParametrosMapa(searchParams));
+  const foco = inicial.foco;
   const [catalogos, setCatalogos] = useState(CATALOGOS_VAZIOS);
-  const [rascunho, setRascunho] = useState(FILTROS_VAZIOS);
-  const [aplicados, setAplicados] = useState(FILTROS_VAZIOS);
+  const [rascunho, setRascunho] = useState(inicial.filtros);
+  const [aplicados, setAplicados] = useState(inicial.filtros);
   const [resposta, setResposta] = useState({ chave: null, erro: null, pontos: [] });
   const [tentativa, setTentativa] = useState(0);
-  const [ligadas, setLigadas] = useState({ FOCO_CALOR: false, DESMATAMENTO: false });
+  const [ligadas, setLigadas] = useState(inicial.ligadas);
   const [agregadoManual, setAgregadoManual] = useState(false);
   const [tentativaSat, setTentativaSat] = useState(0);
   const [modo, setModo] = useState('pontos');
@@ -84,7 +87,17 @@ export default function InteligenciaAmbientalPage() {
     let ativo = true;
     Promise.all([listarMunicipios(), listarBiomas(), listarCategorias(), listarStatus()])
       .then(([municipios, biomas, categorias, situacoes]) => {
-        if (ativo) setCatalogos({ municipios, biomas, categorias, situacoes });
+        if (!ativo) return;
+        setCatalogos({ municipios, biomas, categorias, situacoes });
+        // Descarta da URL valores que não existem nos catálogos (ex.: categoria=XYZ).
+        const { filtros } = lerParametrosMapa(searchParams, { biomas, categorias, situacoes });
+        const podar = (atual) => {
+          const novo = { ...atual };
+          for (const c of ['bioma', 'categoria', 'status']) if (!filtros[c]) novo[c] = '';
+          return novo;
+        };
+        setRascunho(podar);
+        setAplicados(podar);
       })
       .catch(() => {});
     return () => {
