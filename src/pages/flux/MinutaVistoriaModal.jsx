@@ -33,15 +33,20 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
   const [erroEnvio, setErroEnvio] = useState(null);
   const [docCriado, setDocCriado] = useState(false);
   const pedidoAtual = useRef(0);
+  const abortar = useRef(null);
+  const tituloPasso = useRef(null);
   const enviado = useRef(null); // documento já criado (para repetir só o vínculo)
 
   async function gerar() {
     pedidoAtual.current += 1;
     const pedido = pedidoAtual.current;
+    abortar.current?.abort();
+    const controle = new AbortController();
+    abortar.current = controle;
     setFase('gerando');
     setErro(null);
     try {
-      const r = await gerarMinutaVistoria(demanda.id);
+      const r = await gerarMinutaVistoria(demanda.id, { signal: controle.signal });
       if (pedido !== pedidoAtual.current) return;
       setMinuta(r);
       setTexto(r.markdown ?? '');
@@ -57,9 +62,21 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
     gerar();
     return () => {
       pedidoAtual.current += 1;
+      abortar.current?.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    tituloPasso.current?.focus();
+  }, [fase]);
+
+  const anuncio = {
+    gerando: 'Gerando a minuta.',
+    editando: 'Minuta pronta para revisão e edição.',
+    confirmando: 'Confirme o envio da minuta como documento.',
+    enviando: 'Enviando a minuta.',
+  }[fase];
 
   const tituloValido = titulo.trim().length >= 3 && titulo.trim().length <= 200;
   const textoValido = texto.trim().length > 0;
@@ -104,6 +121,9 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
   return (
     <Modal title="Minuta de relatório de vistoria" onClose={onClose} busy={ocupado}>
       <div className="modal-body">
+        <p className="visually-hidden" role="status" aria-live="polite">
+          {anuncio}
+        </p>
         <p className="fw-semibold text-warning-emphasis mb-2" role="note">
           {AVISO_MINUTA}
         </p>
@@ -137,6 +157,9 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
             )}
             {fase === 'editando' && (
               <>
+                <h3 className="h6" tabIndex={-1} ref={tituloPasso}>
+                  Revisar e editar
+                </h3>
                 <div className="d-flex gap-2 mb-2" role="group" aria-label="Modo de exibição">
                   <button
                     type="button"
@@ -177,6 +200,15 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
             )}
             {(fase === 'confirmando' || fase === 'enviando') && (
               <div className="border rounded p-3" role="group" aria-label="Confirmar envio">
+                <h3 className="h6" tabIndex={-1} ref={tituloPasso}>
+                  Confirmar envio
+                </h3>
+                {docCriado && (
+                  <p className="text-warning-emphasis">
+                    O texto já foi enviado como documento e não pode mais ser alterado aqui; falta
+                    apenas vincular à demanda.
+                  </p>
+                )}
                 <p className="mb-2">
                   Enviar a minuta revisada como novo documento (.md) e vincular à demanda{' '}
                   <strong>{demanda.numero}</strong>? Nada é salvo antes desta confirmação.
@@ -226,21 +258,27 @@ export default function MinutaVistoriaModal({ demanda, onClose, onSucesso }) {
         )}
         {(fase === 'confirmando' || fase === 'enviando') && (
           <>
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              disabled={ocupado}
-              onClick={() => setFase('editando')}
-            >
-              Voltar à edição
-            </button>
+            {!docCriado && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                disabled={ocupado}
+                onClick={() => setFase('editando')}
+              >
+                Voltar à edição
+              </button>
+            )}
             <button
               type="button"
               className="btn btn-primary"
               disabled={ocupado || !tituloValido}
               onClick={enviar}
             >
-              {ocupado ? 'Enviando...' : 'Confirmar envio'}
+              {ocupado
+                ? 'Enviando...'
+                : docCriado
+                  ? 'Tentar vincular novamente'
+                  : 'Confirmar envio'}
             </button>
           </>
         )}

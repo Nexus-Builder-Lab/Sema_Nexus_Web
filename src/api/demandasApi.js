@@ -115,9 +115,10 @@ export async function sugerirDistribuicao(id) {
  * rascunho em Markdown (`markdown`, `aviso`, `modo`, `modelo`, `nomeArquivoSugerido`, `evidencias`,
  * `avisos`). Não grava nada (ADMIN/GESTOR/ANALISTA/FISCAL designado). Primeira chamada: até ~1 minuto.
  */
-export async function gerarMinutaVistoria(id) {
+export async function gerarMinutaVistoria(id, { signal } = {}) {
   const { data } = await httpClient.post(`/demandas/${id}/minuta-vistoria`, null, {
     timeout: 120_000,
+    signal,
   });
   return data;
 }

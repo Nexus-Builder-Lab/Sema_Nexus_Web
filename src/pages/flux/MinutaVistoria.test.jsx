@@ -7,6 +7,7 @@ import { podeGerarMinuta } from '../../auth/perfis.js';
 import { resetDemandasMock } from '../../mocks/fixtures/demandas.js';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao } from '../../test/auth.js';
+import MarkdownSeguro from './MarkdownSeguro.jsx';
 
 function abrir() {
   return render(
@@ -82,5 +83,83 @@ describe('Minuta de vistoria', () => {
     expect(await screen.findByText(/Muitas solicitações/)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(chamou).toBe(false);
+  });
+
+  async function ateConfirmar(user) {
+    await user.click(await screen.findByRole('button', { name: 'Gerar minuta de relatório' }));
+    const modal = await screen.findByRole('dialog');
+    await within(modal).findByLabelText(/Texto da minuta/);
+    await user.click(within(modal).getByRole('button', { name: 'Enviar como documento' }));
+    return modal;
+  }
+
+  it('vínculo falho após upload trava a edição e repete só o vínculo', async () => {
+    const user = userEvent.setup();
+    let uploads = 0;
+    let tentativas = 0;
+    server.use(
+      http.post('/api/documentos', () => {
+        uploads += 1;
+        return HttpResponse.json({ id: 77 }, { status: 201 });
+      }),
+      http.post('/api/demandas/:id/documentos', () => {
+        tentativas += 1;
+        return tentativas === 1
+          ? HttpResponse.json({ status: 500, detail: 'falhou' }, { status: 500 })
+          : HttpResponse.json({}, { status: 201 });
+      }),
+    );
+    abrir();
+    const modal = await ateConfirmar(user);
+    await user.click(within(modal).getByRole('button', { name: 'Confirmar envio' }));
+    expect(await within(modal).findByText(/vínculo à demanda falhou/)).toBeInTheDocument();
+    expect(within(modal).queryByRole('button', { name: 'Voltar à edição' })).toBeNull();
+    await user.click(within(modal).getByRole('button', { name: 'Tentar vincular novamente' }));
+    await waitFor(() => expect(tentativas).toBe(2));
+    expect(uploads).toBe(1);
+  });
+
+  it('falha no upload mantém o texto e permite voltar à edição', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/documentos', () =>
+        HttpResponse.json({ status: 500, detail: 'Erro no upload' }, { status: 500 }),
+      ),
+    );
+    abrir();
+    const modal = await ateConfirmar(user);
+    await user.click(within(modal).getByRole('button', { name: 'Confirmar envio' }));
+    expect(await within(modal).findByRole('alert')).toBeInTheDocument();
+    await user.click(within(modal).getByRole('button', { name: 'Voltar à edição' }));
+    expect(within(modal).getByLabelText(/Texto da minuta/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ['CONSULTA', { id: 9, nome: 'C', email: 'c@x', perfil: 'CONSULTA' }],
+    ['FISCAL não designado', { id: 999, nome: 'F', email: 'f@x', perfil: 'FISCAL' }],
+  ])('esconde o botão para %s', async (_n, usuario) => {
+    iniciarSessao(usuario);
+    abrir();
+    await screen.findByRole('heading', { name: /DEM-2026\/0001/ });
+    expect(screen.queryByRole('button', { name: 'Gerar minuta de relatório' })).toBeNull();
+  });
+});
+
+describe('MarkdownSeguro', () => {
+  it('não cria HTML bruto, links nem negrito aninhado quebrado', () => {
+    const { container } = render(
+      <MarkdownSeguro
+        texto={[
+          '<script>alert(1)</script>',
+          '[x](javascript:alert(1))',
+          '**a **b** c**',
+          '- item <img src=x onerror=1>',
+        ].join(String.fromCharCode(10))}
+      />,
+    );
+    expect(container.querySelector('script, img, a')).toBeNull();
+    expect(container.textContent).toContain('<script>alert(1)</script>');
+    expect(container.textContent).toContain('[x](javascript:alert(1))');
+    expect(container.querySelectorAll('li')).toHaveLength(1);
   });
 });
