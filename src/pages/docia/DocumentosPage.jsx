@@ -1,13 +1,19 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 import { Eye, FileText } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { listarMunicipios } from '../../api/catalogosApi.js';
-import { listarDocumentos } from '../../api/documentosApi.js';
+import { listarDocumentos, pesquisarDocumentos } from '../../api/documentosApi.js';
 import { useAuth } from '../../auth/useAuth.js';
 import { PERFIS_ESCRITA_DOCUMENTO } from '../../auth/perfis.js';
 import DataTable from '../../components/DataTable.jsx';
 import FilterBar from '../../components/FilterBar.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
+import {
+  EXPLICACAO_SIMILARIDADE,
+  SeloRecuperacao,
+  SeloSimilaridade,
+} from '../../components/RecuperacaoDocia.jsx';
+import { EXPLICACAO_ADERENCIA } from '../../components/RespostaDocia.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { formatarData } from '../../utils/datas.js';
 import { formatarTamanho } from './validarDocumento.js';
@@ -16,9 +22,29 @@ const carregarTodos = () => listarDocumentos({ page: 0, size: 200 });
 const TAMANHO_PAGINA = 20;
 const ORDEM_PADRAO = 'criadoEm,desc';
 const CAMPOS_FILTRO = ['q', 'categoria', 'tipo', 'municipioId', 'de', 'ate'];
+// Limites de `GET /api/documentos/busca` (consulta de 2 a 200 caracteres; até 20 resultados).
+const MIN_CONSULTA_BUSCA = 2;
+const MAX_CONSULTA = 200;
+const LIMITE_BUSCA = 20;
 
 export const AVISO_BUSCA =
-  'A pesquisa é textual: procura o trecho digitado no título, na descrição, nas palavras-chave e no conteúdo extraído, sem diferenciar maiúsculas e acentos. Não é busca semântica.';
+  'A pesquisa procura o trecho digitado no título, na descrição, nas palavras-chave e no conteúdo extraído, sem diferenciar maiúsculas e acentos. Quando a busca híbrida está ativa, os documentos também podem ser encontrados por proximidade de sentido.';
+
+/**
+ * Nos resultados ranqueados, os filtros de categoria, tipo, município e datas são aplicados sobre os até 20
+ * documentos mais relevantes (a API de pesquisa não recebe esses filtros).
+ */
+function filtrarResultadosBusca(resultados, filtros) {
+  // Mesma semântica dos filtros da listagem: categoria e tipo com correspondência exata.
+  return resultados.filter(({ documento: d }) => {
+    if (filtros.categoria && d.categoria !== filtros.categoria) return false;
+    if (filtros.tipo && d.tipo !== filtros.tipo) return false;
+    if (filtros.municipioId && String(d.municipio?.id ?? '') !== filtros.municipioId) return false;
+    if (filtros.de && (d.dataDocumento ?? '') < filtros.de) return false;
+    if (filtros.ate && (d.dataDocumento ?? '') > filtros.ate) return false;
+    return true;
+  });
+}
 
 function Campo({ id, label, className = 'col-12 col-sm-6 col-lg-3', children }) {
   return (
@@ -50,6 +76,7 @@ function Filtros({ inicial, municipios, onAplicar, onLimpar }) {
           type="search"
           className="form-control"
           aria-describedby="filtro-q-ajuda"
+          maxLength={MAX_CONSULTA}
           placeholder="Título, descrição, palavras-chave ou conteúdo"
           value={rascunho.q}
           onChange={definir('q')}
@@ -128,13 +155,41 @@ export default function DocumentosPage() {
 
   const { data: todos } = useCarregar(carregarTodos);
 
-  const carregar = useCallback(
-    () => listarDocumentos({ ...filtros, page: pagina, size: TAMANHO_PAGINA, sort: ordem }),
+  // Pesquisa com termo (>= 2 caracteres) usa a pesquisa ranqueada; sem termo, a listagem paginada de sempre.
+  const termoBusca = (filtros.q ?? '').trim();
+  const emBusca = termoBusca.length >= MIN_CONSULTA_BUSCA;
+  const idExplicacaoBusca = useId();
+
+  const carregar = useCallback(async () => {
+    if (emBusca) {
+      const resposta = await pesquisarDocumentos(termoBusca, { limite: LIMITE_BUSCA });
+      return {
+        busca: true,
+        recuperacao: resposta.recuperacao,
+        resultados: resposta.resultados ?? [],
+      };
+    }
+    const page = await listarDocumentos({
+      ...filtros,
+      page: pagina,
+      size: TAMANHO_PAGINA,
+      sort: ordem,
+    });
+    return { busca: false, page };
     // `filtros` deriva de `chaveFiltros`; a chave evita refazer a busca a cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [chaveFiltros, pagina, ordem],
-  );
-  const { data, loading, error, recarregar } = useCarregar(carregar);
+  }, [chaveFiltros, pagina, ordem]);
+  const { data: resultado, loading, error, recarregar } = useCarregar(carregar);
+  // Resultados de uma pesquisa anterior (ou de uma listagem) não aparecem enquanto a nova carga não chega.
+  const resultadosBusca =
+    emBusca && resultado?.busca && !loading
+      ? filtrarResultadosBusca(resultado.resultados, filtros)
+      : null;
+  const paginaLista = !emBusca && resultado && !resultado.busca ? resultado.page : null;
+  const linhas = emBusca
+    ? (resultadosBusca ?? []).map((r) => ({ ...r.documento, busca: r }))
+    : (paginaLista?.content ?? []);
+  const temSimilaridade = resultadosBusca?.some((r) => r.similaridadeSemantica != null);
 
   function atualizarUrl(mudancas) {
     const proximo = new URLSearchParams(searchParams);
@@ -145,12 +200,39 @@ export default function DocumentosPage() {
     setSearchParams(proximo);
   }
 
-  const colunas = useMemo(
-    () => [
+  const colunas = useMemo(() => {
+    // Na pesquisa ranqueada a ordem é a relevância da API: sem ordenação por coluna.
+    const ordenavel = !emBusca;
+    const colunaRelevancia = {
+      key: 'relevancia',
+      header: 'Trecho e aderência',
+      className: 'small',
+      render: (d) => (
+        <>
+          <blockquote className="border-start ps-2 mb-1 text-body-secondary">
+            {d.busca.trecho}
+          </blockquote>
+          {d.busca.aderenciaTextual && (
+            <span
+              className="badge text-bg-light border fw-normal"
+              data-testid="aderencia-textual"
+              title={EXPLICACAO_ADERENCIA}
+            >
+              Aderência textual: {d.busca.aderenciaTextual}
+            </span>
+          )}
+          <SeloSimilaridade
+            valor={d.busca.similaridadeSemantica}
+            idExplicacao={idExplicacaoBusca}
+          />
+        </>
+      ),
+    };
+    return [
       {
         key: 'titulo',
         header: 'Título',
-        sortable: true,
+        sortable: ordenavel,
         render: (d) => (
           <div className="d-flex align-items-start gap-2">
             <FileText size={18} className="text-success flex-shrink-0 mt-1" aria-hidden="true" />
@@ -166,17 +248,18 @@ export default function DocumentosPage() {
           </div>
         ),
       },
+      ...(emBusca ? [colunaRelevancia] : []),
       {
         key: 'categoria',
         header: 'Categoria',
-        sortable: true,
+        sortable: ordenavel,
         render: (d) => <span className="badge text-bg-light border">{d.categoria}</span>,
       },
       { key: 'municipio', header: 'Município', render: (d) => d.municipio?.nome ?? '—' },
       {
         key: 'dataDocumento',
         header: 'Data / responsável',
-        sortable: true,
+        sortable: ordenavel,
         className: 'text-nowrap',
         render: (d) => (
           <>
@@ -204,9 +287,8 @@ export default function DocumentosPage() {
           </Link>
         ),
       },
-    ],
-    [],
-  );
+    ];
+  }, [emBusca, idExplicacaoBusca]);
 
   const categorias = useMemo(() => {
     const contagem = new Map();
@@ -259,10 +341,22 @@ export default function DocumentosPage() {
         onAplicar={(valores) => atualizarUrl({ ...valores, page: '' })}
         onLimpar={() => setSearchParams(new URLSearchParams())}
       />
+      {resultadosBusca && (
+        <div className="mb-2" data-testid="pesquisa-documentos">
+          <p className="small text-body-secondary mb-1">
+            Até {LIMITE_BUSCA} documentos mais relevantes para “{termoBusca}”.
+          </p>
+          <SeloRecuperacao
+            recuperacao={resultado.recuperacao}
+            explicacaoId={idExplicacaoBusca}
+            complemento={temSimilaridade ? EXPLICACAO_SIMILARIDADE : null}
+          />
+        </div>
+      )}
       <DataTable
         caption="Documentos da biblioteca"
         columns={colunas}
-        rows={data?.content ?? []}
+        rows={linhas}
         loading={loading}
         error={error}
         onRetry={recarregar}
@@ -272,15 +366,22 @@ export default function DocumentosPage() {
             ? 'Ajuste a pesquisa ou limpe os filtros.'
             : 'Envie o primeiro documento pelo botão "Cadastrar documento".'
         }
-        sort={{ key: campoOrdem, direction: direcaoOrdem === 'asc' ? 'asc' : 'desc' }}
-        onSortChange={({ key, direction }) =>
-          atualizarUrl({ sort: `${key},${direction}`, page: '' })
+        sort={
+          emBusca
+            ? undefined
+            : { key: campoOrdem, direction: direcaoOrdem === 'asc' ? 'asc' : 'desc' }
+        }
+        onSortChange={
+          emBusca
+            ? undefined
+            : ({ key, direction }) => atualizarUrl({ sort: `${key},${direction}`, page: '' })
         }
         pagination={
-          data && {
-            page: data.page,
-            totalPages: data.totalPages,
-            totalElements: data.totalElements,
+          !emBusca &&
+          paginaLista && {
+            page: paginaLista.page,
+            totalPages: paginaLista.totalPages,
+            totalElements: paginaLista.totalElements,
             onPageChange: (p) => atualizarUrl({ page: p || '' }),
           }
         }

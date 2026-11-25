@@ -86,6 +86,99 @@ describe('Assistente DocIA', () => {
     expect(selos[0]).toHaveAttribute('aria-describedby', explicacao.id);
   });
 
+  it('mostra o modo de recuperação com explicação associada e similaridade só quando informada', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'O laudo registra 210 hectares.',
+          modo: MODO,
+          recuperacao: 'HIBRIDA',
+          referencias: [
+            {
+              documentoId: 7,
+              titulo: 'Laudo fictício',
+              trecho: 'Área de 210 hectares.',
+              aderenciaTextual: 'alta',
+              similaridadeSemantica: 0.712,
+            },
+            {
+              documentoId: 8,
+              titulo: 'Relatório fictício',
+              trecho: 'Outra área.',
+              aderenciaTextual: null,
+              similaridadeSemantica: null,
+            },
+          ],
+        }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Qual a área?');
+    await user.click(screen.getByRole('button', { name: 'Perguntar' }));
+    const selo = await screen.findByTestId('recuperacao');
+    expect(selo).toHaveTextContent('Busca: híbrida (palavras + semântica)');
+    const explicacao = document.getElementById(selo.getAttribute('aria-describedby'));
+    expect(explicacao).toHaveTextContent(/não a probabilidade de a resposta estar correta/);
+    const similaridade = screen.getAllByTestId('similaridade-semantica');
+    expect(similaridade).toHaveLength(1);
+    expect(similaridade[0]).toHaveTextContent('Similaridade semântica: 0,71');
+    expect(similaridade[0]).toHaveAttribute(
+      'aria-describedby',
+      screen.getByTestId('explicacao-aderencia').id,
+    );
+    expect(screen.getByTestId('explicacao-aderencia')).toHaveTextContent(/Similaridade semântica/);
+  });
+
+  it('só similaridade (sem aderência): a explicação existe e o selo a referencia', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'Área de 210 hectares.',
+          modo: MODO,
+          recuperacao: 'HIBRIDA',
+          referencias: [
+            {
+              documentoId: 7,
+              titulo: 'Laudo fictício',
+              trecho: 'Área de 210 hectares.',
+              aderenciaTextual: null,
+              similaridadeSemantica: 0.5,
+            },
+          ],
+        }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Qual a área?');
+    await user.click(screen.getByRole('button', { name: 'Perguntar' }));
+    const similaridade = await screen.findByTestId('similaridade-semantica');
+    const explicacao = document.getElementById(similaridade.getAttribute('aria-describedby'));
+    expect(explicacao).not.toBeNull();
+    expect(explicacao).toHaveTextContent(/Similaridade semântica/);
+    expect(screen.queryByTestId('aderencia-textual')).not.toBeInTheDocument();
+  });
+
+  it('mostra "Busca: por palavras" e nenhuma similaridade quando a API não as informa', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'Não há informação suficiente nos documentos.',
+          modo: MODO,
+          recuperacao: 'LEXICAL',
+          referencias: [],
+        }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'algo?');
+    await user.click(screen.getByRole('button', { name: 'Perguntar' }));
+    expect(await screen.findByTestId('recuperacao')).toHaveTextContent('Busca: por palavras');
+    expect(screen.queryByTestId('similaridade-semantica')).not.toBeInTheDocument();
+  });
+
   it('exibe "não há informação suficiente" sem referências', async () => {
     const user = userEvent.setup();
     server.use(

@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import AcoesSugeridas from './AcoesSugeridas.jsx';
 import Icon from './Icon.jsx';
+import { EXPLICACAO_SIMILARIDADE, SeloRecuperacao, SeloSimilaridade } from './RecuperacaoDocia.jsx';
 
 const SEM_INFORMACAO = /^n[aã]o h[aá] informa[cç][aã]o suficiente/i;
 
@@ -24,6 +25,8 @@ export default function Resposta({ item }) {
   const semInfo = SEM_INFORMACAO.test(item.resposta ?? '');
   const comAgente = item.agente === 'LOCAL' || item.agente === 'CLAUDE';
   const idExplicacao = useId();
+  const temAderencia = (item.referencias ?? []).some((r) => r.aderenciaTextual);
+  const temSimilaridade = (item.referencias ?? []).some((r) => r.similaridadeSemantica != null);
   return (
     <div className="nx-ai-row" data-testid="resposta">
       <Avatar />
@@ -37,6 +40,7 @@ export default function Resposta({ item }) {
             {item.agente === 'CLAUDE' ? 'Claude' : 'IA local'} · {item.modelo}
           </span>
         )}
+        <SeloRecuperacao recuperacao={item.recuperacao} className="mb-2" />
         <p className={`mb-2 ${semInfo ? 'text-body-secondary fst-italic' : ''}`}>{item.resposta}</p>
         {item.referencias?.length > 0 && (
           <>
@@ -55,19 +59,23 @@ export default function Resposta({ item }) {
                       Aderência textual: {r.aderenciaTextual}
                     </span>
                   )}
+                  <SeloSimilaridade valor={r.similaridadeSemantica} idExplicacao={idExplicacao} />
                   <blockquote className="small text-body-secondary border-start ps-2 mb-0">
                     {r.trecho}
                   </blockquote>
                 </li>
               ))}
             </ul>
-            {item.referencias.some((r) => r.aderenciaTextual) && (
+            {/* Sempre que um selo aponta para esta explicação, ela existe no DOM (aria-describedby válido). */}
+            {(temAderencia || temSimilaridade) && (
               <p
                 className="small text-body-secondary mb-0"
                 id={idExplicacao}
                 data-testid="explicacao-aderencia"
               >
-                {EXPLICACAO_ADERENCIA}
+                {[temAderencia && EXPLICACAO_ADERENCIA, temSimilaridade && EXPLICACAO_SIMILARIDADE]
+                  .filter(Boolean)
+                  .join(' ')}
               </p>
             )}
           </>

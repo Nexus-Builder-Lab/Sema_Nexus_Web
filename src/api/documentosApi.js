@@ -88,3 +88,14 @@ export async function preAnalisarDocumento(arquivo) {
   });
   return data;
 }
+
+/**
+ * GET /api/documentos/busca?q&limite&modo → `{ consulta, recuperacao, resultados: [{ documento, trecho,
+ * aderenciaTextual, similaridadeSemantica }] }`. `recuperacao` é LEXICAL ou HIBRIDA (a API cai para LEXICAL sem
+ * erro quando o modelo de embeddings não está disponível). `aderenciaTextual` e `similaridadeSemantica` medem
+ * proximidade com a consulta, não confiança. `q` entre 2 e 200 caracteres; `limite` de 1 a 20.
+ */
+export async function pesquisarDocumentos(q, { limite = 20, modo = 'AUTO' } = {}) {
+  const { data } = await httpClient.get('/documentos/busca', { params: { q, limite, modo } });
+  return data;
+}
