@@ -445,7 +445,8 @@ describe('Checklist por categoria e fotos com EXIF na fiscalização', () => {
             liberar.push(resolve);
           });
         }
-        return new HttpResponse(new Uint8Array([1, 2, 3]), {
+        const bytes = new Uint8Array([1, 2, 3]);
+        return HttpResponse.arrayBuffer(bytes.buffer, {
           status: 200,
           headers: { 'Content-Type': 'image/jpeg' },
         });

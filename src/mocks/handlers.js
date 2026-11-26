@@ -302,9 +302,16 @@ async function extrairArquivoMultipart(request) {
   try {
     const formData = await request.clone().formData();
     const arquivo = formData?.get('arquivo');
-    if (arquivo && typeof arquivo !== 'string' && arquivo.size > 0) return arquivo;
+    if (arquivo && typeof arquivo !== 'string' && arquivo.size > 0) {
+      // No Node 22 + jsdom, undici preserva o corpo mas serializa o nome como "blob".
+      if (arquivo.name === 'blob' && MIME_PARA_EXT[arquivo.type]) {
+        const bytes = await arquivo.arrayBuffer();
+        return new File([bytes], `foto.${MIME_PARA_EXT[arquivo.type]}`, { type: arquivo.type });
+      }
+      return arquivo;
+    }
   } catch {
-    // O File do jsdom não é aceito pelo parser multipart do undici; lê o corpo bruto.
+    // O File do jsdom não é aceito pelo parser multipart do undici no Node 24; lê o corpo bruto.
   }
   const buffer = await request.arrayBuffer();
   const texto = new TextDecoder('latin1').decode(buffer);
@@ -463,11 +470,13 @@ const fluxo = [
     if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
     const encontrada = baixarFotoMock(params.id, params.fotoId);
     if (!encontrada) return problema(404, 'Não encontrado', 'Foto inexistente.', caminho);
-    return new HttpResponse(encontrada.bytes, {
+    const { bytes, foto } = encontrada;
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    return HttpResponse.arrayBuffer(buffer, {
       status: 200,
       headers: {
-        'Content-Type': encontrada.foto.mime,
-        'Content-Disposition': `attachment; filename="${encontrada.foto.nomeOriginal}"`,
+        'Content-Type': foto.mime,
+        'Content-Disposition': `attachment; filename="${foto.nomeOriginal}"`,
         'X-Content-Type-Options': 'nosniff',
       },
     });

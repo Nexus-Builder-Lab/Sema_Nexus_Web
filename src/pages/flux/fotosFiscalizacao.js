@@ -95,14 +95,22 @@ export function mensagemDeErroFoto(erro, padrao = 'Não foi possível concluir a
 }
 
 /**
- * Converte respostas `Blob` (ex.: `baixarFotoFiscalizacao` com `responseType: 'blob'`) em JSON
- * `problem+json` antes de extrair a mensagem amigável.
+ * Converte respostas `Blob` ou `ArrayBuffer` (ex.: `baixarFotoFiscalizacao`) em JSON `problem+json`
+ * antes de extrair a mensagem amigável.
  */
 export async function resolverMensagemDeErroFoto(
   erro,
   padrao = 'Não foi possível concluir a operação.',
 ) {
   const dados = erro?.response?.data;
+  if (dados instanceof ArrayBuffer) {
+    try {
+      const json = JSON.parse(new TextDecoder('utf-8').decode(dados));
+      return mensagemDeErroFoto({ ...erro, response: { ...erro.response, data: json } }, padrao);
+    } catch {
+      return mensagemDeErroFoto(erro, padrao);
+    }
+  }
   if (dados instanceof Blob || (dados && typeof dados.text === 'function')) {
     try {
       const json = JSON.parse(await dados.text());

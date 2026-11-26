@@ -104,13 +104,29 @@ export async function enviarFotoFiscalizacao(demandaId, arquivo, onProgress) {
   return data;
 }
 
-/** GET /api/demandas/{id}/fotos/{fotoId}/arquivo → Blob autenticado (sem JWT na URL). */
+/** GET /api/demandas/{id}/fotos/{fotoId}/arquivo → Blob autenticado (sem JWT na URL).
+ * Usa `arraybuffer` (como `relatoriosApi.js`) para compatibilidade com MSW/XHR no Node 22. */
 export async function baixarFotoFiscalizacao(demandaId, fotoId, { signal } = {}) {
-  const { data } = await httpClient.get(`/demandas/${demandaId}/fotos/${fotoId}/arquivo`, {
-    responseType: 'blob',
-    signal,
-  });
-  return data;
+  try {
+    const { data, headers } = await httpClient.get(
+      `/demandas/${demandaId}/fotos/${fotoId}/arquivo`,
+      {
+        responseType: 'arraybuffer',
+        signal,
+      },
+    );
+    return new Blob([data], { type: headers?.['content-type'] || 'application/octet-stream' });
+  } catch (erro) {
+    const dados = erro?.response?.data;
+    if (dados instanceof ArrayBuffer) {
+      try {
+        erro.response.data = JSON.parse(new TextDecoder('utf-8').decode(dados));
+      } catch {
+        erro.response.data = undefined;
+      }
+    }
+    throw erro;
+  }
 }
 
 /** Baixa a foto autenticada e dispara o download no navegador. */
