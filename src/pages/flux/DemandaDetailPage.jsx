@@ -4,6 +4,7 @@ import {
   detalharDemanda,
   iniciarExecucao,
   iniciarTriagem,
+  listarChecklists,
   listarHistorico,
 } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
@@ -29,9 +30,11 @@ import { formatarHectares } from '../intelligence/selecaoMapa.js';
 import { formatarData } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
 import AtividadeForm from './AtividadeForm.jsx';
+import ChecklistResumo from './ChecklistResumo.jsx';
 import ConclusaoModal from './ConclusaoModal.jsx';
 import DistribuicaoModal from './DistribuicaoModal.jsx';
 import FiscalizacaoModal, { AVISO_FISCALIZACAO } from './FiscalizacaoModal.jsx';
+import FotosFiscalizacao from './FotosFiscalizacao.jsx';
 import MinutaVistoriaModal from './MinutaVistoriaModal.jsx';
 import TriagemModal from './TriagemModal.jsx';
 
@@ -52,8 +55,10 @@ export default function DemandaDetailPage() {
   const [acaoAberta, setAcaoAberta] = useState(null);
   const [executando, setExecutando] = useState(false);
   const [recarregarDocs, setRecarregarDocs] = useState(0);
+  const [recarregarFotos, setRecarregarFotos] = useState(0);
 
   const catalogos = useCarregar(carregarCatalogosFlux);
+  const checklists = useCarregar(listarChecklists);
   const demanda = useCarregar(useCallback(() => detalharDemanda(id), [id]));
   const historico = useCarregar(useCallback(() => listarHistorico(id), [id]));
 
@@ -62,6 +67,7 @@ export default function DemandaDetailPage() {
     showToast({ message: mensagem });
     demanda.recarregar();
     historico.recarregar();
+    setRecarregarFotos((n) => n + 1);
   }
 
   async function confirmarInicio(iniciar, sucesso, falha) {
@@ -259,25 +265,39 @@ export default function DemandaDetailPage() {
           Fiscalização
         </h2>
         {d.fiscalizacao ? (
-          <dl className="row g-3 mb-0">
-            <Dado rotulo="Data">{formatarData(d.fiscalizacao.data)}</Dado>
-            <Dado rotulo="Equipe">{d.fiscalizacao.equipe?.nome}</Dado>
-            <Dado rotulo="Registrada por">{d.fiscalizacao.registradoPor?.nome}</Dado>
-            <Dado rotulo="Atividades realizadas">{d.fiscalizacao.atividades}</Dado>
-            <Dado rotulo="Resultado">{d.fiscalizacao.resultado}</Dado>
-            <Dado rotulo="Evidências">{d.fiscalizacao.evidencias}</Dado>
-            <Dado rotulo="Recomendações">{d.fiscalizacao.recomendacoes}</Dado>
-            {d.status === 'FINALIZADA' && (
-              <>
-                <Dado rotulo="Resultado final">{d.resultadoFinal}</Dado>
-                <Dado rotulo="Justificativa da conclusão">{d.justificativaConclusao}</Dado>
-              </>
-            )}
-          </dl>
+          <>
+            <dl className="row g-3 mb-0">
+              <Dado rotulo="Data">{formatarData(d.fiscalizacao.data)}</Dado>
+              <Dado rotulo="Equipe">{d.fiscalizacao.equipe?.nome}</Dado>
+              <Dado rotulo="Registrada por">{d.fiscalizacao.registradoPor?.nome}</Dado>
+              <Dado rotulo="Atividades realizadas">{d.fiscalizacao.atividades}</Dado>
+              <Dado rotulo="Resultado">{d.fiscalizacao.resultado}</Dado>
+              <Dado rotulo="Evidências">{d.fiscalizacao.evidencias}</Dado>
+              <Dado rotulo="Recomendações">{d.fiscalizacao.recomendacoes}</Dado>
+              {d.status === 'FINALIZADA' && (
+                <>
+                  <Dado rotulo="Resultado final">{d.resultadoFinal}</Dado>
+                  <Dado rotulo="Justificativa da conclusão">{d.justificativaConclusao}</Dado>
+                </>
+              )}
+            </dl>
+            <ChecklistResumo checklist={d.fiscalizacao.checklist} modelos={checklists.data ?? []} />
+          </>
         ) : (
           <p className="text-body-secondary mb-2">Nenhuma fiscalização registrada.</p>
         )}
-        <p className="small text-body-secondary mb-0">{AVISO_FISCALIZACAO}</p>
+        <p className="small text-body-secondary mb-0 mt-2">{AVISO_FISCALIZACAO}</p>
+      </section>
+
+      <section className="card card-body shadow-sm mb-3" aria-labelledby="fotos-fiscalizacao">
+        <h2 id="fotos-fiscalizacao" className="h5 mb-3">
+          Fotos de evidência
+        </h2>
+        <FotosFiscalizacao
+          key={`${d.id}-${recarregarFotos}`}
+          demanda={d}
+          onAlterado={historico.recarregar}
+        />
       </section>
 
       <PerguntarSobreDemanda key={d.id} demandaId={d.id} />
@@ -355,7 +375,15 @@ export default function DemandaDetailPage() {
         <AtividadeForm demanda={d} onClose={() => setAcaoAberta(null)} onSucesso={aposAcao} />
       )}
       {acaoAberta === 'FISCALIZACAO' && (
-        <FiscalizacaoModal demanda={d} onClose={() => setAcaoAberta(null)} onSucesso={aposAcao} />
+        <FiscalizacaoModal
+          demanda={d}
+          onClose={() => setAcaoAberta(null)}
+          onSucesso={aposAcao}
+          onFotosAlteradas={() => {
+            setRecarregarFotos((n) => n + 1);
+            historico.recarregar();
+          }}
+        />
       )}
       {(acaoAberta === 'CONCLUIR' || acaoAberta === 'DEVOLVER') && (
         <ConclusaoModal
