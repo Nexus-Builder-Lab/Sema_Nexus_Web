@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { podeEditarDemandas } from '../../auth/perfis.js';
+import { useAuth } from '../../auth/useAuth.js';
 import ErrorState from '../../components/ErrorState.jsx';
 import Loading from '../../components/Loading.jsx';
 import { ROTULOS_STATUS, rotuloDaCategoria, rotuloDoBioma } from './mapaConfig.js';
@@ -6,6 +8,7 @@ import { formatarData, formatarDataHora } from './satelliteFormat.js';
 import {
   ROTULOS_ATRIBUTOS,
   TIPOS_SELECAO,
+  destinoDemandaMonitoramento,
   formatarHectares,
   formatarKm2,
   formatarValor,
@@ -44,10 +47,11 @@ function AreaInpe({ dados }) {
   return <span>{dados.areaObservacao || 'Área afetada: não informada pela fonte.'}</span>;
 }
 
-function DetalheInpe({ dados }) {
+function DetalheInpe({ dados, podeCriarDemanda }) {
   const p = dados.ponto ?? {};
   const atributos = Object.entries(dados.atributos ?? {});
   const imp = dados.importacao;
+  const destino = podeCriarDemanda ? destinoDemandaMonitoramento(dados) : null;
   return (
     <>
       <dl className="row small mb-2">
@@ -86,6 +90,13 @@ function DetalheInpe({ dados }) {
           </>
         )}
       </p>
+      {destino && (
+        <div className="mt-3">
+          <Link to={destino.to} state={destino.state} className="btn btn-primary btn-sm w-100">
+            Criar Demanda de Monitoramento
+          </Link>
+        </div>
+      )}
     </>
   );
 }
@@ -161,9 +172,11 @@ function DetalheDemanda({ dados }) {
  * dado público real; demanda sempre como fictícia. A permissão é da API (403 → aviso, sem dados).
  */
 export default function DetalheSelecaoPainel({ selecao, estado, onFechar, onTentarDeNovo }) {
+  const { usuario } = useAuth();
   if (!selecao) return null;
   const inpe = selecao.tipo !== 'DEMANDA';
   const negado = estado.erro?.response?.status === 403;
+  const podeCriarDemanda = podeEditarDemandas(usuario);
   return (
     <section
       className={`card shadow-sm mb-3 ${inpe ? 'border-warning' : 'border-primary'}`}
@@ -203,7 +216,7 @@ export default function DetalheSelecaoPainel({ selecao, estado, onFechar, onTent
           />
         ) : estado.dados ? (
           inpe ? (
-            <DetalheInpe dados={estado.dados} />
+            <DetalheInpe dados={estado.dados} podeCriarDemanda={podeCriarDemanda} />
           ) : (
             <DetalheDemanda dados={estado.dados} />
           )

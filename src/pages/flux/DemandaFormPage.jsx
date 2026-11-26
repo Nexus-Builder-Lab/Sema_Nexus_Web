@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { cadastrarDemanda, detalharDemanda, editarDemanda } from '../../api/demandasApi.js';
 import { mensagemDeErro } from '../../api/httpClient.js';
 import { STATUS_EDITAVEIS } from '../../auth/perfis.js';
@@ -9,6 +9,7 @@ import PageHeader from '../../components/PageHeader.jsx';
 import { useToast } from '../../components/Toasts.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import { hojeISO } from '../../utils/datas.js';
+import AreaPoligonoField from './AreaPoligonoField.jsx';
 import { carregarCatalogosFlux } from './catalogosFlux.js';
 import {
   errosDaApi,
@@ -79,6 +80,12 @@ function Formulario({ inicial, catalogos, demanda }) {
   const [tentativas, setTentativas] = useState(0);
 
   const bloqueada = editando && !STATUS_EDITAVEIS.includes(demanda.status);
+  const areaOriginal = editando
+    ? { areaHa: demanda.areaHa ?? null, areaGeometria: demanda.areaGeometria ?? null }
+    : null;
+  const tinhaArea = Boolean(
+    areaOriginal && (areaOriginal.areaHa != null || areaOriginal.areaGeometria != null),
+  );
   const definir = (campo) => (e) => setValores((atual) => ({ ...atual, [campo]: e.target.value }));
   const hoje = hojeISO();
 
@@ -100,7 +107,7 @@ function Formulario({ inicial, catalogos, demanda }) {
 
     setEnviando(true);
     try {
-      const corpo = montarCorpo(valores, catalogos.municipios);
+      const corpo = montarCorpo(valores, catalogos.municipios, { editando, areaOriginal });
       const salva = editando
         ? await editarDemanda(demanda.id, corpo)
         : await cadastrarDemanda(corpo);
@@ -272,6 +279,51 @@ function Formulario({ inicial, catalogos, demanda }) {
             )}
           </Campo>
 
+          <AreaPoligonoField
+            areaGeometria={valores.areaGeometria}
+            areaHa={valores.areaHa}
+            removerArea={valores.removerArea}
+            editando={editando}
+            tinhaArea={tinhaArea}
+            disabled={bloqueada || enviando}
+            erroAreaHa={erros.areaHa}
+            erroAreaGeometria={erros.areaGeometria}
+            onChangeAreaHa={(valor) =>
+              setValores((atual) => ({ ...atual, areaHa: valor, removerArea: false }))
+            }
+            onAplicarGeometria={({ geometria, areaHa, centroide }) =>
+              setValores((atual) => ({
+                ...atual,
+                areaGeometria: geometria,
+                areaHa: String(areaHa).replace('.', ','),
+                removerArea: false,
+                ...(centroide
+                  ? {
+                      latitude: String(centroide.latitude).replace('.', ','),
+                      longitude: String(centroide.longitude).replace('.', ','),
+                    }
+                  : {}),
+              }))
+            }
+            onRemoverArea={() =>
+              setValores((atual) => ({
+                ...atual,
+                areaGeometria: null,
+                areaHa: '',
+                removerArea: editando && tinhaArea,
+              }))
+            }
+            onDesfazerRemocao={() =>
+              setValores((atual) => ({
+                ...atual,
+                areaGeometria: areaOriginal?.areaGeometria ?? null,
+                areaHa:
+                  areaOriginal?.areaHa != null ? String(areaOriginal.areaHa).replace('.', ',') : '',
+                removerArea: false,
+              }))
+            }
+          />
+
           <Campo
             id="dataRecebimento"
             label="Data de recebimento"
@@ -348,6 +400,7 @@ function Formulario({ inicial, catalogos, demanda }) {
 export default function DemandaFormPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const editando = Boolean(id);
 
   const catalogos = useCarregar(carregarCatalogosFlux);
@@ -400,7 +453,7 @@ export default function DemandaFormPage() {
               : {
                   ...VALORES_INICIAIS,
                   dataRecebimento: hojeISO(),
-                  ...valoresDaUrl(searchParams, catalogos.data),
+                  ...valoresDaUrl(searchParams, catalogos.data, location.state),
                 }
           }
           catalogos={catalogos.data}

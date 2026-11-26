@@ -25,6 +25,7 @@ import { useToast } from '../../components/Toasts.jsx';
 import useCarregar from '../../hooks/useCarregar.js';
 import DemandaDocumentos from '../docia/DemandaDocumentos.jsx';
 import PerguntarSobreDemanda from '../docia/PerguntarSobreDemanda.jsx';
+import { formatarHectares } from '../intelligence/selecaoMapa.js';
 import { formatarData } from '../../utils/datas.js';
 import { carregarCatalogosFlux, rotuloDoCatalogo } from './catalogosFlux.js';
 import AtividadeForm from './AtividadeForm.jsx';
@@ -240,6 +241,8 @@ export default function DemandaDetailPage() {
           <Dado rotulo="Município">{d.municipio?.nome}</Dado>
           <Dado rotulo="Localidade">{d.localidade}</Dado>
           <Dado rotulo="Data de recebimento">{formatarData(d.dataRecebimento)}</Dado>
+          <Dado rotulo="Prazo sugerido">{d.prazoSugerido && formatarData(d.prazoSugerido)}</Dado>
+          <Dado rotulo="Área afetada">{d.areaHa != null ? formatarHectares(d.areaHa) : null}</Dado>
           <div className="col-12">
             <dt className="text-body-secondary small fw-normal">Descrição</dt>
             <dd className="mb-0">{d.descricao}</dd>

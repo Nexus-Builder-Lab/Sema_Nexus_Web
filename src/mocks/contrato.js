@@ -27,7 +27,8 @@ export function gerarExemplo(schemaOuRef, chave = '', profundidade = 0) {
   const composto = schema.allOf ?? schema.oneOf ?? schema.anyOf;
   if (composto) return gerarExemplo(composto[0], chave, profundidade + 1);
 
-  switch (schema.type) {
+  const tipo = Array.isArray(schema.type) ? schema.type.find((t) => t !== 'null') : schema.type;
+  switch (tipo) {
     case 'object': {
       const saida = {};
       for (const [nome, prop] of Object.entries(schema.properties ?? {})) {

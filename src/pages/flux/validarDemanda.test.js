@@ -71,6 +71,25 @@ describe('validarDemanda', () => {
     expect(validar({ latitude: '', longitude: '' })).toEqual({});
   });
 
+  it('rejeita área afetada <= 0, inválida ou incompatível com o polígono (> 2%)', () => {
+    expect(validar({ areaHa: '0' }).areaHa).toMatch(/maior que zero/);
+    expect(validar({ areaHa: 'abc' }).areaHa).toMatch(/maior que zero/);
+    expect(validar({ areaHa: '42,35' })).toEqual({});
+    const poli = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-56.1, -15.6],
+          [-56.09, -15.6],
+          [-56.09, -15.59],
+          [-56.1, -15.59],
+          [-56.1, -15.6],
+        ],
+      ],
+    };
+    expect(validar({ areaGeometria: poli, areaHa: '10' }).areaHa).toMatch(/diverge mais de 2%/);
+  });
+
   it('rejeita data de recebimento futura e prazo anterior ao recebimento', () => {
     expect(validar({ dataRecebimento: '2026-11-11' }).dataRecebimento).toMatch(/futura/);
     expect(validar({ dataRecebimento: HOJE })).toEqual({});
@@ -94,11 +113,48 @@ describe('montarCorpo e conversões', () => {
       localidade: null,
       latitude: -15.601,
       longitude: null,
+      areaHa: null,
+      areaGeometria: null,
       dataRecebimento: '2026-11-09',
       prioridade: null,
       prazoSugerido: null,
       observacoes: null,
     });
+  });
+
+  it('montarCorpo na edição preserva área intocada e envia removerArea=true ao remover', () => {
+    const areaOriginal = {
+      areaHa: 42.35,
+      areaGeometria: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-56.1, -15.6],
+            [-56.09, -15.6],
+            [-56.09, -15.59],
+            [-56.1, -15.59],
+            [-56.1, -15.6],
+          ],
+        ],
+      },
+    };
+    const preservado = montarCorpo(
+      { ...valido, areaHa: '42,35', areaGeometria: areaOriginal.areaGeometria },
+      MUNICIPIOS,
+      { editando: true, areaOriginal },
+    );
+    expect(preservado.areaHa).toBeNull();
+    expect(preservado.areaGeometria).toBeNull();
+    expect(preservado.removerArea).toBe(false);
+
+    const removido = montarCorpo(
+      { ...valido, areaHa: '', areaGeometria: null, removerArea: true },
+      MUNICIPIOS,
+      { editando: true, areaOriginal },
+    );
+    expect(removido.areaHa).toBeNull();
+    expect(removido.areaGeometria).toBeNull();
+    expect(removido.removerArea).toBe(true);
   });
 
   it('lerCoordenada: vazio → null, inválido → NaN', () => {
@@ -152,5 +208,28 @@ describe('valoresDaUrl (pré-preenchimento da Sentinela)', () => {
   it('ignora valores fora do catálogo ou inválidos', () => {
     const p = new URLSearchParams('origem=XYZ&municipioId=1&latitude=abc');
     expect(valoresDaUrl(p, catalogos)).toEqual({});
+  });
+
+  it('preenche área e centroide a partir de location.state.areaGeometria quando sem lat/lon', () => {
+    const p = new URLSearchParams('origem=MONITORAMENTO&municipioId=5107909');
+    const poli = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-55.52, -11.88],
+          [-55.5, -11.88],
+          [-55.5, -11.86],
+          [-55.52, -11.86],
+          [-55.52, -11.88],
+        ],
+      ],
+    };
+    const saida = valoresDaUrl(p, catalogos, { areaGeometria: poli });
+    expect(saida.origem).toBe('MONITORAMENTO');
+    expect(saida.municipio).toBe('Sinop');
+    expect(saida.areaGeometria).toEqual(poli);
+    expect(saida.areaHa).toBeTruthy();
+    expect(saida.latitude).toBe('-11,87');
+    expect(saida.longitude).toBe('-55,51');
   });
 });

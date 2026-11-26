@@ -1,4 +1,5 @@
 import { hojeISO } from '../../utils/datas.js';
+import { analisarGeometria, areaCompativel } from '../../utils/geometriaArea.js';
 
 // Validação do formulário de demanda para usabilidade. Espelha `DemandaRequest` da API
 // (Sema_Nexus_API); quem decide é o backend — erros 400 dele são exibidos no campo correspondente.
@@ -10,6 +11,7 @@ export const LIMITES = {
   observacoes: { max: 2000 },
   latitude: { min: -18.1, max: -7.3 },
   longitude: { min: -61.7, max: -50.2 },
+  areaHa: { min: 0.01, max: 9999999999.99 },
 };
 
 export const VALORES_INICIAIS = {
@@ -21,6 +23,9 @@ export const VALORES_INICIAIS = {
   localidade: '',
   latitude: '',
   longitude: '',
+  areaHa: '',
+  areaGeometria: null,
+  removerArea: false,
   dataRecebimento: '',
   prioridade: '',
   prazoSugerido: '',
@@ -98,6 +103,30 @@ export function validarDemanda(valores, { municipios = [], hoje = hojeISO() } = 
     erros[faltando] ??= 'Informe latitude e longitude juntas.';
   }
 
+  const areaHaValor = lerCoordenada(valores.areaHa);
+  if (String(valores.areaHa ?? '').trim() !== '') {
+    if (
+      Number.isNaN(areaHaValor) ||
+      areaHaValor < LIMITES.areaHa.min ||
+      areaHaValor > LIMITES.areaHa.max
+    ) {
+      erros.areaHa = 'A área afetada deve ser um número maior que zero (mínimo 0,01 ha).';
+    }
+  }
+
+  if (valores.areaGeometria) {
+    const analise = analisarGeometria(valores.areaGeometria);
+    if (!analise.ok) {
+      erros.areaGeometria = analise.erro;
+    } else if (
+      areaHaValor !== null &&
+      !Number.isNaN(areaHaValor) &&
+      !areaCompativel(areaHaValor, analise.areaHa)
+    ) {
+      erros.areaHa = `A área informada diverge mais de 2% da área calculada pelo polígono (${String(analise.areaHa).replace('.', ',')} ha).`;
+    }
+  }
+
   if (!valores.dataRecebimento) erros.dataRecebimento = 'Informe a data de recebimento.';
   else if (valores.dataRecebimento > hoje) {
     erros.dataRecebimento = 'A data de recebimento não pode ser futura.';
@@ -119,8 +148,37 @@ export function validarDemanda(valores, { municipios = [], hoje = hojeISO() } = 
 }
 
 /** Monta o corpo de `POST/PUT /api/demandas` a partir dos valores (já validados) do formulário. */
-export function montarCorpo(valores, municipios) {
+export function montarCorpo(valores, municipios, { editando = false, areaOriginal = null } = {}) {
   const vazioParaNulo = (texto) => (texto.trim() === '' ? null : texto.trim());
+  const areaHaNum = lerCoordenada(valores.areaHa);
+  const areaGeometria = valores.areaGeometria ?? null;
+  let areaCampos = { areaHa: areaHaNum, areaGeometria };
+
+  if (editando) {
+    if (valores.removerArea) {
+      areaCampos = { areaHa: null, areaGeometria: null, removerArea: true };
+    } else if (areaOriginal) {
+      const tinhaGeo = Boolean(areaOriginal.areaGeometria);
+      const temGeo = Boolean(areaGeometria);
+      const geoIgual =
+        (!tinhaGeo && !temGeo) ||
+        (tinhaGeo &&
+          temGeo &&
+          JSON.stringify(areaOriginal.areaGeometria) === JSON.stringify(areaGeometria));
+      const haOrig = areaOriginal.areaHa == null ? null : Number(areaOriginal.areaHa);
+      const haIgual = haOrig === areaHaNum;
+      if (geoIgual && haIgual) {
+        areaCampos = { areaHa: null, areaGeometria: null, removerArea: false };
+      } else if (!temGeo && areaHaNum == null && (tinhaGeo || haOrig != null)) {
+        areaCampos = { areaHa: null, areaGeometria: null, removerArea: true };
+      } else {
+        areaCampos = { areaHa: areaHaNum, areaGeometria, removerArea: false };
+      }
+    } else {
+      areaCampos = { areaHa: areaHaNum, areaGeometria, removerArea: false };
+    }
+  }
+
   return {
     titulo: valores.titulo.trim(),
     descricao: valores.descricao.trim(),
@@ -130,6 +188,7 @@ export function montarCorpo(valores, municipios) {
     localidade: vazioParaNulo(valores.localidade),
     latitude: lerCoordenada(valores.latitude),
     longitude: lerCoordenada(valores.longitude),
+    ...areaCampos,
     dataRecebimento: valores.dataRecebimento,
     prioridade: valores.prioridade || null,
     prazoSugerido: valores.prazoSugerido || null,
@@ -149,6 +208,9 @@ export function valoresDaDemanda(demanda) {
     localidade: demanda.localidade ?? '',
     latitude: texto(demanda.latitude),
     longitude: texto(demanda.longitude),
+    areaHa: texto(demanda.areaHa),
+    areaGeometria: demanda.areaGeometria ?? null,
+    removerArea: false,
     dataRecebimento: demanda.dataRecebimento ?? '',
     prioridade: demanda.prioridade ?? '',
     prazoSugerido: demanda.prazoSugerido ?? '',
@@ -170,11 +232,10 @@ export function errosDaApi(errors = []) {
 
 /**
  * Pré-preenchimento do cadastro por parâmetros da URL (atalho "Abrir demanda de monitoramento" da
- * Sentinela, GH-142). Só preenche campos de texto/catálogo — quem salva é a pessoa. Aceita `origem`,
- * `categoria`, `titulo`, `municipio` (nome) ou `municipioId` (resolvido no catálogo), `localidade`,
- * `latitude`/`longitude` (também `lat`/`lon`). Valores fora do catálogo são ignorados.
+ * Sentinela, GH-142, e painel de seleção do mapa, GH-147) e `location.state` (polígono GeoJSON).
+ * Só preenche campos de texto/catálogo/geometria — quem salva é a pessoa.
  */
-export function valoresDaUrl(params, catalogos = {}) {
+export function valoresDaUrl(params, catalogos = {}, state = null) {
   const ler = (...nomes) => {
     for (const n of nomes) {
       const v = params.get(n);
@@ -200,5 +261,37 @@ export function valoresDaUrl(params, catalogos = {}) {
   const lon = ler('longitude', 'lon');
   if (lat && !Number.isNaN(lerCoordenada(lat))) saida.latitude = lat;
   if (lon && !Number.isNaN(lerCoordenada(lon))) saida.longitude = lon;
+
+  const areaHaUrl = ler('areaHa');
+  const areaHaNum = lerCoordenada(areaHaUrl);
+  if (
+    areaHaUrl &&
+    areaHaNum !== null &&
+    !Number.isNaN(areaHaNum) &&
+    areaHaNum >= LIMITES.areaHa.min &&
+    areaHaNum <= LIMITES.areaHa.max
+  ) {
+    saida.areaHa = areaHaUrl;
+  }
+
+  if (state?.areaGeometria) {
+    const analise = analisarGeometria(state.areaGeometria);
+    if (analise.ok) {
+      saida.areaGeometria = analise.geometria;
+      saida.areaHa = String(analise.areaHa).replace('.', ',');
+      if (!saida.latitude && !saida.longitude && analise.centroide) {
+        const { latitude: cLat, longitude: cLon } = analise.centroide;
+        if (
+          cLat >= LIMITES.latitude.min &&
+          cLat <= LIMITES.latitude.max &&
+          cLon >= LIMITES.longitude.min &&
+          cLon <= LIMITES.longitude.max
+        ) {
+          saida.latitude = String(cLat).replace('.', ',');
+          saida.longitude = String(cLon).replace('.', ',');
+        }
+      }
+    }
+  }
   return saida;
 }
