@@ -77,3 +77,19 @@ export function podeGerarMinuta(usuario, demanda) {
 
 /** Perfis que veem o painel Sentinela Territorial (GET /api/intelligence/sentinela/briefing). */
 export const PERFIS_SENTINELA = ['ADMIN', 'GESTOR'];
+
+/** Upload de foto de evidência: demanda EM_ANDAMENTO e ADMIN/GESTOR ou FISCAL designado. */
+export function podeEnviarFoto(usuario, demanda) {
+  return demanda?.status === 'EM_ANDAMENTO' && podeExecutar(usuario, demanda);
+}
+
+/**
+ * Exclusão de foto de evidência (API#145): ADMIN, GESTOR ou FISCAL, somente quem enviou a foto
+ * (`autor.id === usuario.id`) e antes da conclusão da demanda (`status !== 'FINALIZADA'`).
+ */
+export function podeExcluirFoto(usuario, demanda, foto) {
+  if (!usuario || !foto) return false;
+  if (!['ADMIN', 'GESTOR', 'FISCAL'].includes(usuario.perfil)) return false;
+  if (demanda?.status === 'FINALIZADA') return false;
+  return foto.autor?.id != null && foto.autor.id === usuario.id;
+}

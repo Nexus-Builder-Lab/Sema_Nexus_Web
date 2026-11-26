@@ -76,6 +76,77 @@ export async function registrarFiscalizacao(id, corpo) {
   return data;
 }
 
+/** GET /api/demandas/checklists → `[ChecklistModelo]` por categoria (Issue API#145). */
+export async function listarChecklists() {
+  const { data } = await httpClient.get('/demandas/checklists');
+  return data;
+}
+
+/** GET /api/demandas/{id}/fotos → `[FotoFiscalizacao]` com metadados e selo EXIF. */
+export async function listarFotosFiscalizacao(demandaId) {
+  const { data } = await httpClient.get(`/demandas/${demandaId}/fotos`);
+  return data;
+}
+
+/**
+ * POST /api/demandas/{id}/fotos (multipart, parte `arquivo`) → 201 FotoFiscalizacao.
+ * Apenas EM_ANDAMENTO; JPG, PNG ou WebP até 10 MB; máximo de 20 fotos por demanda.
+ */
+export async function enviarFotoFiscalizacao(demandaId, arquivo, onProgress) {
+  const corpo = new FormData();
+  corpo.append('arquivo', arquivo);
+  const { data } = await httpClient.post(`/demandas/${demandaId}/fotos`, corpo, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (evento) => {
+      if (evento.total) onProgress?.(Math.round((evento.loaded * 100) / evento.total));
+    },
+  });
+  return data;
+}
+
+/** GET /api/demandas/{id}/fotos/{fotoId}/arquivo → Blob autenticado (sem JWT na URL).
+ * Usa `arraybuffer` (como `relatoriosApi.js`) para compatibilidade com MSW/XHR no Node 22. */
+export async function baixarFotoFiscalizacao(demandaId, fotoId, { signal } = {}) {
+  try {
+    const { data, headers } = await httpClient.get(
+      `/demandas/${demandaId}/fotos/${fotoId}/arquivo`,
+      {
+        responseType: 'arraybuffer',
+        signal,
+      },
+    );
+    return new Blob([data], { type: headers?.['content-type'] || 'application/octet-stream' });
+  } catch (erro) {
+    const dados = erro?.response?.data;
+    if (dados instanceof ArrayBuffer) {
+      try {
+        erro.response.data = JSON.parse(new TextDecoder('utf-8').decode(dados));
+      } catch {
+        erro.response.data = undefined;
+      }
+    }
+    throw erro;
+  }
+}
+
+/** Baixa a foto autenticada e dispara o download no navegador. */
+export async function baixarEGuardarFoto(demandaId, foto) {
+  const blob = await baixarFotoFiscalizacao(demandaId, foto.id);
+  const url = URL.createObjectURL(blob);
+  const ancora = document.createElement('a');
+  ancora.href = url;
+  ancora.download = foto.nomeOriginal || `foto-${foto.id}`;
+  document.body.appendChild(ancora);
+  ancora.click();
+  ancora.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** DELETE /api/demandas/{id}/fotos/{fotoId} → 204 (somente quem enviou, antes da conclusão). */
+export async function excluirFotoFiscalizacao(demandaId, fotoId) {
+  await httpClient.delete(`/demandas/${demandaId}/fotos/${fotoId}`);
+}
+
 /** POST /api/demandas/{id}/conclusao `{ resultadoFinal, justificativa }` (→ FINALIZADA). */
 export async function concluirDemanda(id, corpo) {
   const { data } = await httpClient.post(`/demandas/${id}/conclusao`, corpo);

@@ -1,4 +1,5 @@
 import { CATEGORIAS, EQUIPES, MEMBROS, MUNICIPIOS } from './catalogos.js';
+import { validarChecklistMock } from './checklists.js';
 import { hojeISO } from '../../utils/datas.js';
 import { analisarGeometria, areaCompativel } from '../../utils/geometriaArea.js';
 
@@ -103,12 +104,18 @@ function fixture(i) {
 let demandas = [];
 let proximoId = 1;
 const eventos = new Map();
+const fotosPorDemanda = new Map();
+const conteudosFotos = new Map();
+let proximoFotoId = 1;
 
 /** Restaura as demandas fictícias iniciais (os testes chamam entre um caso e outro). */
 export function resetDemandasMock(total = 25) {
   demandas = Array.from({ length: total }, (_, i) => fixture(i));
   eventos.clear();
+  fotosPorDemanda.clear();
+  conteudosFotos.clear();
   proximoId = total + 1;
+  proximoFotoId = 1;
 }
 resetDemandasMock();
 
@@ -447,7 +454,7 @@ export function registrarAtividadeMock(demanda, corpo) {
   return eventos.get(demanda.id).at(-1);
 }
 
-export function validarFiscalizacaoMock(corpo) {
+export function validarFiscalizacaoMock(corpo, demanda) {
   const erros = [];
   if (!corpo.data) erros.push({ campo: 'data', mensagem: 'não deve ser nulo' });
   else if (corpo.data > hojeISO())
@@ -455,10 +462,19 @@ export function validarFiscalizacaoMock(corpo) {
   for (const campo of ['atividades', 'resultado', 'evidencias']) {
     if (!corpo[campo]?.trim()) erros.push({ campo, mensagem: 'não deve estar em branco' });
   }
+  if (corpo.checklist != null) {
+    const { erros: errosChecklist } = validarChecklistMock(demanda?.categoria, corpo.checklist);
+    erros.push(...errosChecklist);
+  }
   return erros;
 }
 
 export function registrarFiscalizacaoMock(demanda, corpo) {
+  const anterior = demanda.fiscalizacao;
+  const checklist =
+    corpo.checklist != null
+      ? validarChecklistMock(demanda?.categoria, corpo.checklist).normalizado
+      : (anterior?.checklist ?? null);
   demanda.fiscalizacao = {
     id: demanda.id,
     data: corpo.data,
@@ -469,9 +485,151 @@ export function registrarFiscalizacaoMock(demanda, corpo) {
     recomendacoes: corpo.recomendacoes ?? null,
     registradoPor: USUARIO_CRIADOR,
     registradoEm: `${HOJE}T11:00:00`,
+    checklist,
   };
   registrar(demanda, 'FISCALIZACAO', 'AGUARDANDO_CONCLUSAO', corpo.resultado);
   return demanda;
+}
+
+const MIMES_FOTO_MOCK = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
+export function listarFotosMock(demandaId) {
+  return [...(fotosPorDemanda.get(Number(demandaId)) ?? [])];
+}
+
+export async function enviarFotoMock(demanda, arquivo, autor = USUARIO_CRIADOR) {
+  if (demanda.status !== 'EM_ANDAMENTO') {
+    return {
+      status: 409,
+      erro: 'Fotos de evidência só podem ser enviadas com a demanda em andamento.',
+    };
+  }
+  const lista = fotosPorDemanda.get(demanda.id) ?? [];
+  if (lista.length >= 20) {
+    return { status: 409, erro: 'A demanda já tem o máximo de 20 fotos.' };
+  }
+  if (!arquivo || typeof arquivo === 'string') {
+    return { status: 400, erro: 'Envie a foto na parte `arquivo`.' };
+  }
+  if (arquivo.size === 0) {
+    return { status: 400, erro: 'O arquivo está vazio.' };
+  }
+  if (arquivo.size > 10 * 1024 * 1024) {
+    return { status: 413, erro: 'A foto excede o limite de 10 MB.' };
+  }
+  const ext = arquivo.name?.includes('.') ? arquivo.name.split('.').pop().toLowerCase() : '';
+  const mime =
+    MIMES_FOTO_MOCK[ext] ||
+    (['image/jpeg', 'image/png', 'image/webp'].includes(arquivo.type) ? arquivo.type : null);
+  if (!mime) {
+    return { status: 415, erro: 'Formato não aceito. Envie JPEG, PNG ou WebP.' };
+  }
+
+  const nome = arquivo.name || `foto.${ext || 'jpg'}`;
+  const lower = nome.toLowerCase();
+  let exif = {
+    exifDataHora: '2026-11-10T10:15:00',
+    exifLatitude: -15.601,
+    exifLongitude: -56.097,
+    distanciaKm: 0.42,
+    gpsForaMt: false,
+    conferencia: 'CONFERE',
+  };
+  if (lower.includes('fora-mt')) {
+    exif = {
+      exifDataHora: '2026-11-10T10:15:00',
+      exifLatitude: -23.5505,
+      exifLongitude: -46.6333,
+      distanciaKm: 1350.2,
+      gpsForaMt: true,
+      conferencia: 'FORA_MT',
+    };
+  } else if (lower.includes('divergente')) {
+    exif = {
+      exifDataHora: '2026-11-10T10:15:00',
+      exifLatitude: -15.65,
+      exifLongitude: -56.15,
+      distanciaKm: 8.42,
+      gpsForaMt: false,
+      conferencia: 'DIVERGENTE',
+    };
+  } else if (lower.includes('sem-gps') || mime === 'image/png') {
+    exif = {
+      exifDataHora: null,
+      exifLatitude: null,
+      exifLongitude: null,
+      distanciaKm: null,
+      gpsForaMt: false,
+      conferencia: 'SEM_GPS',
+    };
+  } else if (lower.includes('sem-ref')) {
+    exif = {
+      exifDataHora: '2026-11-10T10:15:00',
+      exifLatitude: -15.601,
+      exifLongitude: -56.097,
+      distanciaKm: null,
+      gpsForaMt: false,
+      conferencia: 'SEM_REFERENCIA',
+    };
+  }
+
+  const id = proximoFotoId++;
+  const foto = {
+    id,
+    demandaId: demanda.id,
+    nomeOriginal: nome,
+    mime,
+    tamanho: arquivo.size,
+    sha256: `${String(id).padStart(8, '0')}a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4`,
+    ...exif,
+    autor: { id: autor.id, nome: autor.nome },
+    criadoEm: `${HOJE}T10:20:00`,
+  };
+  const bytes =
+    typeof arquivo.arrayBuffer === 'function' ? await arquivo.arrayBuffer() : new ArrayBuffer(0);
+  fotosPorDemanda.set(demanda.id, [...lista, foto]);
+  conteudosFotos.set(id, new Uint8Array(bytes));
+  registrar(demanda, 'ATIVIDADE', demanda.status, `[Foto] Evidência anexada: ${nome}`);
+  return { status: 201, foto };
+}
+
+export function baixarFotoMock(demandaId, fotoId) {
+  const lista = fotosPorDemanda.get(Number(demandaId)) ?? [];
+  const foto = lista.find((f) => f.id === Number(fotoId));
+  if (!foto) return null;
+  return { foto, bytes: conteudosFotos.get(foto.id) ?? new Uint8Array() };
+}
+
+export function excluirFotoMock(demanda, fotoId, autor = USUARIO_CRIADOR) {
+  const lista = fotosPorDemanda.get(demanda.id) ?? [];
+  const foto = lista.find((f) => f.id === Number(fotoId));
+  if (!foto) return { status: 404, erro: 'Foto não encontrada.' };
+  if (foto.autor?.id !== autor.id) {
+    return { status: 403, erro: 'Somente quem enviou a foto pode excluí-la.' };
+  }
+  if (demanda.status === 'FINALIZADA') {
+    return {
+      status: 409,
+      erro: 'A demanda já foi concluída; a foto não pode mais ser excluída.',
+    };
+  }
+  fotosPorDemanda.set(
+    demanda.id,
+    lista.filter((f) => f.id !== Number(fotoId)),
+  );
+  conteudosFotos.delete(foto.id);
+  registrar(
+    demanda,
+    'ATIVIDADE',
+    demanda.status,
+    `[Foto] Evidência removida: ${foto.nomeOriginal}`,
+  );
+  return { status: 204 };
 }
 
 export function validarConclusaoMock(corpo) {

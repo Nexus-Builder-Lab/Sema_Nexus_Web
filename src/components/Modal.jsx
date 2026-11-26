@@ -4,7 +4,7 @@ import { useEffect, useId, useRef } from 'react';
  * Modal genérico (renderizado pelo React, sem o JS do Bootstrap). Esc fecha (exceto ocupado);
  * o foco vai ao primeiro campo ao abrir e volta ao elemento anterior ao fechar.
  */
-export default function Modal({ title, onClose, busy = false, children }) {
+export default function Modal({ title, onClose, busy = false, size = '', children }) {
   const titleId = useId();
   const dialogRef = useRef(null);
   const latest = useRef({ busy, onClose });
@@ -38,7 +38,9 @@ export default function Modal({ title, onClose, busy = false, children }) {
         aria-labelledby={titleId}
         ref={dialogRef}
       >
-        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div
+          className={`modal-dialog modal-dialog-centered modal-dialog-scrollable ${size}`.trim()}
+        >
           <div className="modal-content">
             <div className="modal-header">
               <h2 className="modal-title h5" id={titleId}>
