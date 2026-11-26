@@ -566,3 +566,15 @@
 - **Executado por:** subagente implementador-frontend, a pedido do proprietário.
 - **O que foi feito:** `FiscalizacaoModal.jsx` passa a carregar o modelo da categoria via `GET /api/demandas/checklists` (`ChecklistFiscalizacaoFields.jsx`) com validação client-side/backend (`checklist.<id>`) e pré-preenchimento/preservação do checklist anterior no reenvio após devolução. Novo módulo `FotosFiscalizacao.jsx` (usado no `DemandaDetailPage.jsx` e dentro do `FiscalizacaoModal.jsx`) com upload multipart JPG/PNG/WebP (validação client-side até 10 MB e limite de 20 fotos), listagem com selo de conferência EXIF (`CONFERE`, `DIVERGENTE`, `FORA_MT`, `SEM_GPS`, `SEM_REFERENCIA`), distância em km até a demanda, data/hora e GPS do EXIF, pré-visualização/download autenticado via Blob (sem JWT na URL) e exclusão com confirmação respeitando permissão do autor antes de `FINALIZADA`. `DemandaDetailPage.jsx` exibe também `ChecklistResumo.jsx`. `src/mocks/openapi.json` sincronizado com `target/openapi-contrato-teste.json` da API (`4b77a62`), com mocks em `checklists.js`, `demandas.js` e `handlers.js`.
 - **Testes:** `ChecklistFotosFiscalizacao.test.jsx` (12 testes). Suíte completa (`npx vitest run --maxWorkers=3`): 57 arquivos, 478 testes, 0 falhas; `npm run lint`, `npm run build` e `verificar-diff.mjs` verdes.
+
+## 2026-11-26 · GH-135 · Taxa de concordância, autoverificação e feedback (PE-12-WEB)
+- **Status:** PR solicitado. Depende de API#131 (`e0367f5`).
+- **Executado por:** subagente implementador-frontend, a pedido do proprietário.
+- **O que foi feito:**
+  - `src/mocks/openapi.json` sincronizado com `openapi-contrato-teste.json` da API (`e0367f5`); mocks em `src/mocks/fixtures/sistema.js` (`governanca` no painel e `avaliacaoAgentesMock`) e `src/mocks/handlers.js` (`POST /api/sistema/agentes/avaliar`, `POST /api/docia/respostas/:execucaoId/avaliacao` e `execucaoId` no `handlersSse`).
+  - `src/api/sistemaApi.js` (`avaliarAgentes`) e `src/api/assistenteApi.js` (`avaliarResposta`).
+  - `GovernancaIaSecao.jsx` integrado em `PainelSistemaPage.jsx` (`Secoes.jsx` → `AgentesIa`): cards de concordância integral e aproveitamento Humano × IA (Triagem, Distribuição e feedback DocIA), tabela por categoria e botão "Executar autoverificação dos agentes" (exibido só para `ADMIN`, mostrando placar, modo `DETERMINISTICO`, aviso de que nenhum dado operacional foi lido/gravado e tabela de casos).
+  - `FeedbackDocia.jsx` integrado em `RespostaDocia.jsx` (atende `AssistentePage.jsx` e `PerguntarSobreDemanda.jsx`): botões opcionais `Útil`/`Imprecisa` apenas quando `execucaoId` existe, com troca de avaliação e tratamento amigável de 403, 404 e 429.
+  - `README.md` atualizado com as novas capacidades.
+- **Testes:** `PainelSistema.test.jsx` (11), `Assistente.test.jsx` (21), `DemandaDetailPage.test.jsx` (17). Suíte completa (`npx vitest run --maxWorkers=3`): 56 arquivos, 477 testes, 0 falhas; `npm run lint` (0 erros), `npm run build` e `verificar-diff.mjs` verdes.
+- **API real ou mocks:** somente mocks MSW (validação integrada com Docker a cargo do validador).

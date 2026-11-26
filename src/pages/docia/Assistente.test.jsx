@@ -425,3 +425,83 @@ it('mantém a região ao vivo do progresso montada e vazia quando ocioso', async
   const regiao = await screen.findByTestId('progresso-agente');
   expect(regiao).toBeEmptyDOMElement();
 });
+
+describe('Assistente DocIA — feedback da resposta', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('omite os botões de avaliação quando execucaoId está ausente', async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({ resposta: 'Sem id.', modo: MODO, referencias: [], execucaoId: null }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'oi');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+    expect(await screen.findByText('Sem id.')).toBeInTheDocument();
+    expect(screen.queryByTestId('feedback-docia')).not.toBeInTheDocument();
+  });
+
+  it('envia UTIL, permite trocar para IMPRECISA e preserva após SSE', async () => {
+    const user = userEvent.setup();
+    const enviadas = [];
+    server.use(
+      ...handlersSse,
+      http.post('/api/docia/respostas/:execucaoId/avaliacao', async ({ request, params }) => {
+        enviadas.push({ id: params.execucaoId, body: await request.json() });
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Vistoria?');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+
+    const feedback = await screen.findByTestId('feedback-docia');
+    const util = feedback.querySelector('button:first-of-type');
+    const imprecisa = feedback.querySelector('button:last-of-type');
+
+    await user.click(util);
+    expect(await screen.findByTestId('feedback-confirmado')).toHaveTextContent('Útil');
+    expect(util).toHaveAttribute('aria-pressed', 'true');
+
+    await user.click(imprecisa);
+    expect(await screen.findByTestId('feedback-confirmado')).toHaveTextContent('Imprecisa');
+    expect(imprecisa).toHaveAttribute('aria-pressed', 'true');
+
+    expect(enviadas).toEqual([
+      { id: 'mock-execucao-sse-1', body: { avaliacao: 'UTIL' } },
+      { id: 'mock-execucao-sse-1', body: { avaliacao: 'IMPRECISA' } },
+    ]);
+  });
+
+  it.each([
+    [403, {}, 'Você não tem permissão para avaliar esta resposta.'],
+    [404, {}, 'Resposta não encontrada ou pertence a outro usuário.'],
+    [429, { retryAfterSegundos: 12 }, 'Muitas solicitações. Tente novamente em 12 s.'],
+  ])('trata erro %i amigavelmente ao enviar feedback', async (status, corpo, mensagem) => {
+    const user = userEvent.setup();
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'Laudo ok.',
+          modo: MODO,
+          referencias: [],
+          execucaoId: 'exec-abc-123',
+        }),
+      ),
+      http.post('/api/docia/respostas/:execucaoId/avaliacao', () =>
+        HttpResponse.json(corpo, {
+          status,
+          headers: { 'Content-Type': 'application/problem+json' },
+        }),
+      ),
+    );
+    abrir();
+    await user.type(await screen.findByLabelText('Sua pergunta'), 'Laudo?');
+    await user.click(screen.getByRole('button', { name: /Perguntar/ }));
+
+    await user.click(await screen.findByRole('button', { name: 'Útil' }));
+    expect(await screen.findByTestId('feedback-erro')).toHaveTextContent(mensagem);
+  });
+});

@@ -53,6 +53,9 @@ import {
   FlaskConical,
   Sparkles,
   SendHorizontal,
+  ThumbsUp,
+  ThumbsDown,
+  Play,
 } from 'lucide-react';
 
 // Ícones Lucide (mesma família do protótipo), importados individualmente.
@@ -111,6 +114,9 @@ const ICONS = {
   flask: FlaskConical,
   sparkles: Sparkles,
   send: SendHorizontal,
+  thumbsUp: ThumbsUp,
+  thumbsDown: ThumbsDown,
+  play: Play,
 };
 
 export default function Icon({ name, className = '', title, size = 18 }) {

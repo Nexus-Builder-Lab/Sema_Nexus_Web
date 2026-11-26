@@ -268,6 +268,30 @@ describe('Perguntar ao DocIA sobre a demanda', () => {
     await perguntarAoPainel(user);
     expect(await screen.findByRole('alert')).toHaveTextContent(/30/);
   });
+
+  it('exibe feedback Útil/Imprecisa quando a resposta traz execucaoId', async () => {
+    const user = userEvent.setup();
+    let enviado = null;
+    server.use(
+      http.post('/api/docia/perguntas', () =>
+        HttpResponse.json({
+          resposta: 'Vistoria concluída.',
+          modo: 'Modo demonstrativo',
+          referencias: [],
+          execucaoId: 'exec-dem-1',
+        }),
+      ),
+      http.post('/api/docia/respostas/:execucaoId/avaliacao', async ({ request, params }) => {
+        enviado = { id: params.execucaoId, ...(await request.json()) };
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    abrir(1);
+    await perguntarAoPainel(user);
+    await user.click(await screen.findByRole('button', { name: 'Útil' }));
+    expect(await screen.findByTestId('feedback-confirmado')).toHaveTextContent('Útil');
+    expect(enviado).toEqual({ id: 'exec-dem-1', avaliacao: 'UTIL' });
+  });
 });
 
 describe('Painel DocIA — troca de demanda', () => {

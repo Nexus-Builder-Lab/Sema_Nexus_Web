@@ -69,6 +69,9 @@
   }, {
     "name" : "DocIA — Documentos",
     "description" : "Upload, biblioteca documental, detalhes, texto extraído e download"
+  }, {
+    "name" : "Governança de IA",
+    "description" : "Concordância Humano × IA, feedback do DocIA e bateria de avaliação dos agentes (Issue #131)"
   } ],
   "paths" : {
     "/api/usuarios/{id}" : {
@@ -915,6 +918,46 @@
         }
       }
     },
+    "/api/sistema/agentes/avaliar" : {
+      "post" : {
+        "tags" : [ "Governança de IA" ],
+        "summary" : "Bateria determinística de avaliação dos agentes (somente ADMIN)",
+        "description" : "Roda casos fixos de regressão e adversariais (injeção de instrução no relato, pergunta sobre legislação/multa, histórico forjado, equipe sem fiscal, prazo no passado) sobre a lógica determinística dos agentes de Triagem, Distribuição e DocIA. Não chama modelo de IA e não lê nem grava demandas, documentos ou outros dados operacionais; o resultado é devolvido e a execução fica na auditoria (`AGENTES_AVALIAR`). Issue #131.",
+        "operationId" : "avaliar",
+        "responses" : {
+          "200" : {
+            "description" : "Relatório com cada caso, esperado × obtido",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RelatorioAvaliacao"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Perfil diferente de ADMIN",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setores" : {
       "get" : {
         "tags" : [ "Estrutura" ],
@@ -1543,6 +1586,87 @@
           },
           "401" : {
             "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docia/respostas/{execucaoId}/avaliacao" : {
+      "post" : {
+        "tags" : [ "Governança de IA" ],
+        "summary" : "Feedback opcional sobre uma resposta do Assistente DocIA",
+        "description" : "Qualquer perfil autenticado, somente para respostas dadas a ele mesmo: `execucaoId` é o campo de mesmo nome de `RespostaAssistente`. `UTIL` ou `IMPRECISA`; pode ser trocado depois. 404 se a execução não existe ou é de outro usuário. Auditado (`DOCIA_AVALIAR_RESPOSTA`). Issue #131.",
+        "operationId" : "avaliarResposta",
+        "parameters" : [ {
+          "name" : "execucaoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvaliacaoRespostaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Feedback registrado"
+          },
+          "404" : {
+            "description" : "Execução inexistente ou de outro usuário",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Dados inválidos; os problemas por campo vêm em `errors`.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Perfil sem permissão para a operação.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflito com o estado atual (transição inválida, vínculo duplicado).",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -3726,7 +3850,7 @@
       "get" : {
         "tags" : [ "Painel do sistema" ],
         "summary" : "Painel do sistema (somente ADMIN)",
-        "description" : "Verificações ao vivo (API, banco Oracle, IA dos agentes, dados públicos do INPE, armazenamento) com estado OK/ATENCAO/INDISPONIVEL, latência e detalhes, e as métricas dos agentes desde que a API subiu. Falha de um componente não derruba o painel. Nunca expõe chaves ou senhas.",
+        "description" : "Verificações ao vivo (API, banco Oracle, IA dos agentes, dados públicos do INPE, armazenamento) com estado OK/ATENCAO/INDISPONIVEL, latência e detalhes, as métricas dos agentes desde que a API subiu e `governanca` (Issue #131: concordância Humano × IA por agente/categoria e feedback do DocIA nos últimos 30 dias). Falha de um componente não derruba o painel. Nunca expõe chaves ou senhas.",
         "operationId" : "painel",
         "responses" : {
           "200" : {
@@ -7138,6 +7262,74 @@
         },
         "required" : [ "email", "nome", "perfil", "senha" ]
       },
+      "Caso" : {
+        "type" : "object",
+        "description" : "Resultado de um caso da bateria",
+        "properties" : {
+          "agente" : {
+            "type" : "string",
+            "example" : "triagem"
+          },
+          "id" : {
+            "type" : "string",
+            "example" : "TRI-R01"
+          },
+          "tipo" : {
+            "type" : "string",
+            "enum" : [ "REGRESSAO", "ADVERSARIAL" ]
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "O que o caso verifica"
+          },
+          "esperado" : {
+            "type" : "string"
+          },
+          "obtido" : {
+            "type" : "string"
+          },
+          "aprovado" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "RelatorioAvaliacao" : {
+        "type" : "object",
+        "description" : "Bateria determinística de regressão/adversarial dos agentes (regras locais, sem modelo). Nenhuma demanda, documento ou outro dado operacional é lido ou gravado; só a auditoria registra a execução.",
+        "properties" : {
+          "executadaEm" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "modo" : {
+            "type" : "string",
+            "description" : "Sempre DETERMINISTICO (sem chamada a modelo de IA)",
+            "example" : "DETERMINISTICO"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "aprovados" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reprovados" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "duracaoMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "casos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Caso"
+            }
+          }
+        }
+      },
       "DocumentoUploadRequest" : {
         "type" : "object",
         "description" : "Arquivo e metadados do documento enviado (multipart/form-data)",
@@ -7546,6 +7738,19 @@
           }
         }
       },
+      "AvaliacaoRespostaRequest" : {
+        "type" : "object",
+        "description" : "Feedback opcional sobre uma resposta do Assistente DocIA",
+        "properties" : {
+          "avaliacao" : {
+            "type" : "string",
+            "description" : "UTIL ou IMPRECISA",
+            "enum" : [ "UTIL", "IMPRECISA" ],
+            "example" : "UTIL"
+          }
+        },
+        "required" : [ "avaliacao" ]
+      },
       "PerguntaRequest" : {
         "type" : "object",
         "description" : "Pergunta em linguagem natural sobre os documentos",
@@ -7683,6 +7888,11 @@
             "items" : {
               "$ref" : "#/components/schemas/AcaoSugerida"
             }
+          },
+          "execucaoId" : {
+            "type" : [ "string", "null" ],
+            "description" : "Identificador desta execução do assistente (Issue #131), usado no feedback opcional `POST /api/docia/respostas/{execucaoId}/avaliacao` (só pelo autor da pergunta). Nulo se não foi possível registrar.",
+            "example" : "3f1c2b7e-8a3d-4a51-9d0e-2b6f9c1e7a10"
           }
         }
       },
@@ -8767,6 +8977,98 @@
           }
         }
       },
+      "Concordancia" : {
+        "type" : "object",
+        "description" : "Decisões humanas após sugestão do agente",
+        "properties" : {
+          "agente" : {
+            "type" : "string",
+            "example" : "triagem"
+          },
+          "categoria" : {
+            "type" : [ "string", "null" ],
+            "description" : "Categoria da demanda (nula no agregado por agente; SEM_CATEGORIA quando a demanda não tinha categoria)",
+            "example" : "QUEIMADA_INCENDIO"
+          },
+          "avaliadas" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Decisões avaliadas no período"
+          },
+          "aceitaIntegral" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ajustadaParcial" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "descartada" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "concordanciaPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% aceita integralmente (0–100, 1 casa); nulo sem avaliações",
+            "example" : 62.5
+          },
+          "aproveitamentoPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% aceita integral ou parcialmente (0–100, 1 casa); nulo sem avaliações",
+            "example" : 87.5
+          }
+        }
+      },
+      "FeedbackDocia" : {
+        "type" : "object",
+        "description" : "Feedback opcional UTIL/IMPRECISA nas respostas do DocIA",
+        "properties" : {
+          "util" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "imprecisa" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "utilPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% úteis (0–100, 1 casa); nulo sem feedback"
+          }
+        }
+      },
+      "GovernancaIa" : {
+        "type" : "object",
+        "description" : "Governança de IA: concordância Humano × IA por agente e categoria e feedback do DocIA, nos últimos `periodoDias` dias (pela data da decisão humana)",
+        "properties" : {
+          "periodoDias" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 30
+          },
+          "porAgente" : {
+            "type" : "array",
+            "description" : "Concordância por agente (triagem, distribuicao)",
+            "items" : {
+              "$ref" : "#/components/schemas/Concordancia"
+            }
+          },
+          "porCategoria" : {
+            "type" : "array",
+            "description" : "Concordância por agente e categoria da demanda",
+            "items" : {
+              "$ref" : "#/components/schemas/Concordancia"
+            }
+          },
+          "docia" : {
+            "$ref" : "#/components/schemas/FeedbackDocia",
+            "description" : "Feedback dos usuários nas respostas do Assistente DocIA"
+          }
+        }
+      },
       "PainelSistema" : {
         "type" : "object",
         "description" : "Painel do sistema (somente ADMIN): saúde ao vivo dos componentes e operação dos agentes",
@@ -8789,6 +9091,11 @@
             "items" : {
               "$ref" : "#/components/schemas/AgentePainel"
             }
+          },
+          "governanca" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/GovernancaIa",
+            "description" : "Governança de IA (Issue #131): concordância Humano × IA por agente e categoria e feedback do DocIA nos últimos 30 dias; nula se indisponível"
           }
         }
       },
