@@ -942,6 +942,22 @@ figure.nx-chart-figure {
   display: block;
 }
 
+// Modais com <form> entre .modal-content e .modal-body: sem isto o corpo não rola e o rodapé
+// (botões) some quando o conteúdo cresce (ex.: "Como o agente chegou à sugestão").
+.modal-dialog-scrollable .modal-content > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-dialog-scrollable .modal-content > form > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 // Tela de login (fora do AppLayout) — paridade com o protótipo
 .nx-logo {
   display: flex;
