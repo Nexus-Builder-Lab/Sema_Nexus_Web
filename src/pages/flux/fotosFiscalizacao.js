@@ -93,3 +93,23 @@ export function mensagemDeErroFoto(erro, padrao = 'Não foi possível concluir a
       return mensagemDeErro(erro, padrao);
   }
 }
+
+/**
+ * Converte respostas `Blob` (ex.: `baixarFotoFiscalizacao` com `responseType: 'blob'`) em JSON
+ * `problem+json` antes de extrair a mensagem amigável.
+ */
+export async function resolverMensagemDeErroFoto(
+  erro,
+  padrao = 'Não foi possível concluir a operação.',
+) {
+  const dados = erro?.response?.data;
+  if (dados instanceof Blob || (dados && typeof dados.text === 'function')) {
+    try {
+      const json = JSON.parse(await dados.text());
+      return mensagemDeErroFoto({ ...erro, response: { ...erro.response, data: json } }, padrao);
+    } catch {
+      // Blob não é JSON válido; cai no tratamento padrão.
+    }
+  }
+  return mensagemDeErroFoto(erro, padrao);
+}

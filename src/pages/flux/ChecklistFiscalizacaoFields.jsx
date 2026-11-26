@@ -26,7 +26,9 @@ export default function ChecklistFiscalizacaoFields({
             ? 'Checklist anterior carregado. Se não alterar os itens, o checklist anterior será preservado no reenvio.'
             : 'Checklist demonstrativo por categoria (opcional se deixado em branco).'}
         </p>
-        {(alterado || Object.values(valores).some((v) => v !== null && v !== '')) && (
+        {(preservadoAnterior
+          ? alterado
+          : Object.values(valores).some((v) => v !== null && v !== '')) && (
           <button type="button" className="btn btn-sm btn-outline-secondary" onClick={onLimpar}>
             {preservadoAnterior ? 'Restaurar checklist anterior' : 'Limpar checklist'}
           </button>

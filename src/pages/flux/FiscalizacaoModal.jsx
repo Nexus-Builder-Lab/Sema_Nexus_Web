@@ -118,11 +118,21 @@ export default function FiscalizacaoModal({ demanda, onClose, onSucesso, onFotos
       await onSucesso('Fiscalização registrada com sucesso.');
     } catch (erro) {
       const doBackend = {};
+      let erroChecklistRaiz = null;
       for (const { campo, mensagem } of erro.response?.data?.errors ?? []) {
-        if (!(campo in doBackend)) doBackend[campo] = mensagem;
+        if (campo === 'checklist') {
+          erroChecklistRaiz ??= mensagem;
+        } else if (!(campo in doBackend)) {
+          doBackend[campo] = mensagem;
+        }
       }
-      if (erro.response?.status === 400 && Object.keys(doBackend).length > 0) setErros(doBackend);
-      else if (erro.response?.status === 403)
+      if (
+        erro.response?.status === 400 &&
+        (Object.keys(doBackend).length > 0 || erroChecklistRaiz)
+      ) {
+        setErros(doBackend);
+        if (erroChecklistRaiz) setErroGeral(erroChecklistRaiz);
+      } else if (erro.response?.status === 403)
         setErroGeral('Seu perfil não tem permissão para esta operação.');
       else setErroGeral(mensagemDeErro(erro, 'Não foi possível registrar a fiscalização.'));
       setEnviando(false);

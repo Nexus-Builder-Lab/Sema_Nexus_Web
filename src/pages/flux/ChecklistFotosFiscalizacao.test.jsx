@@ -22,6 +22,7 @@ import {
   formatarDataHoraExif,
   formatarDistanciaKm,
   mensagemDeErroFoto,
+  resolverMensagemDeErroFoto,
   validarArquivoFoto,
 } from './fotosFiscalizacao.js';
 
@@ -97,6 +98,16 @@ describe('helpers de checklist e fotos da fiscalização', () => {
     expect(mensagemDeErroFoto({ response: { status: 413 } })).toMatch(/10 MB/);
     expect(mensagemDeErroFoto({ response: { status: 415 } })).toMatch(/JPG, PNG ou WebP/);
     expect(mensagemDeErroFoto({ response: { status: 403 } })).toMatch(/permissão/);
+  });
+
+  it('interpreta problem+json retornado em Blob por respostas responseType blob', async () => {
+    const blob = new Blob([JSON.stringify({ detail: 'Foto fora do escopo da equipe.' })], {
+      type: 'application/problem+json',
+    });
+    const msg = await resolverMensagemDeErroFoto({
+      response: { status: 403, data: blob },
+    });
+    expect(msg).toBe('Foto fora do escopo da equipe.');
   });
 
   it('respeita regras de permissão de envio e exclusão de fotos', () => {
@@ -213,6 +224,9 @@ describe('Checklist por categoria e fotos com EXIF na fiscalização', () => {
     expect(
       within(modal).getByText(/Checklist anterior carregado\. Se não alterar os itens/),
     ).toBeInTheDocument();
+    expect(
+      within(modal).queryByRole('button', { name: 'Restaurar checklist anterior' }),
+    ).not.toBeInTheDocument();
     expect(within(modal).getByLabelText(/^Quantidade de animais/)).toHaveValue(3);
 
     const campoAtividades = within(modal).getByLabelText(/^Atividades realizadas/);
@@ -365,7 +379,16 @@ describe('Checklist por categoria e fotos com EXIF na fiscalização', () => {
     expect(await within(modal).findByText('foto.webp')).toBeInTheDocument();
     expect(within(modal).getByText('EXIF: Confere')).toBeInTheDocument();
 
-    // Confirmação inline no modal (sem empilhar dois modais).
+    // Confirmação inline no modal (sem empilhar dois modais), com foco gerenciado.
+    const btnExcluir = within(modal).getByRole('button', { name: 'Excluir foto.webp' });
+    await user.click(btnExcluir);
+    const btnCancelarInline = within(
+      within(modal).getByRole('group', { name: 'Confirmar exclusão de foto.webp' }),
+    ).getByRole('button', { name: 'Cancelar' });
+    expect(btnCancelarInline).toHaveFocus();
+    await user.click(btnCancelarInline);
+    expect(within(modal).getByRole('button', { name: 'Excluir foto.webp' })).toHaveFocus();
+
     await user.click(within(modal).getByRole('button', { name: 'Excluir foto.webp' }));
     await user.click(within(modal).getByRole('button', { name: 'Confirmar exclusão' }));
     await waitFor(() => expect(within(modal).queryByText('foto.webp')).not.toBeInTheDocument());
@@ -381,5 +404,115 @@ describe('Checklist por categoria e fotos com EXIF na fiscalização', () => {
     );
     await user.upload(inputModal, new File(['bad'], 'falsa.jpg', { type: 'image/jpeg' }));
     expect(await within(modal).findByRole('alert')).toHaveTextContent(/Tipo de arquivo não aceito/);
+  });
+
+  it('evita corrida no preview e não cria ObjectURL após desmontar', async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => 'blob:ok');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    const liberar = [];
+
+    server.use(
+      http.get('/api/demandas/:id/fotos', () =>
+        HttpResponse.json([
+          {
+            id: 10,
+            demandaId: 12,
+            nomeOriginal: 'lenta.jpg',
+            mime: 'image/jpeg',
+            tamanho: 100,
+            sha256: '111122223333',
+            conferencia: 'SEM_GPS',
+            autor: { id: 1, nome: 'Administrador Demonstrativo' },
+            criadoEm: '2026-11-10T10:00:00',
+          },
+          {
+            id: 11,
+            demandaId: 12,
+            nomeOriginal: 'rapida.jpg',
+            mime: 'image/jpeg',
+            tamanho: 100,
+            sha256: '444455556666',
+            conferencia: 'SEM_GPS',
+            autor: { id: 1, nome: 'Administrador Demonstrativo' },
+            criadoEm: '2026-11-10T10:01:00',
+          },
+        ]),
+      ),
+      http.get('/api/demandas/:id/fotos/:fotoId/arquivo', async ({ params }) => {
+        if (params.fotoId === '10') {
+          await new Promise((resolve) => {
+            liberar.push(resolve);
+          });
+        }
+        return new HttpResponse(new Uint8Array([1, 2, 3]), {
+          status: 200,
+          headers: { 'Content-Type': 'image/jpeg' },
+        });
+      }),
+    );
+
+    try {
+      // 1) Corrida entre dois cliques: rapida.jpg vence e lenta.jpg obsoleta é descartada.
+      const primeiro = abrir(12);
+      const secao = await screen.findByRole('region', { name: 'Fotos de evidência' });
+      await within(secao).findByText('lenta.jpg');
+
+      await user.click(within(secao).getByRole('button', { name: 'Visualizar lenta.jpg' }));
+      await user.click(within(secao).getByRole('button', { name: 'Visualizar rapida.jpg' }));
+
+      expect(await within(secao).findByAltText('Foto de evidência rapida.jpg')).toBeInTheDocument();
+      liberar.shift()?.();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(within(secao).getByAltText('Foto de evidência rapida.jpg')).toBeInTheDocument();
+      expect(createObjectURL).toHaveBeenCalledTimes(1);
+
+      primeiro.unmount();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:ok');
+
+      // 2) Desmontar durante o carregamento não pode gerar ObjectURL depois.
+      createObjectURL.mockClear();
+      const segundo = abrir(12);
+      const secao2 = await screen.findByRole('region', { name: 'Fotos de evidência' });
+      await within(secao2).findByText('lenta.jpg');
+      await user.click(within(secao2).getByRole('button', { name: 'Visualizar lenta.jpg' }));
+      segundo.unmount();
+      liberar.shift()?.();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(createObjectURL).not.toHaveBeenCalled();
+    } finally {
+      while (liberar.length) liberar.shift()?.();
+      createObjectURL.mockRestore();
+      revokeObjectURL.mockRestore();
+    }
+  });
+
+  it('encaminha erro 400 no campo raiz checklist para o alerta geral do FiscalizacaoModal', async () => {
+    server.use(
+      http.post('/api/demandas/:id/fiscalizacao', () =>
+        HttpResponse.json(
+          {
+            title: 'Dados inválidos',
+            status: 400,
+            detail: 'Um ou mais campos são inválidos.',
+            errors: [{ campo: 'checklist', mensagem: 'Checklist com itens demais.' }],
+          },
+          { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    abrir(12);
+    await user.click(await screen.findByRole('button', { name: 'Registrar fiscalização' }));
+    const modal = await screen.findByRole('dialog');
+
+    await user.type(within(modal).getByLabelText(/^Atividades realizadas/), 'Vistoria');
+    await user.type(within(modal).getByLabelText(/^Resultado/), 'Ok');
+    await user.type(within(modal).getByLabelText(/^Evidências/), 'Fotos');
+    await user.click(within(modal).getByRole('button', { name: 'Registrar fiscalização' }));
+
+    expect(await within(modal).findByRole('alert')).toHaveTextContent(
+      'Checklist com itens demais.',
+    );
   });
 });

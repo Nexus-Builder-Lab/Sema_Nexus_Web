@@ -105,9 +105,10 @@ export async function enviarFotoFiscalizacao(demandaId, arquivo, onProgress) {
 }
 
 /** GET /api/demandas/{id}/fotos/{fotoId}/arquivo → Blob autenticado (sem JWT na URL). */
-export async function baixarFotoFiscalizacao(demandaId, fotoId) {
+export async function baixarFotoFiscalizacao(demandaId, fotoId, { signal } = {}) {
   const { data } = await httpClient.get(`/demandas/${demandaId}/fotos/${fotoId}/arquivo`, {
     responseType: 'blob',
+    signal,
   });
   return data;
 }

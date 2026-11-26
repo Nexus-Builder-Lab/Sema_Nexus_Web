@@ -24,6 +24,7 @@ import {
   formatarDistanciaKm,
   MAX_FOTOS_POR_DEMANDA,
   mensagemDeErroFoto,
+  resolverMensagemDeErroFoto,
   validarArquivoFoto,
 } from './fotosFiscalizacao.js';
 
@@ -68,20 +69,49 @@ export default function FotosFiscalizacao({
   const [removendo, setRemovendo] = useState(false);
   const [previa, setPrevia] = useState(null); // { foto, url }
   const [carregandoPreviaId, setCarregandoPreviaId] = useState(null);
+
+  const montadoRef = useRef(true);
   const previaUrlRef = useRef(null);
+  const previaReqRef = useRef(0);
+  const previaAbortRef = useRef(null);
+  const cancelarInlineRef = useRef(null);
+  const excluirRefs = useRef(new Map());
+  const voltarFocoFotoIdRef = useRef(null);
 
   const fotos = useCarregar(useCallback(() => listarFotosFiscalizacao(demanda.id), [demanda.id]));
 
   useEffect(() => {
+    montadoRef.current = true;
+    const reqRef = previaReqRef;
+    const abortRef = previaAbortRef;
+    const urlRef = previaUrlRef;
     return () => {
-      if (previaUrlRef.current) {
-        URL.revokeObjectURL(previaUrlRef.current);
-        previaUrlRef.current = null;
+      montadoRef.current = false;
+      reqRef.current += 1;
+      abortRef.current?.abort();
+      abortRef.current = null;
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = null;
       }
     };
   }, []);
 
+  useEffect(() => {
+    if (confirmandoInline) {
+      cancelarInlineRef.current?.focus();
+    } else if (voltarFocoFotoIdRef.current != null) {
+      const alvo = excluirRefs.current.get(voltarFocoFotoIdRef.current);
+      voltarFocoFotoIdRef.current = null;
+      alvo?.focus();
+    }
+  }, [confirmandoInline]);
+
   function fecharPrevia() {
+    previaReqRef.current += 1;
+    previaAbortRef.current?.abort();
+    previaAbortRef.current = null;
+    setCarregandoPreviaId(null);
     if (previaUrlRef.current) {
       URL.revokeObjectURL(previaUrlRef.current);
       previaUrlRef.current = null;
@@ -109,13 +139,15 @@ export default function FotosFiscalizacao({
     atualizarEnviando(true);
     try {
       const nova = await enviarFotoFiscalizacao(demanda.id, arquivo, setProgresso);
+      if (!montadoRef.current) return;
       showToast({ message: `Foto "${nova.nomeOriginal}" enviada.` });
       fotos.recarregar();
       onAlterado?.();
     } catch (erro) {
+      if (!montadoRef.current) return;
       setErroUpload(mensagemDeErroFoto(erro, 'Não foi possível enviar a foto.'));
     } finally {
-      atualizarEnviando(false);
+      if (montadoRef.current) atualizarEnviando(false);
     }
   }
 
@@ -124,12 +156,13 @@ export default function FotosFiscalizacao({
     try {
       await baixarEGuardarFoto(demanda.id, foto);
     } catch (erro) {
+      if (!montadoRef.current) return;
       showToast({
         variant: 'danger',
-        message: mensagemDeErroFoto(erro, 'Não foi possível baixar a foto.'),
+        message: await resolverMensagemDeErroFoto(erro, 'Não foi possível baixar a foto.'),
       });
     } finally {
-      setBaixandoId(null);
+      if (montadoRef.current) setBaixandoId(null);
     }
   }
 
@@ -138,20 +171,40 @@ export default function FotosFiscalizacao({
       fecharPrevia();
       return;
     }
+    previaAbortRef.current?.abort();
+    const controle = new AbortController();
+    previaAbortRef.current = controle;
+    const reqId = ++previaReqRef.current;
     setCarregandoPreviaId(foto.id);
     try {
-      const blob = await baixarFotoFiscalizacao(demanda.id, foto.id);
+      const blob = await baixarFotoFiscalizacao(demanda.id, foto.id, { signal: controle.signal });
+      if (!montadoRef.current || reqId !== previaReqRef.current) return;
       const url = URL.createObjectURL(blob);
+      if (!montadoRef.current || reqId !== previaReqRef.current) {
+        URL.revokeObjectURL(url);
+        return;
+      }
       if (previaUrlRef.current) URL.revokeObjectURL(previaUrlRef.current);
       previaUrlRef.current = url;
       setPrevia({ foto, url });
     } catch (erro) {
+      if (
+        !montadoRef.current ||
+        reqId !== previaReqRef.current ||
+        erro?.name === 'CanceledError' ||
+        erro?.name === 'AbortError' ||
+        erro?.code === 'ERR_CANCELED'
+      ) {
+        return;
+      }
       showToast({
         variant: 'danger',
-        message: mensagemDeErroFoto(erro, 'Não foi possível abrir a imagem.'),
+        message: await resolverMensagemDeErroFoto(erro, 'Não foi possível abrir a imagem.'),
       });
     } finally {
-      setCarregandoPreviaId(null);
+      if (montadoRef.current && reqId === previaReqRef.current) {
+        setCarregandoPreviaId(null);
+      }
     }
   }
 
@@ -160,13 +213,17 @@ export default function FotosFiscalizacao({
     setRemovendo(true);
     try {
       await excluirFotoFiscalizacao(demanda.id, fotoAlvo.id);
+      if (!montadoRef.current) return;
       if (previa?.foto.id === fotoAlvo.id) fecharPrevia();
+      voltarFocoFotoIdRef.current = null;
       setExcluindo(null);
       setConfirmandoInline(null);
       showToast({ message: `Foto "${fotoAlvo.nomeOriginal}" excluída.` });
       fotos.recarregar();
       onAlterado?.();
     } catch (erro) {
+      if (!montadoRef.current) return;
+      voltarFocoFotoIdRef.current = null;
       setExcluindo(null);
       setConfirmandoInline(null);
       showToast({
@@ -174,7 +231,7 @@ export default function FotosFiscalizacao({
         message: mensagemDeErroFoto(erro, 'Não foi possível excluir a foto.'),
       });
     } finally {
-      setRemovendo(false);
+      if (montadoRef.current) setRemovendo(false);
     }
   }
 
@@ -185,6 +242,10 @@ export default function FotosFiscalizacao({
   return (
     <div>
       <p className="small text-body-secondary mb-2">{AVISO_FOTOS_DEMONSTRATIVAS}</p>
+
+      <div className="visually-hidden" aria-live="polite">
+        {confirmandoInline ? `Confirme a exclusão da foto ${confirmandoInline.nomeOriginal}.` : ''}
+      </div>
 
       {podeEnviar && (
         <div className="mb-3">
@@ -272,7 +333,7 @@ export default function FotosFiscalizacao({
                     </div>
                   </div>
 
-                  <div className="d-flex flex-wrap gap-2 flex-shrink-0">
+                  <div className="d-flex flex-wrap gap-2 mw-100">
                     <button
                       type="button"
                       className="btn btn-sm btn-outline-secondary"
@@ -297,17 +358,32 @@ export default function FotosFiscalizacao({
                     </button>
                     {podeExcluir && !confirmandoEsta && (
                       <button
+                        ref={(el) => {
+                          if (el) excluirRefs.current.set(foto.id, el);
+                          else excluirRefs.current.delete(foto.id);
+                        }}
                         type="button"
                         className="btn btn-sm btn-outline-danger"
                         disabled={removendo}
                         aria-label={`Excluir ${foto.nomeOriginal}`}
-                        onClick={() => (emModal ? setConfirmandoInline(foto) : setExcluindo(foto))}
+                        onClick={() => {
+                          if (emModal) {
+                            voltarFocoFotoIdRef.current = null;
+                            setConfirmandoInline(foto);
+                          } else {
+                            setExcluindo(foto);
+                          }
+                        }}
                       >
                         Excluir
                       </button>
                     )}
                     {confirmandoEsta && (
-                      <div className="d-flex align-items-center gap-1">
+                      <div
+                        className="d-flex align-items-center flex-wrap gap-1 mw-100"
+                        role="group"
+                        aria-label={`Confirmar exclusão de ${foto.nomeOriginal}`}
+                      >
                         <button
                           type="button"
                           className="btn btn-sm btn-danger"
@@ -317,10 +393,14 @@ export default function FotosFiscalizacao({
                           {removendo ? 'Excluindo…' : 'Confirmar exclusão'}
                         </button>
                         <button
+                          ref={cancelarInlineRef}
                           type="button"
                           className="btn btn-sm btn-outline-secondary"
                           disabled={removendo}
-                          onClick={() => setConfirmandoInline(null)}
+                          onClick={() => {
+                            voltarFocoFotoIdRef.current = foto.id;
+                            setConfirmandoInline(null);
+                          }}
                         >
                           Cancelar
                         </button>
