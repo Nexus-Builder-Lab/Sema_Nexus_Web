@@ -19,6 +19,7 @@ import {
 } from './conteudo.js';
 import EstadoBadge from './EstadoBadge.jsx';
 import { duracao, segundosDe } from './estados.js';
+import GovernancaIaSecao from './GovernancaIaSecao.jsx';
 
 const ORDEM_VISAO = ['web', 'api', 'banco', 'ia', 'inpe', 'armazenamento', 'esri', 'osm'];
 
@@ -308,7 +309,11 @@ function Fluxo({ ferramentas, modelo }) {
 export function AgentesIa({ painel, verificacoes }) {
   const ia = verificacoes.ia ?? {};
   const d = ia.detalhes ?? {};
-  const links = { triagem: '/flux/demandas', docia: '/docia/assistente' };
+  const links = {
+    triagem: '/flux/demandas',
+    distribuicao: '/flux/demandas',
+    docia: '/docia/assistente',
+  };
   return (
     <div className="d-grid gap-3">
       <section className="card nx-card" aria-label="Motor de IA">
@@ -382,7 +387,10 @@ export function AgentesIa({ painel, verificacoes }) {
                         : 'IA local'}{' '}
                     · {a.modelo}
                   </span>
-                  <Link to={links[a.id]} className="btn btn-sm btn-outline-success">
+                  <Link
+                    to={links[a.id] ?? '/flux/demandas'}
+                    className="btn btn-sm btn-outline-success"
+                  >
                     Experimentar
                   </Link>
                 </div>
@@ -422,6 +430,8 @@ export function AgentesIa({ painel, verificacoes }) {
           </section>
         );
       })}
+
+      <GovernancaIaSecao governanca={painel?.governanca} />
     </div>
   );
 }

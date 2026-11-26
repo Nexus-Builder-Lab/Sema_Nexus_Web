@@ -58,6 +58,9 @@
     "name" : "Painel do sistema",
     "description" : "Saúde ao vivo dos componentes e operação dos agentes (Issue #114)"
   }, {
+    "name" : "Flux — Fiscalização: checklist e fotos",
+    "description" : "Modelos de checklist por categoria e fotos de evidência (JPEG/PNG/WebP) com leitura de EXIF"
+  }, {
     "name" : "Usuários",
     "description" : "Gestão de usuários (cadastro, edição e ativação: somente ADMIN)"
   }, {
@@ -66,6 +69,9 @@
   }, {
     "name" : "DocIA — Documentos",
     "description" : "Upload, biblioteca documental, detalhes, texto extraído e download"
+  }, {
+    "name" : "Governança de IA",
+    "description" : "Concordância Humano × IA, feedback do DocIA e bateria de avaliação dos agentes (Issue #131)"
   } ],
   "paths" : {
     "/api/usuarios/{id}" : {
@@ -912,6 +918,46 @@
         }
       }
     },
+    "/api/sistema/agentes/avaliar" : {
+      "post" : {
+        "tags" : [ "Governança de IA" ],
+        "summary" : "Bateria determinística de avaliação dos agentes (somente ADMIN)",
+        "description" : "Roda casos fixos de regressão e adversariais (injeção de instrução no relato, pergunta sobre legislação/multa, histórico forjado, equipe sem fiscal, prazo no passado) sobre a lógica determinística dos agentes de Triagem, Distribuição e DocIA. Não chama modelo de IA e não lê nem grava demandas, documentos ou outros dados operacionais; o resultado é devolvido e a execução fica na auditoria (`AGENTES_AVALIAR`). Issue #131.",
+        "operationId" : "avaliar",
+        "responses" : {
+          "200" : {
+            "description" : "Relatório com cada caso, esperado × obtido",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RelatorioAvaliacao"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Perfil diferente de ADMIN",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setores" : {
       "get" : {
         "tags" : [ "Estrutura" ],
@@ -1540,6 +1586,87 @@
           },
           "401" : {
             "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docia/respostas/{execucaoId}/avaliacao" : {
+      "post" : {
+        "tags" : [ "Governança de IA" ],
+        "summary" : "Feedback opcional sobre uma resposta do Assistente DocIA",
+        "description" : "Qualquer perfil autenticado, somente para respostas dadas a ele mesmo: `execucaoId` é o campo de mesmo nome de `RespostaAssistente`. `UTIL` ou `IMPRECISA`; pode ser trocado depois. 404 se a execução não existe ou é de outro usuário. Auditado (`DOCIA_AVALIAR_RESPOSTA`). Issue #131.",
+        "operationId" : "avaliarResposta",
+        "parameters" : [ {
+          "name" : "execucaoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AvaliacaoRespostaRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "Feedback registrado"
+          },
+          "404" : {
+            "description" : "Execução inexistente ou de outro usuário",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Dados inválidos; os problemas por campo vêm em `errors`.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Perfil sem permissão para a operação.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflito com o estado atual (transição inválida, vínculo duplicado).",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -2525,6 +2652,197 @@
         }
       }
     },
+    "/api/demandas/{id}/fotos" : {
+      "get" : {
+        "tags" : [ "Flux — Fiscalização: checklist e fotos" ],
+        "summary" : "Lista as fotos de evidência da demanda (metadados e selo de conferência do EXIF)",
+        "description" : "Qualquer perfil autenticado; FISCAL só nas demandas da sua equipe ou atribuídas a ele.",
+        "operationId" : "listar_5",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Fotos da demanda, das mais antigas às mais recentes",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/FotoFiscalizacao"
+                  }
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Fiscal fora do escopo (demanda de outra equipe)",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso inexistente (ou excluído logicamente).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "Flux — Fiscalização: checklist e fotos" ],
+        "summary" : "Envia uma foto de evidência (multipart, parte `arquivo`)",
+        "description" : "Perfis: FISCAL (só o fiscal designado), GESTOR, ADMIN. Demanda em EM_ANDAMENTO (409 caso contrário ou com 20 fotos). JPEG, PNG ou WebP reconhecidos pelos magic bytes (outro conteúdo → 415), até 10 MB (413). Arquivo gravado intacto no volume, com SHA-256; EXIF (data/hora, GPS) lido só como informação — nunca usado em autorização — e GPS fora de MT é sinalizado. Distância em km até a coordenada da demanda ou até a borda da área. Registra histórico e auditoria.",
+        "operationId" : "enviar_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "arquivo" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "arquivo" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "201" : {
+            "description" : "Foto registrada",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/FotoFiscalizacao"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Fiscal que não é o designado para a demanda",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Dados inválidos; os problemas por campo vêm em `errors`.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso inexistente (ou excluído logicamente).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflito com o estado atual (transição inválida, vínculo duplicado).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "413" : {
+            "description" : "Arquivo maior que o limite (10 MB).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "415" : {
+            "description" : "Tipo de arquivo não permitido ou conteúdo incompatível com a extensão.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "429" : {
+            "description" : "Limite de requisições excedido; aguarde os segundos do cabeçalho `Retry-After`.",
+            "headers" : {
+              "Retry-After" : {
+                "description" : "Segundos até a próxima janela do limite.",
+                "schema" : { }
+              }
+            },
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/demandas/{id}/fiscalizacao" : {
       "post" : {
         "tags" : [ "Flux — Demandas" ],
@@ -2619,7 +2937,7 @@
         "tags" : [ "DocIA — Documentos" ],
         "summary" : "Documentos vinculados à demanda",
         "description" : "Qualquer perfil autenticado; FISCAL só nas demandas da sua equipe ou atribuídas a ele.",
-        "operationId" : "listar_5",
+        "operationId" : "listar_6",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -3532,7 +3850,7 @@
       "get" : {
         "tags" : [ "Painel do sistema" ],
         "summary" : "Painel do sistema (somente ADMIN)",
-        "description" : "Verificações ao vivo (API, banco Oracle, IA dos agentes, dados públicos do INPE, armazenamento) com estado OK/ATENCAO/INDISPONIVEL, latência e detalhes, e as métricas dos agentes desde que a API subiu. Falha de um componente não derruba o painel. Nunca expõe chaves ou senhas.",
+        "description" : "Verificações ao vivo (API, banco Oracle, IA dos agentes, dados públicos do INPE, armazenamento) com estado OK/ATENCAO/INDISPONIVEL, latência e detalhes, as métricas dos agentes desde que a API subiu e `governanca` (Issue #131: concordância Humano × IA por agente/categoria e feedback do DocIA nos últimos 30 dias). Falha de um componente não derruba o painel. Nunca expõe chaves ou senhas.",
         "operationId" : "painel",
         "responses" : {
           "200" : {
@@ -3830,7 +4148,7 @@
         "tags" : [ "Core — Notificações" ],
         "summary" : "Lista as notificações do usuário logado, mais recentes primeiro",
         "description" : "Qualquer perfil autenticado; cada usuário vê apenas as próprias. Filtro opcional `lida=true|false`.",
-        "operationId" : "listar_6",
+        "operationId" : "listar_7",
         "parameters" : [ {
           "name" : "lida",
           "in" : "query",
@@ -5136,7 +5454,7 @@
         "tags" : [ "Flux — Prazos" ],
         "summary" : "Lista demandas com prazo por estado (VENCIDA, PROXIMA, NO_PRAZO, CONCLUIDA)",
         "description" : "Ordenadas por prazo. Sem `estado`, todas com prazo. Paginação `page`/`size`.",
-        "operationId" : "listar_7",
+        "operationId" : "listar_8",
         "parameters" : [ {
           "name" : "estado",
           "in" : "query",
@@ -5274,7 +5592,7 @@
         "tags" : [ "Flux — Demandas" ],
         "summary" : "Demandas distribuídas a uma equipe, com paginação",
         "description" : "Perfis: ADMIN, GESTOR. Opcionalmente filtra por status.",
-        "operationId" : "listar_8",
+        "operationId" : "listar_9",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -5610,6 +5928,119 @@
         }
       }
     },
+    "/api/demandas/{id}/fotos/{fotoId}/arquivo" : {
+      "get" : {
+        "tags" : [ "Flux — Fiscalização: checklist e fotos" ],
+        "summary" : "Baixa o arquivo da foto",
+        "description" : "Qualquer perfil autenticado com acesso à demanda (FISCAL só no seu escopo). `Content-Disposition: attachment` com nome saneado e `X-Content-Type-Options: nosniff`.",
+        "operationId" : "baixar_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fotoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Conteúdo da imagem",
+            "content" : {
+              "image/jpeg" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              },
+              "image/png" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              },
+              "image/webp" : {
+                "schema" : {
+                  "type" : "string",
+                  "format" : "binary"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Sem permissão",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso inexistente (ou excluído logicamente).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demandas/checklists" : {
+      "get" : {
+        "tags" : [ "Flux — Fiscalização: checklist e fotos" ],
+        "summary" : "Modelos de checklist da fiscalização por categoria",
+        "description" : "Qualquer perfil autenticado. Modelos versionados no código; o checklist enviado em `POST /api/demandas/{id}/fiscalizacao` é validado contra o modelo da categoria da demanda.",
+        "operationId" : "checklists",
+        "responses" : {
+          "200" : {
+            "description" : "Um modelo por categoria",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ChecklistModelo"
+                  }
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/dashboard" : {
       "get" : {
         "tags" : [ "Dashboard" ],
@@ -5908,7 +6339,7 @@
         "tags" : [ "Core — Auditoria" ],
         "summary" : "Consulta paginada da auditoria, mais recentes primeiro",
         "description" : "Perfil: ADMIN (demais recebem 403). Filtros combináveis: `de`/`ate` (AAAA-MM-DD, inclusivos), `usuarioId`, `acao` e `entidade` (igualdade, sem diferenciar maiúsculas).",
-        "operationId" : "listar_9",
+        "operationId" : "listar_10",
         "parameters" : [ {
           "name" : "de",
           "in" : "query",
@@ -6042,6 +6473,76 @@
           },
           "401" : {
             "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/demandas/{id}/fotos/{fotoId}" : {
+      "delete" : {
+        "tags" : [ "Flux — Fiscalização: checklist e fotos" ],
+        "summary" : "Exclui uma foto de evidência",
+        "description" : "Perfis: FISCAL, GESTOR, ADMIN — e somente quem enviou a foto (403 caso contrário), antes da conclusão da demanda (409 se FINALIZADA). Registra histórico e auditoria.",
+        "operationId" : "excluir_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fotoId",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "Foto excluída"
+          },
+          "403" : {
+            "description" : "Usuário não é quem enviou a foto ou está fora do escopo",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "401" : {
+            "description" : "Sem token, token inválido/expirado ou usuário inativo.",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Recurso inexistente (ou excluído logicamente).",
+            "content" : {
+              "application/problem+json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Problema"
+                }
+              }
+            }
+          },
+          "409" : {
+            "description" : "Conflito com o estado atual (transição inválida, vínculo duplicado).",
             "content" : {
               "application/problem+json" : {
                 "schema" : {
@@ -6494,6 +6995,31 @@
         },
         "required" : [ "dataRecebimento", "descricao", "municipioId", "origem", "titulo" ]
       },
+      "ChecklistPreenchido" : {
+        "type" : "object",
+        "description" : "Checklist estruturado preenchido (validado contra o modelo da categoria da demanda)",
+        "properties" : {
+          "versao" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Versão do modelo usada na validação",
+            "example" : 1
+          },
+          "categoria" : {
+            "type" : "string",
+            "enum" : [ "DESMATAMENTO_ILEGAL", "QUEIMADA_INCENDIO", "RECURSOS_HIDRICOS", "FAUNA_SILVESTRE", "PESCA_IRREGULAR", "MINERACAO_IRREGULAR", "RESIDUOS_POLUICAO", "AREA_PRESERVACAO_PERMANENTE" ]
+          },
+          "itens" : {
+            "type" : "object",
+            "additionalProperties" : { },
+            "description" : "Respostas por id do item (booleano, texto ou número)",
+            "example" : {
+              "local_acessivel" : true,
+              "area_estimada_ha" : 12.5
+            }
+          }
+        }
+      },
       "DemandaDetalhe" : {
         "type" : "object",
         "description" : "Demanda de fiscalização com todos os dados (dados fictícios na demonstração)",
@@ -6673,6 +7199,11 @@
           "registradoEm" : {
             "type" : "string",
             "format" : "date-time"
+          },
+          "checklist" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/ChecklistPreenchido",
+            "description" : "Checklist estruturado (Issue #145); nulo em registros sem checklist"
           }
         }
       },
@@ -6730,6 +7261,74 @@
           }
         },
         "required" : [ "email", "nome", "perfil", "senha" ]
+      },
+      "Caso" : {
+        "type" : "object",
+        "description" : "Resultado de um caso da bateria",
+        "properties" : {
+          "agente" : {
+            "type" : "string",
+            "example" : "triagem"
+          },
+          "id" : {
+            "type" : "string",
+            "example" : "TRI-R01"
+          },
+          "tipo" : {
+            "type" : "string",
+            "enum" : [ "REGRESSAO", "ADVERSARIAL" ]
+          },
+          "descricao" : {
+            "type" : "string",
+            "description" : "O que o caso verifica"
+          },
+          "esperado" : {
+            "type" : "string"
+          },
+          "obtido" : {
+            "type" : "string"
+          },
+          "aprovado" : {
+            "type" : "boolean"
+          }
+        }
+      },
+      "RelatorioAvaliacao" : {
+        "type" : "object",
+        "description" : "Bateria determinística de regressão/adversarial dos agentes (regras locais, sem modelo). Nenhuma demanda, documento ou outro dado operacional é lido ou gravado; só a auditoria registra a execução.",
+        "properties" : {
+          "executadaEm" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "modo" : {
+            "type" : "string",
+            "description" : "Sempre DETERMINISTICO (sem chamada a modelo de IA)",
+            "example" : "DETERMINISTICO"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "aprovados" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reprovados" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "duracaoMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "casos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Caso"
+            }
+          }
+        }
       },
       "DocumentoUploadRequest" : {
         "type" : "object",
@@ -7139,6 +7738,19 @@
           }
         }
       },
+      "AvaliacaoRespostaRequest" : {
+        "type" : "object",
+        "description" : "Feedback opcional sobre uma resposta do Assistente DocIA",
+        "properties" : {
+          "avaliacao" : {
+            "type" : "string",
+            "description" : "UTIL ou IMPRECISA",
+            "enum" : [ "UTIL", "IMPRECISA" ],
+            "example" : "UTIL"
+          }
+        },
+        "required" : [ "avaliacao" ]
+      },
       "PerguntaRequest" : {
         "type" : "object",
         "description" : "Pergunta em linguagem natural sobre os documentos",
@@ -7276,6 +7888,11 @@
             "items" : {
               "$ref" : "#/components/schemas/AcaoSugerida"
             }
+          },
+          "execucaoId" : {
+            "type" : [ "string", "null" ],
+            "description" : "Identificador desta execução do assistente (Issue #131), usado no feedback opcional `POST /api/docia/respostas/{execucaoId}/avaliacao` (só pelo autor da pergunta). Nulo se não foi possível registrar.",
+            "example" : "3f1c2b7e-8a3d-4a51-9d0e-2b6f9c1e7a10"
           }
         }
       },
@@ -7718,6 +8335,77 @@
           }
         }
       },
+      "FotoFiscalizacao" : {
+        "type" : "object",
+        "description" : "Foto de evidência da fiscalização (demonstrativa). EXIF é declarado pelo arquivo: informativo, sem valor de prova.",
+        "properties" : {
+          "id" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 7
+          },
+          "demandaId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 42
+          },
+          "nomeOriginal" : {
+            "type" : "string",
+            "description" : "Nome original saneado (não é usado no disco)",
+            "example" : "vistoria-01.jpg"
+          },
+          "mime" : {
+            "type" : "string",
+            "example" : "image/jpeg"
+          },
+          "tamanho" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Tamanho em bytes",
+            "example" : 184233
+          },
+          "sha256" : {
+            "type" : "string",
+            "description" : "SHA-256 do conteúdo (hex)"
+          },
+          "exifDataHora" : {
+            "type" : [ "string", "null" ],
+            "format" : "date-time",
+            "description" : "Data/hora da captura no EXIF (horário local da câmera)"
+          },
+          "exifLatitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Latitude do GPS no EXIF",
+            "example" : -15.601
+          },
+          "exifLongitude" : {
+            "type" : [ "number", "null" ],
+            "description" : "Longitude do GPS no EXIF",
+            "example" : -56.097
+          },
+          "distanciaKm" : {
+            "type" : [ "number", "null" ],
+            "description" : "Distância (km) do GPS até a coordenada da demanda, ou até a borda da área (0 = dentro)",
+            "example" : 0.42
+          },
+          "gpsForaMt" : {
+            "type" : "boolean",
+            "description" : "GPS do EXIF fora da caixa envolvente de Mato Grosso"
+          },
+          "conferencia" : {
+            "type" : "string",
+            "description" : "Selo de conferência do EXIF",
+            "enum" : [ "CONFERE", "DIVERGENTE", "FORA_MT", "SEM_GPS", "SEM_REFERENCIA" ]
+          },
+          "autor" : {
+            "$ref" : "#/components/schemas/UsuarioRef"
+          },
+          "criadoEm" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
       "FiscalizacaoRequest" : {
         "type" : "object",
         "description" : "Registro completo da fiscalização realizada (simulada)",
@@ -7750,6 +8438,17 @@
             "type" : [ "string", "null" ],
             "maxLength" : 4000,
             "minLength" : 0
+          },
+          "checklist" : {
+            "type" : [ "object", "null" ],
+            "additionalProperties" : { },
+            "description" : "Checklist estruturado (Issue #145): respostas por id do item do modelo da categoria da demanda (`GET /api/demandas/checklists`). Item desconhecido, obrigatório ausente ou tipo errado → 400. Opcional (registros sem checklist continuam aceitos).",
+            "example" : {
+              "local_acessivel" : true,
+              "supressao_confirmada" : true,
+              "area_estimada_ha" : 12.5,
+              "maquinario_no_local" : false
+            }
           }
         },
         "required" : [ "atividades", "data", "evidencias", "resultado" ]
@@ -8278,6 +8977,98 @@
           }
         }
       },
+      "Concordancia" : {
+        "type" : "object",
+        "description" : "Decisões humanas após sugestão do agente",
+        "properties" : {
+          "agente" : {
+            "type" : "string",
+            "example" : "triagem"
+          },
+          "categoria" : {
+            "type" : [ "string", "null" ],
+            "description" : "Categoria da demanda (nula no agregado por agente; SEM_CATEGORIA quando a demanda não tinha categoria)",
+            "example" : "QUEIMADA_INCENDIO"
+          },
+          "avaliadas" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Decisões avaliadas no período"
+          },
+          "aceitaIntegral" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "ajustadaParcial" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "descartada" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "concordanciaPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% aceita integralmente (0–100, 1 casa); nulo sem avaliações",
+            "example" : 62.5
+          },
+          "aproveitamentoPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% aceita integral ou parcialmente (0–100, 1 casa); nulo sem avaliações",
+            "example" : 87.5
+          }
+        }
+      },
+      "FeedbackDocia" : {
+        "type" : "object",
+        "description" : "Feedback opcional UTIL/IMPRECISA nas respostas do DocIA",
+        "properties" : {
+          "util" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "imprecisa" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "utilPct" : {
+            "type" : [ "number", "null" ],
+            "format" : "double",
+            "description" : "% úteis (0–100, 1 casa); nulo sem feedback"
+          }
+        }
+      },
+      "GovernancaIa" : {
+        "type" : "object",
+        "description" : "Governança de IA: concordância Humano × IA por agente e categoria e feedback do DocIA, nos últimos `periodoDias` dias (pela data da decisão humana)",
+        "properties" : {
+          "periodoDias" : {
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 30
+          },
+          "porAgente" : {
+            "type" : "array",
+            "description" : "Concordância por agente (triagem, distribuicao)",
+            "items" : {
+              "$ref" : "#/components/schemas/Concordancia"
+            }
+          },
+          "porCategoria" : {
+            "type" : "array",
+            "description" : "Concordância por agente e categoria da demanda",
+            "items" : {
+              "$ref" : "#/components/schemas/Concordancia"
+            }
+          },
+          "docia" : {
+            "$ref" : "#/components/schemas/FeedbackDocia",
+            "description" : "Feedback dos usuários nas respostas do Assistente DocIA"
+          }
+        }
+      },
       "PainelSistema" : {
         "type" : "object",
         "description" : "Painel do sistema (somente ADMIN): saúde ao vivo dos componentes e operação dos agentes",
@@ -8300,6 +9091,11 @@
             "items" : {
               "$ref" : "#/components/schemas/AgentePainel"
             }
+          },
+          "governanca" : {
+            "type" : "null",
+            "$ref" : "#/components/schemas/GovernancaIa",
+            "description" : "Governança de IA (Issue #131): concordância Humano × IA por agente e categoria e feedback do DocIA nos últimos 30 dias; nula se indisponível"
           }
         }
       },
@@ -9693,6 +10489,55 @@
             "description" : "Documentos do mais ao menos relevante; vazio quando nada atende à consulta (abstenção)",
             "items" : {
               "$ref" : "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "ChecklistItemModelo" : {
+        "type" : "object",
+        "description" : "Item do checklist",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "description" : "Identificador estável do item (chave no JSON enviado)",
+            "example" : "maquinario_no_local"
+          },
+          "rotulo" : {
+            "type" : "string",
+            "example" : "Havia maquinário no local?"
+          },
+          "tipo" : {
+            "type" : "string",
+            "enum" : [ "BOOLEANO", "TEXTO", "NUMERO" ]
+          },
+          "obrigatorio" : {
+            "type" : "boolean",
+            "description" : "Item obrigatório"
+          }
+        }
+      },
+      "ChecklistModelo" : {
+        "type" : "object",
+        "description" : "Modelo do checklist estruturado da fiscalização para uma categoria (versionado no código)",
+        "properties" : {
+          "categoria" : {
+            "type" : "string",
+            "enum" : [ "DESMATAMENTO_ILEGAL", "QUEIMADA_INCENDIO", "RECURSOS_HIDRICOS", "FAUNA_SILVESTRE", "PESCA_IRREGULAR", "MINERACAO_IRREGULAR", "RESIDUOS_POLUICAO", "AREA_PRESERVACAO_PERMANENTE" ]
+          },
+          "rotulo" : {
+            "type" : "string",
+            "example" : "Desmatamento ilegal"
+          },
+          "versao" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Versão do modelo",
+            "example" : 1
+          },
+          "itens" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ChecklistItemModelo"
             }
           }
         }

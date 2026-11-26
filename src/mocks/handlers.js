@@ -1,7 +1,7 @@
 import { explicacaoComparacaoMock } from './fixtures/comparacao.js';
 import { minutaVistoriaMock } from './fixtures/minuta.js';
 import { preAnaliseMock } from './fixtures/preAnalise.js';
-import { painelSistemaMock } from './fixtures/sistema.js';
+import { avaliacaoAgentesMock, painelSistemaMock } from './fixtures/sistema.js';
 import { http, HttpResponse } from 'msw';
 import { respostaAssistenteGlobalMock } from './fixtures/assistenteGlobal.js';
 import { handlersAdmin } from './fixtures/admin.js';
@@ -501,6 +501,19 @@ export const handlers = [
   }),
 
   http.post('/api/docia/perguntas/stream', () => new HttpResponse(null, { status: 405 })),
+  // Feedback opcional das respostas do Assistente DocIA (API#131).
+  http.post('/api/docia/respostas/:execucaoId/avaliacao', async ({ request, params }) => {
+    const caminho = `/api/docia/respostas/${params.execucaoId}/avaliacao`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const corpo = await request.json().catch(() => ({}));
+    if (!['UTIL', 'IMPRECISA'].includes(corpo?.avaliacao)) {
+      return problemaValidacao(
+        [{ campo: 'avaliacao', mensagem: 'Informe UTIL ou IMPRECISA.' }],
+        caminho,
+      );
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
   // Pré-análise de documento (API#140): sugere metadados, não grava.
   http.post('/api/documentos/pre-analise', ({ request }) =>
     temToken(request)
@@ -554,6 +567,11 @@ export const handlers = [
     if (!temToken(request)) return naoAutenticado('/api/sistema/painel');
     return HttpResponse.json(painelSistemaMock());
   }),
+  // Autoverificação determinística dos agentes (API#131): somente ADMIN.
+  http.post('/api/sistema/agentes/avaliar', ({ request }) => {
+    if (!temToken(request)) return naoAutenticado('/api/sistema/agentes/avaliar');
+    return HttpResponse.json(avaliacaoAgentesMock());
+  }),
   ...auth,
   ...handlersAdmin,
   ...handlersNotificacoes,
@@ -582,6 +600,7 @@ export const handlersSse = [
       agente: 'DEMONSTRATIVO',
       modelo: null,
       passos: [],
+      execucaoId: 'mock-execucao-sse-1',
     };
     return respostaSse([
       ['inicio', { agente: 'docia' }],

@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import AcoesSugeridas from './AcoesSugeridas.jsx';
+import FeedbackDocia from './FeedbackDocia.jsx';
 import Icon from './Icon.jsx';
 import { EXPLICACAO_SIMILARIDADE, SeloRecuperacao, SeloSimilaridade } from './RecuperacaoDocia.jsx';
 
@@ -91,6 +92,7 @@ export default function Resposta({ item }) {
             </ul>
           </details>
         )}
+        <FeedbackDocia key={item.execucaoId ?? 'sem-execucao'} execucaoId={item.execucaoId} />
       </div>
     </div>
   );

@@ -26,3 +26,13 @@ export function perguntarStream(pergunta, { demandaId, historico, signal, onEven
     alternativa: () => perguntar(pergunta, { demandaId, historico, signal }),
   });
 }
+
+/**
+ * POST /api/docia/respostas/{execucaoId}/avaliacao `{ avaliacao: 'UTIL' | 'IMPRECISA' }` → 204.
+ * Feedback opcional do autor da pergunta sobre uma resposta do Assistente DocIA (Issue API#131).
+ */
+export async function avaliarResposta(execucaoId, avaliacao) {
+  await httpClient.post(`/docia/respostas/${encodeURIComponent(execucaoId)}/avaliacao`, {
+    avaliacao,
+  });
+}
