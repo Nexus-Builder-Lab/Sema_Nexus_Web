@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { vi } from 'vitest';
 import App from '../../App.jsx';
+import { MUNICIPIOS } from '../../mocks/fixtures/catalogos.js';
 import { server } from '../../mocks/server.js';
-import { iniciarSessao } from '../../test/auth.js';
+import { iniciarSessao, USUARIO_ADMIN } from '../../test/auth.js';
 import { PANE_SELECAO } from './mapaConfig.js';
 import {
   formatarHectares,
@@ -53,10 +54,16 @@ const marcadores = (container) =>
 const paneSelecao = (container) => container.querySelector(`.leaflet-${PANE_SELECAO}-pane`);
 const painel = () => screen.findByRole('region', { name: 'Detalhes da seleção no mapa' });
 
+function LocalAtual() {
+  const loc = useLocation();
+  return <span data-testid="rota-atual">{`${loc.pathname}${loc.search}`}</span>;
+}
+
 function renderPagina() {
   return render(
     <MemoryRouter initialEntries={[ROTA]}>
       <App />
+      <LocalAtual />
     </MemoryRouter>,
   );
 }
@@ -176,6 +183,85 @@ describe('Seleção no mapa: área afetada e painel de detalhes', () => {
     expect(caixa).not.toHaveTextContent(/ha$/);
     expect(paneSelecao(container).querySelector('.nx-selecao-area')).toBeNull();
   });
+
+  it('botão "Criar Demanda de Monitoramento": abre cadastro pré-preenchido a partir de DETER (com polígono e área)', async () => {
+    server.use(
+      http.get('/api/catalogos/municipios', () =>
+        HttpResponse.json([
+          ...MUNICIPIOS,
+          {
+            id: 5100250,
+            nome: 'Alta Floresta',
+            regiao: 'Norte',
+            bioma: 'AMAZONIA',
+            latitude: -9.876,
+            longitude: -56.086,
+          },
+        ]),
+      ),
+    );
+    const user = userEvent.setup();
+    const { container } = renderPagina();
+    await screen.findByText('4 demandas no mapa');
+    await ligar(container, user, DETER);
+    await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 2), { timeout: 5000 });
+
+    fireEvent.click([...marcadores(container)].at(-2));
+    const caixa = await painel();
+    const criar = await within(caixa).findByRole('link', {
+      name: 'Criar Demanda de Monitoramento',
+    });
+
+    await user.click(criar);
+    await screen.findByRole('form', { name: 'Dados da demanda' });
+    expect(screen.getByTestId('rota-atual')).toHaveTextContent('/flux/demandas/nova');
+    expect(screen.getByLabelText(/^Origem/)).toHaveValue('MONITORAMENTO');
+    expect(screen.getByLabelText(/^Município/)).toHaveValue('Alta Floresta');
+    expect(screen.getByLabelText(/^Categoria/)).toHaveValue('DESMATAMENTO_ILEGAL');
+    expect(screen.getByLabelText(/^Latitude/)).toHaveValue('-9.8');
+    expect(screen.getByLabelText(/^Longitude/)).toHaveValue('-56.3');
+    expect(screen.getByText(/Polígono ativo \(5 vértices/)).toBeInTheDocument();
+  });
+
+  it.each(['GESTOR', 'ANALISTA'])(
+    'perfil %s vê "Criar Demanda de Monitoramento" ao selecionar foco INPE',
+    async (perfil) => {
+      iniciarSessao({ ...USUARIO_ADMIN, perfil });
+      const user = userEvent.setup();
+      const { container } = renderPagina();
+      await screen.findByText('4 demandas no mapa');
+      await ligar(container, user, FOCOS);
+      await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 8), { timeout: 5000 });
+
+      fireEvent.click([...marcadores(container)].at(-1));
+      const caixa = await painel();
+      const criar = await within(caixa).findByRole('link', {
+        name: 'Criar Demanda de Monitoramento',
+      });
+      expect(criar.getAttribute('href')).toContain('/flux/demandas/nova?');
+      expect(criar.getAttribute('href')).toContain('origem=MONITORAMENTO');
+      expect(criar.getAttribute('href')).toContain('categoria=QUEIMADA_INCENDIO');
+    },
+  );
+
+  it.each(['FISCAL', 'CONSULTA'])(
+    'perfil %s não vê "Criar Demanda de Monitoramento"',
+    async (perfil) => {
+      iniciarSessao({ ...USUARIO_ADMIN, perfil });
+      const user = userEvent.setup();
+      const { container } = renderPagina();
+      await screen.findByText('4 demandas no mapa');
+      await ligar(container, user, DETER);
+      await waitFor(() => expect(marcadores(container)).toHaveLength(4 + 2), { timeout: 5000 });
+
+      fireEvent.click([...marcadores(container)].at(-2));
+      const caixa = await painel();
+      await within(caixa).findByText('INPE — dados públicos reais');
+      expect(
+        within(caixa).queryByRole('link', { name: 'Criar Demanda de Monitoramento' }),
+      ).not.toBeInTheDocument();
+    },
+  );
 });
 
 describe('formatação da área e geometria da seleção', () => {

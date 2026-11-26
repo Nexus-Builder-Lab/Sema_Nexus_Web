@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import App from '../../App.jsx';
+import { buscarDemanda } from '../../mocks/fixtures/demandas.js';
 import { server } from '../../mocks/server.js';
 import { iniciarSessao, USUARIO_ADMIN } from '../../test/auth.js';
 import { hojeISO } from '../../utils/datas.js';
@@ -75,7 +76,9 @@ describe('Cadastro de demanda', () => {
 
   it('avisa quando o município do atalho não existe no catálogo', async () => {
     await abrirFormulario('/flux/demandas/nova?municipioId=999&origem=MONITORAMENTO');
-    expect(await screen.findByText(/município informado no atalho não foi encontrado/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/município informado no atalho não foi encontrado/),
+    ).toBeInTheDocument();
   });
 
   it('valida no cliente: mostra os erros por campo, foca o primeiro e não chama a API', async () => {
@@ -290,5 +293,171 @@ describe('Edição de demanda', () => {
   it('demanda inexistente mostra "não encontrada"', async () => {
     renderAt('/flux/demandas/999/editar');
     expect(await screen.findByText('Demanda não encontrada')).toBeInTheDocument();
+  });
+
+  it('edita demanda com polígono: preserva área sem tocar e envia removerArea=true ao remover', async () => {
+    const user = userEvent.setup();
+    const d1 = buscarDemanda(1);
+    d1.areaHa = 123.45;
+    d1.areaGeometria = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-56.1, -15.6],
+          [-56.09, -15.6],
+          [-56.09, -15.59],
+          [-56.1, -15.59],
+          [-56.1, -15.6],
+        ],
+      ],
+    };
+    d1.prazoSugerido = '2026-12-15';
+
+    const corpos = [];
+    server.events.on('request:start', async ({ request }) => {
+      if (request.method === 'PUT' && request.url.endsWith('/api/demandas/1')) {
+        corpos.push(await request.clone().json());
+      }
+    });
+
+    await abrirFormulario('/flux/demandas/1/editar');
+    expect(screen.getByLabelText(/^Área afetada/)).toHaveValue('123,45');
+    expect(screen.getByLabelText(/^Prazo sugerido/)).toHaveValue('2026-12-15');
+
+    await user.click(screen.getByRole('button', { name: 'Remover área afetada' }));
+    expect(screen.getByText(/será removida ao salvar/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Desfazer remoção' }));
+    expect(screen.getByLabelText(/^Área afetada/)).toHaveValue('123,45');
+
+    await user.click(screen.getByRole('button', { name: 'Remover área afetada' }));
+    await user.clear(screen.getByLabelText(/^Prazo sugerido/));
+    await user.type(screen.getByLabelText(/^Prazo sugerido/), '2026-12-20');
+    await user.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    expect(await screen.findByText(/Demanda DEM-2026\/0001 atualizada com sucesso/)).toBeVisible();
+    server.events.removeAllListeners();
+    expect(corpos[0]).toMatchObject({
+      removerArea: true,
+      areaHa: null,
+      areaGeometria: null,
+      prazoSugerido: '2026-12-20',
+    });
+    expect(buscarDemanda(1).areaHa).toBeNull();
+    expect(buscarDemanda(1).areaGeometria).toBeNull();
+    expect(buscarDemanda(1).prazoSugerido).toBe('2026-12-20');
+  });
+});
+
+describe('Polígono e importação GeoJSON no cadastro de demanda', () => {
+  beforeEach(() => iniciarSessao());
+
+  it('importa .geojson válido, preenche centroide e área (ha) e envia ao cadastrar', async () => {
+    const user = userEvent.setup();
+    let corpoEnviado;
+    server.events.on('request:start', async ({ request }) => {
+      if (request.method === 'POST' && request.url.endsWith('/api/demandas')) {
+        corpoEnviado = await request.clone().json();
+      }
+    });
+
+    await abrirFormulario();
+    const geojson = JSON.stringify({
+      type: 'Feature',
+      properties: { nome: 'Talhão 1' },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [-56.1, -15.6],
+            [-56.09, -15.6],
+            [-56.09, -15.59],
+            [-56.1, -15.59],
+            [-56.1, -15.6],
+          ],
+        ],
+      },
+    });
+    const arquivo = new File([geojson], 'area.geojson', { type: 'application/geo+json' });
+    await user.upload(screen.getByLabelText('Importar .geojson'), arquivo);
+
+    await waitFor(() => expect(screen.getByLabelText(/^Latitude/)).toHaveValue('-15,595'));
+    expect(screen.getByLabelText(/^Longitude/)).toHaveValue('-56,095');
+    expect(Number(screen.getByLabelText(/^Área afetada/).value.replace(',', '.'))).toBeGreaterThan(
+      100,
+    );
+    expect(screen.getByText(/Polígono ativo \(5 vértices/)).toBeInTheDocument();
+
+    await preencherObrigatorios(user);
+    await user.click(botaoSalvar());
+    expect(await screen.findByText(/Demanda DEM-2026\/0026 cadastrada com sucesso/)).toBeVisible();
+    server.events.removeAllListeners();
+
+    expect(corpoEnviado.areaGeometria.type).toBe('Polygon');
+    expect(corpoEnviado.areaHa).toBeGreaterThan(100);
+    expect(corpoEnviado.latitude).toBeCloseTo(-15.595, 3);
+    expect(corpoEnviado.longitude).toBeCloseTo(-56.095, 3);
+  });
+
+  it('rejeita .geojson fora de Mato Grosso ou malformado com erro claro', async () => {
+    const user = userEvent.setup();
+    await abrirFormulario();
+    const foraMt = new File(
+      [
+        JSON.stringify({
+          type: 'Polygon',
+          coordinates: [
+            [
+              [-46.6, -23.5],
+              [-46.5, -23.5],
+              [-46.5, -23.4],
+              [-46.6, -23.5],
+            ],
+          ],
+        }),
+      ],
+      'fora.geojson',
+      { type: 'application/geo+json' },
+    );
+    await user.upload(screen.getByLabelText('Importar .geojson'), foraMt);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/fora de Mato Grosso/);
+  });
+
+  it('permite desenhar polígono no mapa Leaflet (adicionar pontos, desfazer e concluir)', async () => {
+    const user = userEvent.setup();
+    const form = await abrirFormulario();
+    await user.click(screen.getByRole('button', { name: 'Desenhar polígono' }));
+    expect(screen.getByText(/Modo de desenho ativo: clique no mapa/)).toBeInTheDocument();
+
+    const mapaEl = form.querySelector('.nx-map-area-editor .leaflet-container');
+    // Em jsdom o container tem 0x0: definimos dimensões e bounding rect para o Leaflet converter cliques em lat/lon.
+    Object.defineProperties(mapaEl, {
+      offsetWidth: { value: 600, configurable: true },
+      offsetHeight: { value: 320, configurable: true },
+      clientWidth: { value: 600, configurable: true },
+      clientHeight: { value: 320, configurable: true },
+    });
+    mapaEl.getBoundingClientRect = () => ({
+      left: 0,
+      top: 0,
+      width: 600,
+      height: 320,
+      right: 600,
+      bottom: 320,
+    });
+    const clicar = (x, y) => fireEvent.click(mapaEl, { clientX: x, clientY: y, bubbles: true });
+
+    clicar(20, 20);
+    clicar(40, 20);
+    clicar(40, 40);
+    clicar(20, 40);
+    await waitFor(() => expect(screen.getByText(/\(4 pontos\)/)).toBeInTheDocument());
+
+    await user.click(screen.getByRole('button', { name: 'Desfazer ponto' }));
+    expect(screen.getByText(/\(3 pontos\)/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Concluir polígono' }));
+    expect(await screen.findByText(/Polígono ativo \(4 vértices/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Latitude/).value).not.toBe('');
+    expect(screen.getByLabelText(/^Área afetada/).value).not.toBe('');
   });
 });

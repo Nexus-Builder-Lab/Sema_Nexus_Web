@@ -1236,6 +1236,15 @@ figure.nx-chart-figure {
   z-index: 0;
 }
 
+.nx-map-sm {
+  height: 320px;
+  min-height: 260px;
+}
+
+.nx-map-desenho {
+  cursor: crosshair;
+}
+
 .nx-map-overlay {
   position: absolute;
   inset: 0;

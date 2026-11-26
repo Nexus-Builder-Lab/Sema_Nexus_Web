@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { detalharDemanda } from '../../api/demandasApi.js';
 import { obterReferenciaPonto } from '../../api/intelligenceApi.js';
+import { analisarGeometria } from '../../utils/geometriaArea.js';
 
 // Seleção de um item no mapa (foco de calor, alerta DETER ou demanda fictícia) e o painel de detalhes.
 // A área exibida vem sempre da API: o INPE só informa área nos alertas DETER (polígono + km²); o foco de calor é
@@ -86,6 +87,60 @@ export function limitesDaGeometria(geometria) {
 export function geometriaDaSelecao(selecao, dados) {
   if (!selecao || !dados) return null;
   return selecao.tipo === 'DEMANDA' ? (dados.areaGeometria ?? null) : (dados.geometria ?? null);
+}
+
+/**
+ * Monta destino (`/flux/demandas/nova?...`) e `state` (`{ areaGeometria }`) para o botão
+ * "Criar Demanda de Monitoramento" a partir de um alerta DETER ou foco de calor do INPE (GH-147).
+ * Só preenche dados para revisão humana — nunca grava nada automaticamente.
+ */
+export function destinoDemandaMonitoramento(dados) {
+  const p = dados?.ponto;
+  if (!p) return null;
+  const deter = p.tipo === 'DESMATAMENTO';
+  const queimada =
+    p.tipo === 'FOCO_CALOR' ||
+    String(p.classe ?? '')
+      .toUpperCase()
+      .includes('QUEIMADA');
+  const categoria = queimada ? 'QUEIMADA_INCENDIO' : 'DESMATAMENTO_ILEGAL';
+  const titulo = deter
+    ? `Monitoramento DETER${p.classe ? ` (${p.classe})` : ''} — ${p.municipio ?? 'MT'}`
+    : `Monitoramento foco de calor INPE — ${p.municipio ?? 'MT'}`;
+  const localidade = dados.atributos?.uc
+    ? `UC: ${dados.atributos.uc}`
+    : `Referência INPE (${p.satelite ?? (deter ? 'DETER' : 'Foco de calor')})`;
+
+  const q = new URLSearchParams();
+  q.set('origem', 'MONITORAMENTO');
+  q.set('categoria', categoria);
+  q.set('titulo', titulo.slice(0, 200));
+  q.set('localidade', localidade.slice(0, 200));
+  if (p.municipioId != null) q.set('municipioId', String(p.municipioId));
+  else if (p.municipio) q.set('municipio', p.municipio);
+  if (p.latitude != null && p.longitude != null) {
+    q.set('latitude', String(p.latitude));
+    q.set('longitude', String(p.longitude));
+  }
+
+  let state;
+  if (dados.geometria) {
+    const analise = analisarGeometria(dados.geometria);
+    if (analise.ok) {
+      q.set('areaHa', String(analise.areaHa));
+      state = { areaGeometria: analise.geometria };
+    } else if (p.areaHa != null) {
+      q.set('areaHa', String(p.areaHa));
+      state = { areaGeometria: dados.geometria };
+    }
+  } else if (p.areaHa != null) {
+    q.set('areaHa', String(p.areaHa));
+  }
+
+  return {
+    to: `/flux/demandas/nova?${q.toString()}`,
+    state,
+  };
 }
 
 /**

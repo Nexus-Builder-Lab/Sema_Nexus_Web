@@ -1,5 +1,6 @@
 import { CATEGORIAS, EQUIPES, MEMBROS, MUNICIPIOS } from './catalogos.js';
 import { hojeISO } from '../../utils/datas.js';
+import { analisarGeometria, areaCompativel } from '../../utils/geometriaArea.js';
 
 // Demandas fictícias dos mocks: store em memória que simula listagem, cadastro e edição da API.
 // Dados 100% simulados — nada aqui é dado oficial.
@@ -81,6 +82,7 @@ function fixture(i) {
     ...areaFicticia(i),
     dataRecebimento: dataRecebimento(i),
     prioridade: i % 7 === 6 ? null : PRIORIDADES[i % PRIORIDADES.length],
+    prazoSugerido: null,
     prazo,
     status,
     atrasada: Boolean(prazo) && prazo < HOJE && status !== 'FINALIZADA',
@@ -212,6 +214,32 @@ export function validarCorpoMock(corpo) {
       corpo.latitude == null ? 'latitude' : 'longitude',
       'Informe latitude e longitude juntas.',
     );
+  if (
+    corpo.prazoSugerido != null &&
+    corpo.dataRecebimento &&
+    corpo.prazoSugerido < corpo.dataRecebimento
+  )
+    falha('prazoSugerido', 'O prazo sugerido não pode ser anterior à data de recebimento.');
+  if (corpo.areaHa != null) {
+    const ha = Number(corpo.areaHa);
+    if (!Number.isFinite(ha) || ha < 0.01 || ha > 9999999999.99)
+      falha('areaHa', 'A área deve ser maior que zero.');
+  }
+  if (corpo.areaGeometria != null) {
+    const analise = analisarGeometria(corpo.areaGeometria);
+    if (!analise.ok) {
+      falha('areaGeometria', analise.erro);
+    } else if (
+      corpo.areaHa != null &&
+      Number.isFinite(Number(corpo.areaHa)) &&
+      !areaCompativel(Number(corpo.areaHa), analise.areaHa)
+    ) {
+      falha(
+        'areaHa',
+        `A área informada (${corpo.areaHa} ha) diverge mais de 2% da calculada pela geometria (${analise.areaHa} ha).`,
+      );
+    }
+  }
   if (corpo.localidade && corpo.localidade.length > 200)
     falha('localidade', 'tamanho deve ser no máximo 200');
   if (corpo.observacoes && corpo.observacoes.length > 2000)
@@ -219,8 +247,52 @@ export function validarCorpoMock(corpo) {
   return erros;
 }
 
-function aplicarCorpo(destino, corpo) {
+function resolverAreaMock(destino, corpo, existente) {
+  let latitude = corpo.latitude ?? null;
+  let longitude = corpo.longitude ?? null;
+  if (existente && corpo.areaHa == null && corpo.areaGeometria == null && !corpo.removerArea) {
+    return {
+      areaHa: destino.areaHa ?? null,
+      areaGeometria: destino.areaGeometria ?? null,
+      latitude,
+      longitude,
+    };
+  }
+  if (corpo.areaGeometria == null) {
+    return { areaHa: corpo.areaHa ?? null, areaGeometria: null, latitude, longitude };
+  }
+  const analise = analisarGeometria(corpo.areaGeometria);
+  if (!analise.ok) {
+    return {
+      areaHa: corpo.areaHa ?? null,
+      areaGeometria: corpo.areaGeometria,
+      latitude,
+      longitude,
+    };
+  }
+  if (
+    latitude == null &&
+    longitude == null &&
+    analise.centroide &&
+    analise.centroide.latitude >= LAT[0] &&
+    analise.centroide.latitude <= LAT[1] &&
+    analise.centroide.longitude >= LON[0] &&
+    analise.centroide.longitude <= LON[1]
+  ) {
+    latitude = analise.centroide.latitude;
+    longitude = analise.centroide.longitude;
+  }
+  return {
+    areaHa: analise.areaHa,
+    areaGeometria: analise.geometria,
+    latitude,
+    longitude,
+  };
+}
+
+function aplicarCorpo(destino, corpo, existente = false) {
   const municipio = MUNICIPIOS.find((m) => m.id === corpo.municipioId);
+  const area = resolverAreaMock(destino, corpo, existente);
   Object.assign(destino, {
     titulo: corpo.titulo.trim(),
     descricao: corpo.descricao,
@@ -228,8 +300,10 @@ function aplicarCorpo(destino, corpo) {
     categoria: corpo.categoria ?? null,
     municipio: { id: municipio.id, nome: municipio.nome, bioma: municipio.bioma },
     localidade: corpo.localidade ?? null,
-    latitude: corpo.latitude ?? null,
-    longitude: corpo.longitude ?? null,
+    latitude: area.latitude,
+    longitude: area.longitude,
+    areaHa: area.areaHa,
+    areaGeometria: area.areaGeometria,
     dataRecebimento: corpo.dataRecebimento,
     prioridade: corpo.prioridade ?? null,
     prazoSugerido: corpo.prazoSugerido ?? null,
@@ -245,6 +319,9 @@ export function cadastrarDemandaMock(corpo) {
       ...fixture(0),
       id,
       numero: `DEM-${ANO}/${String(id).padStart(4, '0')}`,
+      areaHa: null,
+      areaGeometria: null,
+      prazoSugerido: null,
       status: 'PENDENTE',
       prazo: null,
       atrasada: false,
@@ -253,13 +330,14 @@ export function cadastrarDemandaMock(corpo) {
       criadoEm: `${HOJE}T09:00:00`,
     },
     corpo,
+    false,
   );
   demandas.push(nova);
   return nova;
 }
 
 export function editarDemandaMock(demanda, corpo) {
-  aplicarCorpo(demanda, corpo);
+  aplicarCorpo(demanda, corpo, true);
   demanda.atualizadoEm = `${HOJE}T10:00:00`;
   return demanda;
 }
