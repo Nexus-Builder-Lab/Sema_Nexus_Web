@@ -25,6 +25,7 @@ import {
   PRIORIDADES,
   STATUS,
 } from './fixtures/catalogos.js';
+import { CHECKLISTS_MOCK } from './fixtures/checklists.js';
 import {
   buscarDemanda,
   cadastrarDemandaMock,
@@ -38,6 +39,10 @@ import {
   validarAtividadeMock,
   registrarFiscalizacaoMock,
   validarFiscalizacaoMock,
+  listarFotosMock,
+  enviarFotoMock,
+  baixarFotoMock,
+  excluirFotoMock,
   concluirMock,
   validarConclusaoMock,
   devolverMock,
@@ -234,6 +239,11 @@ function problemaValidacao(erros, instance) {
 // Demandas (Issue API#11): store em memória com filtros, ordenação, paginação, cadastro e edição.
 const demandas = [
   http.get(
+    '/api/demandas/checklists',
+    comToken(() => HttpResponse.json(CHECKLISTS_MOCK)),
+  ),
+
+  http.get(
     '/api/demandas',
     comToken(({ request }) =>
       HttpResponse.json(listarDemandasMock(new URL(request.url).searchParams)),
@@ -282,6 +292,41 @@ const demandas = [
   }),
 ];
 
+const MIME_PARA_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+
+async function extrairArquivoMultipart(request) {
+  try {
+    const formData = await request.clone().formData();
+    const arquivo = formData?.get('arquivo');
+    if (arquivo && typeof arquivo !== 'string' && arquivo.size > 0) return arquivo;
+  } catch {
+    // O File do jsdom não é aceito pelo parser multipart do undici; lê o corpo bruto.
+  }
+  const buffer = await request.arrayBuffer();
+  const texto = new TextDecoder('latin1').decode(buffer);
+  const match =
+    /Content-Disposition:\s*form-data;\s*name="arquivo"(?:;\s*filename="([^"]*)")?\r?\n(?:Content-Type:\s*([^\r\n]*)\r?\n)?\r?\n([\s\S]*?)\r?\n--/i.exec(
+      texto,
+    );
+  if (!match) return null;
+  const nome = match[1] || 'foto.jpg';
+  const tipo = (match[2] || '').trim();
+  const conteudoTexto = match[3] ?? '';
+  // No jsdom, FormData serializa File como filename="blob" com corpo vazio; preserva o tipo para os testes.
+  if (nome === 'blob' && conteudoTexto.length === 0 && MIME_PARA_EXT[tipo]) {
+    return new File([new Uint8Array([1])], `foto.${MIME_PARA_EXT[tipo]}`, { type: tipo });
+  }
+  const bytes = new Uint8Array(conteudoTexto.length);
+  for (let i = 0; i < conteudoTexto.length; i += 1) {
+    bytes[i] = conteudoTexto.charCodeAt(i) & 0xff;
+  }
+  return new File([bytes], nome, { type: tipo });
+}
+
 // Fluxo de triagem e distribuição (Issue API#12): transições em memória com 409 para status inválido.
 function conflito(id, detalhe) {
   return problema(409, 'Conflito', detalhe, `/api/demandas/${id}`);
@@ -294,7 +339,7 @@ function acaoDeFluxo(statusEsperado, aplicar, validar) {
     const demanda = buscarDemanda(params.id);
     if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
     const corpo = await request.json().catch(() => ({}));
-    const erros = validar ? validar(corpo) : [];
+    const erros = validar ? validar(corpo, demanda) : [];
     if (erros.length) return problemaValidacao(erros, caminho);
     if (demanda.status !== statusEsperado) {
       return conflito(params.id, `Transição inválida: a demanda está em ${demanda.status}.`);
@@ -380,6 +425,63 @@ const fluxo = [
     '/api/demandas/:id/fiscalizacao',
     acaoDeFluxo('EM_ANDAMENTO', registrarFiscalizacaoMock, validarFiscalizacaoMock),
   ),
+  // Fotos de evidência da fiscalização (API#145).
+  http.get('/api/demandas/:id/fotos', ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}/fotos`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    return HttpResponse.json(listarFotosMock(params.id));
+  }),
+  http.post('/api/demandas/:id/fotos', async ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}/fotos`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    const arquivo = await extrairArquivoMultipart(request);
+    const resultado = await enviarFotoMock(demanda, arquivo);
+    if (resultado.status === 201) {
+      return HttpResponse.json(resultado.foto, {
+        status: 201,
+        headers: { Location: `${caminho}/${resultado.foto.id}` },
+      });
+    }
+    if (resultado.status === 400) {
+      return problemaValidacao([{ campo: 'arquivo', mensagem: resultado.erro }], caminho);
+    }
+    const titulos = {
+      409: 'Conflito',
+      413: 'Arquivo muito grande',
+      415: 'Tipo de mídia não suportado',
+    };
+    return problema(resultado.status, titulos[resultado.status] || 'Erro', resultado.erro, caminho);
+  }),
+  http.get('/api/demandas/:id/fotos/:fotoId/arquivo', ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}/fotos/${params.fotoId}/arquivo`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    const encontrada = baixarFotoMock(params.id, params.fotoId);
+    if (!encontrada) return problema(404, 'Não encontrado', 'Foto inexistente.', caminho);
+    return new HttpResponse(encontrada.bytes, {
+      status: 200,
+      headers: {
+        'Content-Type': encontrada.foto.mime,
+        'Content-Disposition': `attachment; filename="${encontrada.foto.nomeOriginal}"`,
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  }),
+  http.delete('/api/demandas/:id/fotos/:fotoId', ({ request, params }) => {
+    const caminho = `/api/demandas/${params.id}/fotos/${params.fotoId}`;
+    if (!temToken(request)) return naoAutenticado(caminho);
+    const demanda = buscarDemanda(params.id);
+    if (!demanda) return problema(404, 'Não encontrado', 'Demanda inexistente.', caminho);
+    const resultado = excluirFotoMock(demanda, params.fotoId);
+    if (resultado.status === 204) return new HttpResponse(null, { status: 204 });
+    const titulos = { 403: 'Acesso negado', 404: 'Não encontrado', 409: 'Conflito' };
+    return problema(resultado.status, titulos[resultado.status] || 'Erro', resultado.erro, caminho);
+  }),
   http.post(
     '/api/demandas/:id/conclusao',
     acaoDeFluxo('AGUARDANDO_CONCLUSAO', concluirMock, validarConclusaoMock),
